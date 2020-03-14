@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Challenger</string>
+    <string name="email_address">email address</string>
+    <string name="password">password</string>
+    <string name="sign_in">Sign in</string>
+    <string name="register">Register</string>
+    <string name="welcome_to_challenger">Welcome to Challenger</string>
+    <string name="sign_in_or_create_an_account">Sign in or create an account</string>
+    <string name="create_an_account">Create an account</string>
+    <string name="stop">Stop</string>
+    <string name="skip">Skip</string>
+    <string name="username">username</string>
+    <string name="record_activity">Record activity</string>
+    <string name="create_a_challenge">Create a challenge</string>
+    <string name="choose_a_challenge">Choose a challenge!</string>
+    <string name="title_activity_challenge_recorder">Map</string>
+    <string name="start">Start</string>
+    <string name="location_updated">location updated</string>
+    <string name="remove_location_updates">Stop</string>
+    <string name="launch_activity">Launch activity</string>
+    <string name="title_activity_maps">Map</string>
+</resources>

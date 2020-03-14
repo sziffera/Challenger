@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="#FFFFFF"
+    android:orientation="vertical">
+
+    <fragment
+        android:id="@+id/map"
+        class="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="350dp"
+        tools:context=".ChallengeRecorderActivity" />
+
+    <TextView
+        android:id="@+id/challengeRecorderSpeedTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="17sp"
+        android:gravity="center"
+        android:layout_margin="15dp"
+        android:text="TextView" />
+
+    <TextView
+        android:id="@+id/textView5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TextView" />
+
+    <TextView
+        android:id="@+id/textView6"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TextView" />
+
+    <Button
+        android:id="@+id/startChallengeRecording"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/start" />
+
+    <Button
+        android:id="@+id/stopRecording"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/stop" />
+
+</LinearLayout>

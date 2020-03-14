@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_background"
+    tools:context=".RegisterActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginBottom="20dp"
+            android:textSize="25sp"
+            android:text="@string/welcome_to_challenger"
+            android:textAllCaps="true"
+            android:textColor="@android:color/white" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/create_an_account"
+            android:textAllCaps="true"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+
+
+
+        <EditText
+            android:id="@+id/registerUsernameEditText"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:layout_marginTop="25dp"
+            android:layout_marginBottom="15dp"
+            android:layout_height="wrap_content"
+            android:autofillHints="@string/password"
+            android:background="@drawable/round_edittext"
+            android:ems="10"
+            android:hint="@string/username"
+            android:inputType="textPersonName"
+            android:padding="10dp" />
+        <EditText
+            android:id="@+id/registerEmailEditText"
+            android:layout_marginBottom="15dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:background="@drawable/round_edittext"
+            android:autofillHints=""
+            android:ems="10"
+            android:drawableStart="@drawable/ic_email"
+            android:hint="@string/email_address"
+            android:inputType="textEmailAddress"
+            android:padding="10dp" />
+        <EditText
+            android:id="@+id/registerPasswordEditText"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:drawableStart="@drawable/password_icon"
+            android:layout_height="wrap_content"
+            android:autofillHints="@string/password"
+            android:background="@drawable/round_edittext"
+            android:ems="10"
+            android:hint="@string/password"
+            android:layout_marginBottom="15dp"
+            android:inputType="textPassword"
+            android:padding="10dp" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:orientation="vertical"
+        android:gravity="bottom"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <Button
+            android:id="@+id/registerButton"
+            android:layout_width="match_parent"
+            android:background="@drawable/round_edittext"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:text="@string/create_an_account" />
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
