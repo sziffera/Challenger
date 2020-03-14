@@ -11,27 +11,32 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
 class LocationUpdatesService : Service() {
 
     private val mBinder: IBinder = LocalBinder()
-
     private var mChangingConfiguration = false
     private var mNotificationManager: NotificationManager? = null
-
-
     private var mLocationRequest: LocationRequest? = null
-
-
     private var mFusedLocationClient: FusedLocationProviderClient? = null
-
     private var mLocationCallback: LocationCallback? = null
     private var mServiceHandler: Handler? = null
-
-
     private var mLocation: Location? = null
+    private lateinit var mRef: DatabaseReference
+
     override fun onCreate() {
+
+        val sharedPreferences = getSharedPreferences(MainActivity.UID_SHARED_PREF,Context.MODE_PRIVATE)
+
+        Log.i(TAG,sharedPreferences.getString(MainActivity.FINAL_USER_ID,"").toString() + " is the user id")
+        val uid: String = sharedPreferences.getString(MainActivity.FINAL_USER_ID,"").toString()
+
+        mRef = FirebaseDatabase.getInstance().getReference("users").child(uid).child("challenges")
+        val key = mRef.push().key
+        mRef.child(key!!).setValue("Challenge from service")
+
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         mLocationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
@@ -101,7 +106,7 @@ class LocationUpdatesService : Service() {
             if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
                 startForegroundService(Intent(this,LocationUpdatesService::class.java))
             } else {
-                startForeground(NOTIFICATION_ID, getNotification());
+                startForeground(NOTIFICATION_ID, getNotification())
             }
 
         }

@@ -50,7 +50,7 @@ class LoginActivity : AppCompatActivity() {
         database = FirebaseDatabase.getInstance()
         mRef = database.getReference("users")
 
-        sharedPreferences = getSharedPreferences("uid", Context.MODE_PRIVATE)
+        sharedPreferences = getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)
 
         emailText = findViewById(R.id.loginEmailText)
         passwordText = findViewById(R.id.loginPasswordText)

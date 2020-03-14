@@ -43,10 +43,10 @@ class MainActivity : AppCompatActivity() {
         database = FirebaseDatabase.getInstance()
         mRef = database.getReference("users")
         challengeReference = database.getReference("challenges").apply {
-            keepSynced(true)
+            keepSynced(false)
         }
 
-        sharedPreferences = getSharedPreferences("uid", Context.MODE_PRIVATE)
+        sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
 
         recordActivityButton = findViewById(R.id.recordActivityButton)
         newChallengeButton = findViewById(R.id.createChallengeButton)
@@ -61,30 +61,19 @@ class MainActivity : AppCompatActivity() {
 
         uid = if(sharedPreferences.getString("offline user", null) != null && mAuth.currentUser == null) {
             sharedPreferences.getString("offline user",System.nanoTime().toString()).toString()
-
         } else {
             mAuth.currentUser?.uid!!
         }
-
-
-
-        Log.i("ID", uid.toString())
-/*
-        mRef.child(uid).addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onCancelled(p0: DatabaseError) {
-                Log.i("MAIN", p0.details)
-
+        if (!sharedPreferences.contains(FINAL_USER_ID) || sharedPreferences.getString(
+                FINAL_USER_ID, "") != uid
+        ) {
+            with(sharedPreferences.edit()) {
+                this.putString(FINAL_USER_ID,uid)
+                commit()
             }
+        }
 
-            override fun onDataChange(p0: DataSnapshot) {
-                Log.i("SHOULD BE EMPTY", p0.child("username").value.toString())
-            }
-
-        })
-
-
- */
-
+        Log.i("ID", sharedPreferences.getString(FINAL_USER_ID,"").toString())
     }
 
     override fun onStart() {
@@ -132,10 +121,19 @@ class MainActivity : AppCompatActivity() {
 
     inner class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        val distance: TextView = itemView.findViewById<TextView>(R.id.challengeDistanceText)
-        val duration: TextView = itemView.findViewById<TextView>(R.id.challengeDurationText)
-        val type: TextView = itemView.findViewById<TextView>(R.id.challengeTypeText)
+        val distance: TextView = itemView.findViewById(R.id.challengeDistanceText)
+        val duration: TextView = itemView.findViewById(R.id.challengeDurationText)
+        val type: TextView = itemView.findViewById(R.id.challengeTypeText)
 
+    }
+
+    companion object {
+        //to get the user id from skip login
+        const val USER_ID_FROM_NO_LOGIN = "uid"
+        //final uid which is used for authorization
+        const val FINAL_USER_ID = "finalUid"
+        //key for the user's sharedPref
+        const val UID_SHARED_PREF = "sharedPrefUid"
     }
 
 }

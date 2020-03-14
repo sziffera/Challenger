@@ -16,9 +16,9 @@ class SplashScreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val sharedPreferences = getSharedPreferences("uid", Context.MODE_PRIVATE)
+        val sharedPreferences = getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)
 
-        if(sharedPreferences.contains("offline") == false) {
+        if(!sharedPreferences.contains("offline")) {
             FirebaseDatabase.getInstance().setPersistenceEnabled(true)
             with(sharedPreferences.edit()) {
                 this.putBoolean("offline",true)
