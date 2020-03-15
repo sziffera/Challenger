@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="#FFFFFF"
+    android:background="@drawable/gradient_background"
     android:orientation="vertical">
 
     <fragment
@@ -18,21 +18,30 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="17sp"
+        android:textColor="@android:color/white"
         android:gravity="center"
         android:layout_margin="15dp"
         android:text="TextView" />
 
     <TextView
-        android:id="@+id/textView5"
+        android:id="@+id/challengeRecorderDistanceTextView"
+        android:textSize="17sp"
+        android:textColor="@android:color/white"
+        android:gravity="center"
+        android:layout_margin="15dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="TextView" />
 
-    <TextView
-        android:id="@+id/textView6"
+    <Chronometer
+        android:id="@+id/chronometer"
+        android:gravity="center"
+        android:textSize="17sp"
+        android:textColor="@android:color/white"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="TextView" />
+        android:layout_margin="20dp"/>
+
 
     <Button
         android:id="@+id/startChallengeRecording"

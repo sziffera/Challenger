@@ -2,13 +2,17 @@ package com.example.challenger
 
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.core.content.edit
+import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
 class SplashScreenActivity : AppCompatActivity() {
+
+    companion object {
+        private const val OFFLINE = "offline"
+    }
 
     private lateinit var mAuth: FirebaseAuth
 
@@ -16,21 +20,26 @@ class SplashScreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val sharedPreferences = getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)
+        val firebaseSharedPreferences = getSharedPreferences(OFFLINE, Context.MODE_PRIVATE)
 
-        if(!sharedPreferences.contains("offline")) {
+        //make firebase database available offline
+        if(!firebaseSharedPreferences.contains(OFFLINE)) {
+            Log.i("FIREBASE","PERSISTENCE")
             FirebaseDatabase.getInstance().setPersistenceEnabled(true)
-            with(sharedPreferences.edit()) {
-                this.putBoolean("offline",true)
-                apply()
+            with(firebaseSharedPreferences.edit()) {
+                this.putBoolean(OFFLINE,true)
+                commit()
             }
         }
+
+        val userSharedPreferences = getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)
 
 
 
         mAuth = FirebaseAuth.getInstance()
 
-        if (mAuth.currentUser != null || sharedPreferences.contains("offline user")) {
+        //decide whether the user has already opened the app
+        if (mAuth.currentUser != null || userSharedPreferences.contains(MainActivity.NOT_REGISTERED)) {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()

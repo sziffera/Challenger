@@ -19,4 +19,5 @@
     <string name="remove_location_updates">Stop</string>
     <string name="launch_activity">Launch activity</string>
     <string name="title_activity_maps">Map</string>
+    <string name="pause">Pause</string>
 </resources>

@@ -11,8 +11,10 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+
 
 class LocationUpdatesService : Service() {
 
@@ -24,7 +26,9 @@ class LocationUpdatesService : Service() {
     private var mLocationCallback: LocationCallback? = null
     private var mServiceHandler: Handler? = null
     private var mLocation: Location? = null
+    private var distance: Float = 0.0f
     private lateinit var mRef: DatabaseReference
+    lateinit var route: ArrayList<LatLng>
 
     override fun onCreate() {
 
@@ -44,6 +48,7 @@ class LocationUpdatesService : Service() {
                 onNewLocation(locationResult.lastLocation)
             }
         }
+        route = ArrayList()
         createLocationRequest()
         val handlerThread = HandlerThread(TAG)
         handlerThread.start()
@@ -154,9 +159,14 @@ class LocationUpdatesService : Service() {
     private fun onNewLocation(location: Location) {
 
         Log.i(TAG, "New location: $location")
+        if (mLocation != null) {
+            distance += location.distanceTo(mLocation)
+            route.add(LatLng(location.latitude,location.longitude))
+        }
         mLocation = location
 
         val intent = Intent(ACTION_BROADCAST)
+        intent.putExtra(DISTANCE, distance)
         intent.putExtra(EXTRA_LOCATION, location)
         LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
 
@@ -168,12 +178,17 @@ class LocationUpdatesService : Service() {
         }
     }
 
+    private fun filterLocation(location: Location?) : Boolean {
+        //TODO(not implemented)
+        return true
+    }
 
     private fun createLocationRequest() {
         mLocationRequest = LocationRequest()
         mLocationRequest!!.interval = UPDATE_INTERVAL_IN_MILLISECONDS
         mLocationRequest!!.fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
         mLocationRequest!!.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+
     }
 
     inner class LocalBinder : Binder() {
@@ -232,6 +247,7 @@ class LocationUpdatesService : Service() {
             "$PACKAGE_NAME.broadcast"
         const val EXTRA_LOCATION =
             "$PACKAGE_NAME.location"
+        const val DISTANCE =  "$PACKAGE_NAME.distance"
         private const val EXTRA_STARTED_FROM_NOTIFICATION =
             PACKAGE_NAME +
                     ".started_from_notification"
@@ -239,7 +255,7 @@ class LocationUpdatesService : Service() {
         private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 2000
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
-
+        private const val SMALLEST_DISPLACEMENT = 10f
         private const val NOTIFICATION_ID = 12345678
     }
 }

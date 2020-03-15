@@ -1,0 +1,203 @@
+package com.example.challenger
+
+import android.Manifest
+import android.content.*
+import android.content.pm.PackageManager
+import android.location.Location
+import android.os.Build
+import android.os.Bundle
+import android.os.IBinder
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.preference.PreferenceManager
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+
+
+class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback, SharedPreferences.OnSharedPreferenceChangeListener {
+
+    private val REQUEST = 200
+    private val REQUIRE = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    )
+    private lateinit var mMap: GoogleMap
+    private lateinit var distanceTextView: TextView
+    private lateinit var startButton: Button
+    private lateinit var stopButton: Button
+    private lateinit var locationTextView: TextView
+
+    private lateinit var startStopButton: Button
+    private val myReceive = MyReceiver()
+    private var mBound = false
+    private var mService: LocationProviderService? = null
+    private val mServiceConnection: ServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder: LocationProviderService.LocalBinder = service as LocationProviderService.LocalBinder
+            mService = binder.getService()
+            mBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            mService = null
+            mBound = false
+        }
+    }
+
+
+
+    //private lateinit var gpsService: Backgroun
+    //private lateinit var durationTextView: TextView
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_challenge_recorder)
+
+
+        startStopButton = findViewById(R.id.startChallengeRecording)
+        locationTextView = findViewById(R.id.locationText)
+        startStopButton.setOnClickListener {
+            if (requestingLocationUpdates(this) ) {
+                if(checkPermissions() == false)
+                    permissionRequest()
+            }
+
+            mService?.requestLocationUpdates()
+        }
+
+
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        val mapFragment = supportFragmentManager
+            .findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+    }
+
+
+    override fun onStart() {
+        super.onStart()
+
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .registerOnSharedPreferenceChangeListener(this)
+        // Bind to the service. If the service is in foreground mode, this signals to the service
+        // that since this activity is in the foreground, the service can exit foreground mode.
+        bindService(
+            Intent(this, LocationProviderService::class.java), mServiceConnection,
+            Context.BIND_AUTO_CREATE
+        )
+    }
+
+    override fun onResume() {
+        super.onResume()
+        LocalBroadcastManager.getInstance(this).registerReceiver(myReceive, IntentFilter(
+            "com.example.challenger.broadcast"
+        )
+        )
+    }
+
+    /**
+     * Manipulates the map once available.
+     * This callback is triggered when the map is ready to be used.
+     * This is where we can add markers or lines, add listeners or move the camera. In this case,
+     * we just add a marker near Sydney, Australia.
+     * If Google Play services is not installed on the device, the user will be prompted to install
+     * it inside the SupportMapFragment. This method will only be triggered once the user has
+     * installed Google Play services and returned to the app.
+     */
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+
+        // Add a marker in Sydney and move the camera
+        val sydney = LatLng(-34.0, 151.0)
+        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+    }
+
+    private fun permissionRequest() {
+        val locationApproved = ActivityCompat
+            .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) ==
+                PackageManager.PERMISSION_GRANTED
+
+        if (locationApproved) {
+            val backgroundLocationPermissionApproved = ActivityCompat
+                .checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED
+
+            if (backgroundLocationPermissionApproved) {
+                // App can access location both in the foreground and in the background.
+                // Start your service that doesn't have a foreground service type
+                // defined.
+            } else {
+                Toast.makeText(this,"The background location is necessary to function properly",Toast.LENGTH_SHORT).show()
+                // App can only access location in the foreground. Display a dialog
+                // warning the user that your app must have all-the-time access to
+                // location in order to function properly. Then, request background
+                // location.
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                    REQUEST
+                )
+            }
+        } else {
+            // App doesn't have access to the device's location at all. Make full request
+            // for permission.
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ),
+                REQUEST
+            )
+        }
+    }
+    private fun checkPermissions(): Boolean {
+        return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        )
+    }
+
+    private inner class MyReceiver : BroadcastReceiver() {
+        override fun onReceive(
+            context: Context,
+            intent: Intent
+        ) {
+            val location =
+                intent.getParcelableExtra<Location>(LocationProviderService().EXTRA_LOCATION)
+            if (location != null) {
+
+                locationTextView.text = location.toString()
+
+            }
+        }
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        if(key.equals(KEY_REQUESTING_LOCATION_UPDATES)) {
+            TODO("set button state depending on whether location updates are being requested.")
+        }
+    }
+}

@@ -5,22 +5,27 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
-import com.example.challenger.LocationUpdatesService.LocalBinder
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
+import android.view.View
 import android.widget.Button
+import android.widget.Chronometer
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
+import com.example.challenger.LocationUpdatesService.LocalBinder
 import com.example.challenger.R.*
-import com.google.android.gms.maps.*
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.PolylineOptions
 
 
@@ -34,9 +39,13 @@ SharedPreferences.OnSharedPreferenceChangeListener{
 
     private lateinit var mMap: GoogleMap
     private lateinit var speedTextView: TextView
+    private lateinit var distanceTextView: TextView
+    private lateinit var stopButton: Button
+    private lateinit var startStopButton: Button
+    private lateinit var chronometer: Chronometer
+    private var elapsedTime = 0
     private var gpsService: LocationUpdatesService? = null
     private val tag = "RECORDER"
-    private lateinit var routeLine: Polyline
     private var mBound = false
     private val myReceiver: MyReceiver = MyReceiver()
 
@@ -48,16 +57,13 @@ SharedPreferences.OnSharedPreferenceChangeListener{
         }
 
         override fun onServiceDisconnected(className: ComponentName) {
-
             if (className.className == "com.example.challenger.LocationProviderService") {
                 gpsService = null
                 mBound = false
             }
         }
-
     }
 
-    private lateinit var startStopButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,21 +94,30 @@ SharedPreferences.OnSharedPreferenceChangeListener{
             .registerOnSharedPreferenceChangeListener(this)
 
         startStopButton = findViewById(id.startChallengeRecording)
+        chronometer = findViewById(id.chronometer)
         speedTextView  = findViewById(id.challengeRecorderSpeedTextView)
+        distanceTextView = findViewById(id.challengeRecorderDistanceTextView)
+        //TODO(calculate elapsed time for chronometer)
         startStopButton.setOnClickListener {
-
             if(requestingLocationUpdates(this)){
                 gpsService?.removeLocationUpdates()
-            } else
-                gpsService?.requestLocationUpdates()
+                chronometer.stop()
 
+            } else {
+                gpsService?.requestLocationUpdates()
+                chronometer.start()
+            }
+            setButtonState(requestingLocationUpdates(this))
         }
-        val stopButton: Button = findViewById(R.id.stopRecording)
+        stopButton = findViewById(id.stopRecording)
+        stopButton.visibility = View.INVISIBLE
         stopButton.setOnClickListener {
 
             gpsService?.removeLocationUpdates()
+            startActivity(Intent(this,ChallengeDetailsActivity::class.java))
         }
         bindService(Intent(applicationContext, LocationUpdatesService::class.java),serviceConnection,Context.BIND_AUTO_CREATE)
+        setButtonState(requestingLocationUpdates(this))
     }
     /**
      * Manipulates the map once available.
@@ -114,10 +129,19 @@ SharedPreferences.OnSharedPreferenceChangeListener{
      * installed Google Play services and returned to the app.
      */
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onMapReady(googleMap: GoogleMap) {
+
         mMap = googleMap
-        routeLine = mMap.addPolyline(PolylineOptions().clickable(false))
-        // Add a marker in Sydney and move the camera
+        mMap.isMyLocationEnabled = true
+
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient.lastLocation.addOnSuccessListener {
+            val latLng = LatLng(it.latitude,it.longitude)
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,12.0f))
+        }
+
+
     }
     override fun onResume() {
         super.onResume()
@@ -129,6 +153,7 @@ SharedPreferences.OnSharedPreferenceChangeListener{
         LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver)
         super.onPause()
     }
+
 
     private fun permissionRequest() {
         val locationApproved = ActivityCompat
@@ -206,8 +231,9 @@ SharedPreferences.OnSharedPreferenceChangeListener{
 
     private fun setButtonState(requestingLocationUpdates: Boolean) {
         if(requestingLocationUpdates) {
-            startStopButton.text = getString(string.stop)
-            startStopButton.setBackgroundColor(Color.RED)
+            startStopButton.text = getString(string.pause)
+            startStopButton.setBackgroundColor(Color.YELLOW)
+            stopButton.visibility = View.VISIBLE
         }
         else {
             startStopButton.text = getString(string.start)
@@ -217,26 +243,24 @@ SharedPreferences.OnSharedPreferenceChangeListener{
 
     private inner class MyReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent) {
+
             val location: Location? =
                 intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION)
+            val rawDistance: Float = intent.getFloatExtra(LocationUpdatesService.DISTANCE,0.0f)
+            val distance: String = "%.2f".format(rawDistance/1000)
+            distanceTextView.text = "$distance km"
 
             if (location != null) {
                 Log.i(tag, location.toString())
-                val latLng = LatLng(location.latitude,location.longitude)
-                mMap.addMarker(MarkerOptions().position(latLng))
+                val latLng = LatLng(location.latitude, location.longitude)
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
-
-                mMap.addPolyline(PolylineOptions())
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    //if (location.speedAccuracyMetersPerSecond > 0.8f) {
-                        val speed = location.speed * 3.6
-                        speedTextView.text = speed.toString()
-                    //}
-                }
-                else
-                    speedTextView.text = location.speed.toString()
-
+                val speed = location.speed * 3.6
+                speedTextView.text = "${"%.1f".format(speed)} km/h"
+                mMap.addPolyline(PolylineOptions().addAll(gpsService?.route)
+                    .color(Color.BLUE)
+                    .clickable(false))
             }
+
         }
     }
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
@@ -244,7 +268,6 @@ SharedPreferences.OnSharedPreferenceChangeListener{
             val value = sharedPreferences.getBoolean(KEY_REQUESTING_LOCATION_UPDATES,
             false)
             setButtonState(value)
-
         }
     }
 }

@@ -16,14 +16,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.firebase.ui.database.FirebaseRecyclerAdapter
 import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var mAuth: FirebaseAuth
     private lateinit var database: FirebaseDatabase
-    private lateinit var mRef: DatabaseReference
+    private lateinit var usersRef: DatabaseReference
     private lateinit var challengeReference: DatabaseReference
 
     private lateinit var sharedPreferences: SharedPreferences
@@ -41,8 +42,10 @@ class MainActivity : AppCompatActivity() {
 
         mAuth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance()
-        mRef = database.getReference("users")
-        challengeReference = database.getReference("challenges").apply {
+        usersRef = database.getReference(USERS_DATA).apply {
+            keepSynced(false)
+        }
+        challengeReference = database.getReference(CHALLENGES_DATA).apply {
             keepSynced(false)
         }
 
@@ -59,8 +62,8 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        uid = if(sharedPreferences.getString("offline user", null) != null && mAuth.currentUser == null) {
-            sharedPreferences.getString("offline user",System.nanoTime().toString()).toString()
+        uid = if(sharedPreferences.getString(NOT_REGISTERED, null) != null && mAuth.currentUser == null) {
+            sharedPreferences.getString(NOT_REGISTERED,System.nanoTime().toString()).toString()
         } else {
             mAuth.currentUser?.uid!!
         }
@@ -83,6 +86,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setUpRecyclerView() {
+
+        //TODO(make available offline)
+
         val options: FirebaseRecyclerOptions<Challenge> =
             FirebaseRecyclerOptions.Builder<Challenge>()
                 .setQuery(challengeReference,Challenge::class.java)
@@ -128,12 +134,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        //to get the user id from skip login
-        const val USER_ID_FROM_NO_LOGIN = "uid"
         //final uid which is used for authorization
         const val FINAL_USER_ID = "finalUid"
         //key for the user's sharedPref
         const val UID_SHARED_PREF = "sharedPrefUid"
+        //get unregistered user id
+        const val NOT_REGISTERED = "registered"
+        //get users list from firebase
+        private const val USERS_DATA = "users"
+        //get public challenges from firebase
+        private const val CHALLENGES_DATA = "challenges"
     }
 
 }

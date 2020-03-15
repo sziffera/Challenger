@@ -9,7 +9,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -20,7 +19,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import kotlinx.android.synthetic.main.activity_login.*
 
 
 class LoginActivity : AppCompatActivity() {
@@ -174,7 +172,7 @@ class LoginActivity : AppCompatActivity() {
         }
         with(sharedPreferences.edit()) {
 
-            putString("offline user",key)
+            putString(MainActivity.NOT_REGISTERED,key)
             apply()
         }
         intent = Intent(applicationContext,MainActivity::class.java)
