@@ -1,9 +1,9 @@
 package com.example.challenger
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.*
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -13,7 +13,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.Chronometer
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -27,11 +26,10 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.PolylineOptions
 
 
 class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
-SharedPreferences.OnSharedPreferenceChangeListener{
+SharedPreferences.OnSharedPreferenceChangeListener {
 
     companion object {
         private const val REQUEST = 200
@@ -48,6 +46,8 @@ SharedPreferences.OnSharedPreferenceChangeListener{
     private var gpsService: LocationUpdatesService? = null
     private val tag = "RECORDER"
     private var mBound = false
+    private var lastPause: Long = 0
+    private var savedDistance = 0.0f
     private val myReceiver: MyReceiver = MyReceiver()
 
     private val serviceConnection = object : ServiceConnection {
@@ -68,15 +68,18 @@ SharedPreferences.OnSharedPreferenceChangeListener{
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(layout.activity_challenge_recorder)
-
+        if (!checkPermissions()) {
+            permissionRequest()
+        }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
     }
 
     override fun onStop() {
-        if(mBound) {
+        if (mBound) {
             unbindService(serviceConnection)
             mBound = false
         }
@@ -87,25 +90,22 @@ SharedPreferences.OnSharedPreferenceChangeListener{
 
     override fun onStart() {
         super.onStart()
-        if(!checkPermissions()) {
-            permissionRequest()
-        }
+
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)
 
         startStopButton = findViewById(id.startChallengeRecording)
         chronometer = findViewById(id.chronometer)
-        speedTextView  = findViewById(id.challengeRecorderSpeedTextView)
+        speedTextView = findViewById(id.challengeRecorderSpeedTextView)
         distanceTextView = findViewById(id.challengeRecorderDistanceTextView)
         //TODO(calculate elapsed time for chronometer)
         startStopButton.setOnClickListener {
-            if(requestingLocationUpdates(this)){
+
+            if (requestingLocationUpdates(this)) {
                 gpsService?.removeLocationUpdates()
-                chronometer.stop()
 
             } else {
                 gpsService?.requestLocationUpdates()
-                chronometer.start()
             }
             setButtonState(requestingLocationUpdates(this))
         }
@@ -113,12 +113,24 @@ SharedPreferences.OnSharedPreferenceChangeListener{
         stopButton.visibility = View.INVISIBLE
         stopButton.setOnClickListener {
 
-            gpsService?.removeLocationUpdates()
-            startActivity(Intent(this,ChallengeDetailsActivity::class.java))
+            gpsService?.finishAndSaveRoute()
+            startActivity(
+                Intent(this, ChallengeDetailsActivity::class.java)
+                    .putExtra(
+                        "challenge",
+                        Challenge("name", "running", 10.3, 10.4, 20.1, 10.0, gpsService?.route)
+                    )
+            )
+
         }
-        bindService(Intent(applicationContext, LocationUpdatesService::class.java),serviceConnection,Context.BIND_AUTO_CREATE)
+        bindService(
+            Intent(applicationContext, LocationUpdatesService::class.java),
+            serviceConnection,
+            Context.BIND_AUTO_CREATE
+        )
         setButtonState(requestingLocationUpdates(this))
     }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -129,76 +141,85 @@ SharedPreferences.OnSharedPreferenceChangeListener{
      * installed Google Play services and returned to the app.
      */
 
-    @RequiresApi(Build.VERSION_CODES.M)
+
     override fun onMapReady(googleMap: GoogleMap) {
 
         mMap = googleMap
+
         mMap.isMyLocationEnabled = true
 
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         fusedLocationClient.lastLocation.addOnSuccessListener {
-            val latLng = LatLng(it.latitude,it.longitude)
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,12.0f))
+            val latLng = LatLng(it.latitude, it.longitude)
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.0f))
         }
 
 
     }
+
     override fun onResume() {
         super.onResume()
-        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
-        IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            myReceiver,
+            IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
         )
     }
+
     override fun onPause() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver)
         super.onPause()
     }
 
 
-
     private fun setButtonState(requestingLocationUpdates: Boolean) {
 
-        if(requestingLocationUpdates) {
+        if (requestingLocationUpdates) {
             startStopButton.text = getString(string.pause)
-            startStopButton.backgroundTintList = ContextCompat.getColorStateList(this,R.color.colorPause)
+            startStopButton.backgroundTintList =
+                ContextCompat.getColorStateList(this, R.color.colorPause)
             stopButton.visibility = View.VISIBLE
-        }
-        else {
+        } else {
             startStopButton.text = getString(string.start)
-            startStopButton.backgroundTintList = ContextCompat.getColorStateList(this,R.color.colorStart)
+            startStopButton.backgroundTintList =
+                ContextCompat.getColorStateList(this, R.color.colorStart)
         }
     }
 
     private inner class MyReceiver : BroadcastReceiver() {
+        @SuppressLint("SetTextI18n")
         override fun onReceive(context: Context?, intent: Intent) {
 
             val location: Location? =
                 intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION)
-            val rawDistance: Float = intent.getFloatExtra(LocationUpdatesService.DISTANCE,0.0f)
-            val distance: String = "%.2f".format(rawDistance/1000)
+            val rawDistance: Float = intent.getFloatExtra(LocationUpdatesService.DISTANCE, 0.0f)
+            savedDistance = rawDistance
+            val distance: String = "%.2f".format(rawDistance / 1000)
             distanceTextView.text = "$distance km"
 
             if (location != null) {
+
                 Log.i(tag, location.toString())
                 val latLng = LatLng(location.latitude, location.longitude)
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
                 val speed = location.speed * 3.6
                 speedTextView.text = "${"%.1f".format(speed)} km/h"
-                mMap.addPolyline(PolylineOptions().addAll(gpsService?.route)
-                    .color(Color.BLUE)
-                    .clickable(false))
+
             }
 
         }
     }
+
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
-        if(key.equals(KEY_REQUESTING_LOCATION_UPDATES)) {
-            val value = sharedPreferences.getBoolean(KEY_REQUESTING_LOCATION_UPDATES,
-            false)
+        if (key.equals(KEY_REQUESTING_LOCATION_UPDATES)) {
+            val value = sharedPreferences.getBoolean(
+                KEY_REQUESTING_LOCATION_UPDATES,
+                false
+            )
             setButtonState(value)
         }
     }
 
+    //TODO(use just one permission request function)
     private fun permissionRequest() {
         val locationApproved = ActivityCompat
             .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
@@ -209,20 +230,29 @@ SharedPreferences.OnSharedPreferenceChangeListener{
                 ) ==
                 PackageManager.PERMISSION_GRANTED
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             if (locationApproved) {
-                val hasBackgroundLocationPermission = ActivityCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
+                val hasBackgroundLocationPermission = ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
                 if (hasBackgroundLocationPermission) {
                     // handle location update
                 } else {
-                    ActivityCompat.requestPermissions(this,
-                        arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), REQUEST_CODE_BACKGROUND)
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                        REQUEST_CODE_BACKGROUND
+                    )
                 }
             } else {
-                ActivityCompat.requestPermissions(this,
-                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION), REQUEST_CODE_BACKGROUND)
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ), REQUEST_CODE_BACKGROUND
+                )
             }
         } else {
             // App doesn't have access to the device's location at all. Make full request
@@ -248,7 +278,9 @@ SharedPreferences.OnSharedPreferenceChangeListener{
                 )
             }
         }
+
     }
+
     private fun checkPermissions(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
@@ -272,5 +304,4 @@ SharedPreferences.OnSharedPreferenceChangeListener{
             )
         }
     }
-
 }

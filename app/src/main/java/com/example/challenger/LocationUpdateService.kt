@@ -12,7 +12,6 @@ import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 
 
 class LocationUpdatesService : Service() {
@@ -36,9 +35,7 @@ class LocationUpdatesService : Service() {
         Log.i(TAG,sharedPreferences.getString(MainActivity.FINAL_USER_ID,"").toString() + " is the user id")
         val uid: String = sharedPreferences.getString(MainActivity.FINAL_USER_ID,"").toString()
 
-        mRef = FirebaseDatabase.getInstance().getReference("users").child(uid).child("challenges")
-        val key = mRef.push().key
-        mRef.child(key!!).setValue("Challenge from service")
+        mRef = SplashScreenActivity.usersDatabase.child(uid).child("challenges")
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         mLocationCallback = object : LocationCallback() {
@@ -106,13 +103,11 @@ class LocationUpdatesService : Service() {
         if (!mChangingConfiguration && requestingLocationUpdates(this)) {
             Log.i(TAG, "Starting foreground service")
 
-            // TODO(developer). If targeting O, use the following code.
             if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
                 startForegroundService(Intent(this,LocationUpdatesService::class.java))
             } else {
                 startForeground(NOTIFICATION_ID, getNotification())
             }
-
         }
         return true
     }
@@ -177,7 +172,8 @@ class LocationUpdatesService : Service() {
         }
     }
 
-    fun saveRoute() {
+    fun finishAndSaveRoute() {
+        removeLocationUpdates()
 
     }
 
