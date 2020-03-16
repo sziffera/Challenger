@@ -4,4 +4,7 @@
     <color name="colorPrimaryDark">#3C93B4</color>
     <color name="colorAccent">#b9485a</color>
     <color name="colorLightOpacity">#4D555555</color>
+    <color name="colorStart">#66A320</color>
+    <color name="colorStop">#910000</color>
+    <color name="colorPause">#FFC107</color>
 </resources>

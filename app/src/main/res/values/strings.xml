@@ -20,4 +20,6 @@
     <string name="launch_activity">Launch activity</string>
     <string name="title_activity_maps">Map</string>
     <string name="pause">Pause</string>
+    <string name="_0_0_km_h">0.0 km/h</string>
+    <string name="_0_0_km">0.0 km</string>
 </resources>

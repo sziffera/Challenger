@@ -16,6 +16,7 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import com.example.challenger.LocationUpdatesService.LocalBinder
@@ -63,7 +64,6 @@ SharedPreferences.OnSharedPreferenceChangeListener{
             }
         }
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -155,6 +155,50 @@ SharedPreferences.OnSharedPreferenceChangeListener{
     }
 
 
+
+    private fun setButtonState(requestingLocationUpdates: Boolean) {
+
+        if(requestingLocationUpdates) {
+            startStopButton.text = getString(string.pause)
+            startStopButton.backgroundTintList = ContextCompat.getColorStateList(this,R.color.colorPause)
+            stopButton.visibility = View.VISIBLE
+        }
+        else {
+            startStopButton.text = getString(string.start)
+            startStopButton.backgroundTintList = ContextCompat.getColorStateList(this,R.color.colorStart)
+        }
+    }
+
+    private inner class MyReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+
+            val location: Location? =
+                intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION)
+            val rawDistance: Float = intent.getFloatExtra(LocationUpdatesService.DISTANCE,0.0f)
+            val distance: String = "%.2f".format(rawDistance/1000)
+            distanceTextView.text = "$distance km"
+
+            if (location != null) {
+                Log.i(tag, location.toString())
+                val latLng = LatLng(location.latitude, location.longitude)
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+                val speed = location.speed * 3.6
+                speedTextView.text = "${"%.1f".format(speed)} km/h"
+                mMap.addPolyline(PolylineOptions().addAll(gpsService?.route)
+                    .color(Color.BLUE)
+                    .clickable(false))
+            }
+
+        }
+    }
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
+        if(key.equals(KEY_REQUESTING_LOCATION_UPDATES)) {
+            val value = sharedPreferences.getBoolean(KEY_REQUESTING_LOCATION_UPDATES,
+            false)
+            setButtonState(value)
+        }
+    }
+
     private fun permissionRequest() {
         val locationApproved = ActivityCompat
             .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
@@ -206,7 +250,7 @@ SharedPreferences.OnSharedPreferenceChangeListener{
         }
     }
     private fun checkPermissions(): Boolean {
-         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -219,55 +263,14 @@ SharedPreferences.OnSharedPreferenceChangeListener{
             )
 
         } else {
-             return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                 this,
-                 Manifest.permission.ACCESS_FINE_LOCATION
-             ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                 this,
-                 Manifest.permission.ACCESS_COARSE_LOCATION
-             )
-         }
-    }
-
-    private fun setButtonState(requestingLocationUpdates: Boolean) {
-        if(requestingLocationUpdates) {
-            startStopButton.text = getString(string.pause)
-            startStopButton.setBackgroundColor(Color.YELLOW)
-            stopButton.visibility = View.VISIBLE
-        }
-        else {
-            startStopButton.text = getString(string.start)
-            startStopButton.setBackgroundColor(Color.GREEN)
+            return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
         }
     }
 
-    private inner class MyReceiver : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent) {
-
-            val location: Location? =
-                intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION)
-            val rawDistance: Float = intent.getFloatExtra(LocationUpdatesService.DISTANCE,0.0f)
-            val distance: String = "%.2f".format(rawDistance/1000)
-            distanceTextView.text = "$distance km"
-
-            if (location != null) {
-                Log.i(tag, location.toString())
-                val latLng = LatLng(location.latitude, location.longitude)
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
-                val speed = location.speed * 3.6
-                speedTextView.text = "${"%.1f".format(speed)} km/h"
-                mMap.addPolyline(PolylineOptions().addAll(gpsService?.route)
-                    .color(Color.BLUE)
-                    .clickable(false))
-            }
-
-        }
-    }
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
-        if(key.equals(KEY_REQUESTING_LOCATION_UPDATES)) {
-            val value = sharedPreferences.getBoolean(KEY_REQUESTING_LOCATION_UPDATES,
-            false)
-            setButtonState(value)
-        }
-    }
 }

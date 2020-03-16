@@ -11,7 +11,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
@@ -28,7 +27,7 @@ class LocationUpdatesService : Service() {
     private var mLocation: Location? = null
     private var distance: Float = 0.0f
     private lateinit var mRef: DatabaseReference
-    lateinit var route: ArrayList<LatLng>
+    lateinit var route: ArrayList<Location>
 
     override fun onCreate() {
 
@@ -161,7 +160,7 @@ class LocationUpdatesService : Service() {
         Log.i(TAG, "New location: $location")
         if (mLocation != null) {
             distance += location.distanceTo(mLocation)
-            route.add(LatLng(location.latitude,location.longitude))
+            route.add(location)
         }
         mLocation = location
 
@@ -176,6 +175,10 @@ class LocationUpdatesService : Service() {
                 getNotification()
             )
         }
+    }
+
+    fun saveRoute() {
+
     }
 
     private fun filterLocation(location: Location?) : Boolean {
