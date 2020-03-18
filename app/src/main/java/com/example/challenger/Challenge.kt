@@ -2,12 +2,12 @@ package com.example.challenger
 
 
 
-import android.location.Location
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize
 
 @Parcelize
 data class Challenge(
+    val id: String = "",
     var n: String = "",
     var type: String = "",
     val dst: Double = 0.0,
@@ -16,5 +16,5 @@ data class Challenge(
     val avg: Double = 0.0,
     val dur: Double = 0.0,
     //route
-    val r: ArrayList<Location>? = null
+    val stringRoute: String = ""
 ) : Parcelable

@@ -174,7 +174,6 @@ class LocationUpdatesService : Service() {
 
     fun finishAndSaveRoute() {
         removeLocationUpdates()
-
     }
 
     private fun filterLocation(location: Location?) : Boolean {

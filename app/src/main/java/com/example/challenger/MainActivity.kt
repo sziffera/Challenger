@@ -21,14 +21,12 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter
 import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var mAuth: FirebaseAuth
-    private lateinit var database: FirebaseDatabase
-    private lateinit var usersRef: DatabaseReference
+    private lateinit var userRef: DatabaseReference
     private lateinit var challengeReference: DatabaseReference
 
     private lateinit var sharedPreferences: SharedPreferences
@@ -40,7 +38,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: FirebaseRecyclerAdapter<Challenge, UserViewHolder>
 
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -49,11 +46,6 @@ class MainActivity : AppCompatActivity() {
             permissionRequest()
 
         mAuth = FirebaseAuth.getInstance()
-        database = FirebaseDatabase.getInstance()
-        usersRef = database.getReference(USERS_DATA).apply {
-            keepSynced(false)
-        }
-        challengeReference = SplashScreenActivity.challengesDatabase
 
         sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
 
@@ -68,7 +60,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-
         uid = if(sharedPreferences.getString(NOT_REGISTERED, null) != null && mAuth.currentUser == null) {
             sharedPreferences.getString(NOT_REGISTERED,System.nanoTime().toString()).toString()
         } else {
@@ -82,6 +73,8 @@ class MainActivity : AppCompatActivity() {
                 commit()
             }
         }
+        userRef = SplashScreenActivity.usersDatabase.child(uid!!)
+        challengeReference = SplashScreenActivity.challengesDatabase
 
         Log.i("ID", sharedPreferences.getString(FINAL_USER_ID,"").toString())
     }

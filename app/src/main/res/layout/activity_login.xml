@@ -31,7 +31,7 @@
             android:textSize="25sp"
             android:text="@string/welcome_to_challenger"
             android:textAllCaps="true"
-            android:textColor="@android:color/white" />
+             />
 
         <TextView
             android:id="@+id/textView2"
@@ -40,14 +40,14 @@
             android:gravity="center"
             android:text="@string/sign_in_or_create_an_account"
             android:textAllCaps="true"
-            android:textColor="@android:color/white"
+
             android:textSize="16sp" />
 
         <EditText
             android:id="@+id/loginEmailText"
             android:layout_marginTop="25dp"
             android:layout_marginBottom="15dp"
-
+            android:textColor="@android:color/background_dark"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -64,6 +64,7 @@
             android:layout_width="match_parent"
             android:gravity="center"
             android:drawableStart="@drawable/password_icon"
+            android:textColor="@android:color/background_dark"
             android:layout_height="wrap_content"
             android:autofillHints="@string/password"
             android:background="@drawable/round_edittext"
@@ -76,6 +77,7 @@
             android:id="@+id/loginButton"
             android:layout_marginTop="15dp"
             android:background="@drawable/round_edittext"
+            android:textColor="@color/colorAccent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="17sp"
@@ -116,13 +118,13 @@
             android:layout_marginRight="12dp"
             android:layout_marginBottom="4dp"
             android:background="@drawable/round_edittext"
+            android:textColor="@color/colorAccent"
             android:textSize="17sp"
             android:text="@string/create_an_account" />
 
         <Button
             android:id="@+id/skipButton"
             android:layout_width="match_parent"
-            android:textColor="@android:color/white"
             android:textSize="17sp"
             android:layout_marginBottom="8dp"
             android:layout_height="wrap_content"

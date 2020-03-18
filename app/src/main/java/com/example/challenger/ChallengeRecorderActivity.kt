@@ -26,6 +26,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.gson.Gson
 
 
 class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
@@ -42,11 +43,9 @@ SharedPreferences.OnSharedPreferenceChangeListener {
     private lateinit var stopButton: Button
     private lateinit var startStopButton: Button
     private lateinit var chronometer: Chronometer
-    private var elapsedTime = 0
     private var gpsService: LocationUpdatesService? = null
     private val tag = "RECORDER"
     private var mBound = false
-    private var lastPause: Long = 0
     private var savedDistance = 0.0f
     private val myReceiver: MyReceiver = MyReceiver()
 
@@ -112,13 +111,18 @@ SharedPreferences.OnSharedPreferenceChangeListener {
         stopButton = findViewById(id.stopRecording)
         stopButton.visibility = View.INVISIBLE
         stopButton.setOnClickListener {
+            val gson = Gson()
+            val stringJson = gson.toJson(gpsService?.route)
 
+
+            Log.i(tag,"$stringJson is the string Gson")
             gpsService?.finishAndSaveRoute()
             startActivity(
                 Intent(this, ChallengeDetailsActivity::class.java)
                     .putExtra(
                         "challenge",
-                        Challenge("name", "running", 10.3, 10.4, 20.1, 10.0, gpsService?.route)
+                        Challenge("dd","name", "running", 10.3, 10.4, 20.1, 10.0,
+                            stringJson)
                     )
             )
 
