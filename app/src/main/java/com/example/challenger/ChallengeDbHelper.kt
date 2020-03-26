@@ -4,17 +4,20 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 
-class ChallengeDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+class ChallengeDbHelper(context: Context) :
+    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     override fun onCreate(db: SQLiteDatabase) {
         val createTable = "CREATE TABLE IF NOT EXISTS $DATABASE_NAME (" +
-                "$KEY_ID INTEGER(10) PRIMARY KEY," +
+                "$KEY_ID INTEGER PRIMARY KEY," +
                 "$KEY_NAME TEXT," +
-                "$KEY_AVG_SPEED TEXT," +
+                "$KEY_TYPE TEXT," +
                 "$KEY_DISTANCE TEXT," +
-                "$KEY_DURATION TEXT," +
                 "$KEY_MAX_SPEED TEXT," +
+                "$KEY_AVG_SPEED TEXT," +
+                "$KEY_DURATION TEXT," +
                 "$KEY_ROUTE TEXT)"
         db.execSQL(createTable)
     }
@@ -28,8 +31,8 @@ class ChallengeDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         val db: SQLiteDatabase = this.writableDatabase
         val contentValues: ContentValues = ContentValues()
         with(contentValues) {
-            put(KEY_NAME,challenge.n)
-            put(KEY_ID, challenge.id)
+            put(KEY_NAME, challenge.n)
+            put(KEY_TYPE, challenge.type)
             put(KEY_DISTANCE, challenge.dst)
             put(KEY_DURATION, challenge.dur)
             put(KEY_AVG_SPEED, challenge.avg)
@@ -37,14 +40,54 @@ class ChallengeDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_N
             put(KEY_ROUTE, challenge.stringRoute)
         }
         db.insert(DATABASE_NAME, null, contentValues)
-        db.close()
+        db.close().also {
+            Log.i(TAG, "DB write success $challenge")
+        }
     }
 
-    fun updateChallenge(challenge: Challenge) : Int {
+    fun getAllChallenges(): ArrayList<Challenge> {
+
+        val query = "SELECT * FROM $DATABASE_NAME"
+        val db = writableDatabase
+        val cursor = db.rawQuery(query, null)
+        val challenges: ArrayList<Challenge> = ArrayList()
+        if (cursor.moveToFirst()) {
+            while (!cursor.isAfterLast) {
+                val challenge = with(cursor) {
+                    Challenge(
+                        getInt(getColumnIndex(KEY_ID)).toString(),
+                        getString(getColumnIndex(KEY_NAME)),
+                        getString(getColumnIndex(KEY_TYPE)),
+                        getDouble(getColumnIndex(KEY_DISTANCE)),
+                        getDouble(getColumnIndex(KEY_MAX_SPEED)),
+                        getDouble(getColumnIndex(KEY_AVG_SPEED)),
+                        getLong(getColumnIndex(KEY_DURATION)),
+                        getString(getColumnIndex(KEY_ROUTE))
+                    )
+                }
+                challenges.add(challenge)
+                cursor.moveToNext()
+            }
+        }
+
+        cursor.close()
+        return challenges
+    }
+
+    fun getItemCount(): Int {
+        val query = "SELECT * FROM $DATABASE_NAME"
+        val db = readableDatabase
+        val cursor = db.rawQuery(query, null)
+        val count = cursor.count
+        cursor.close()
+        return count
+    }
+
+    fun updateChallenge(challenge: Challenge): Int {
         val db: SQLiteDatabase = this.writableDatabase
         val contentValues: ContentValues = ContentValues()
         with(contentValues) {
-            put(KEY_NAME,challenge.n)
+            put(KEY_NAME, challenge.n)
             put(KEY_DISTANCE, challenge.dst)
             put(KEY_DURATION, challenge.dur)
             put(KEY_AVG_SPEED, challenge.avg)
@@ -52,19 +95,21 @@ class ChallengeDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_N
             put(KEY_ROUTE, challenge.stringRoute)
         }
 
-        return db.update(DATABASE_NAME,contentValues,"$KEY_ID = ?", arrayOf(challenge.id))
+        return db.update(DATABASE_NAME, contentValues, "$KEY_ID = ?", arrayOf(challenge.id))
     }
 
 
     companion object {
+        private const val TAG = "ChallengeDbHelper"
         const val DATABASE_VERSION = 1
-        const val DATABASE_NAME = "UserChallenges.db"
+        const val DATABASE_NAME = "challenges"
         const val KEY_ID = "challengeId"
         const val KEY_NAME = "challengeName"
         const val KEY_AVG_SPEED = "avgSpeed"
         const val KEY_MAX_SPEED = "maxSpeed"
         const val KEY_DISTANCE = "distance"
         const val KEY_DURATION = "duration"
+        const val KEY_TYPE = "type"
         const val KEY_ROUTE = "route"
     }
 }

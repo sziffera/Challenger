@@ -1,34 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="bottom"
-    xmlns:tools="http://schemas.android.com/tools"
     android:background="@drawable/gradient_background"
     android:orientation="vertical">
 
-    <fragment
-        android:id="@+id/map"
-        class="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="3"
-        tools:context=".ChallengeRecorderActivity" />
 
-    <Chronometer
-        android:id="@+id/chronometer"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+    <TextView
+        android:id="@+id/recorderDurationTextView"
         android:gravity="center"
-        android:layout_marginTop="20dp"
-        android:textColor="@android:color/white"
-        android:textSize="50sp" />
+        android:layout_marginVertical="20dp"
+        android:textSize="50sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/_00_00" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
+        android:layout_marginVertical="20dp"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -40,7 +31,7 @@
             android:gravity="center"
             android:text="@string/_0_0_km"
             android:textColor="@android:color/white"
-            android:textSize="20sp" />
+            android:textSize="30sp" />
 
         <TextView
             android:id="@+id/challengeRecorderSpeedTextView"
@@ -50,33 +41,42 @@
             android:gravity="center"
             android:text="@string/_0_0_km_h"
             android:textColor="@android:color/white"
-            android:textSize="20sp" />
+            android:textSize="30sp" />
 
 
     </LinearLayout>
 
 
+    <fragment
+        android:id="@+id/map"
+        class="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        tools:context=".ChallengeRecorderActivity" />
+
     <Button
         android:id="@+id/startChallengeRecording"
         android:layout_width="match_parent"
-        android:layout_marginTop="15dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:layout_marginHorizontal="10dp"
+        android:layout_marginTop="15dp"
         android:background="@drawable/round_edittext"
-        android:textColor="@android:color/background_dark"
-        android:layout_height="wrap_content"
-        android:text="@string/start" />
+        android:text="@string/start"
+        android:textColor="@android:color/background_dark" />
 
     <Button
         android:id="@+id/stopRecording"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
         android:layout_marginHorizontal="10dp"
         android:layout_marginTop="10dp"
-        android:layout_gravity="bottom"
         android:layout_marginBottom="15dp"
         android:background="@drawable/round_edittext"
         android:backgroundTint="@color/colorStop"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:text="@string/stop" />
+
 
 </LinearLayout>

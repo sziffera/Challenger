@@ -24,4 +24,11 @@
     <string name="_0_0_km">0.0 km</string>
     <string name="save">save</string>
     <string name="add_a_name">Add a name</string>
+    <string name="_00_00">00:00</string>
+    <string name="running">running</string>
+    <string name="name">Name</string>
+    <string name="distance">distance</string>
+    <string name="avgspeed">avgSpeed</string>
+    <string name="duration">duration</string>
+    <string name="max_speed">max Speed</string>
 </resources>

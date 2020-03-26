@@ -2,11 +2,12 @@ package com.example.challenger
 
 import android.location.Location
 import android.os.Bundle
+import android.text.format.DateUtils
 import android.util.Log
+import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -24,7 +25,9 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var challengeNameEditText: EditText
     private lateinit var challengeTypeTextView: TextView
     private lateinit var maxSpeedTextView: TextView
+    private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var challenge: Challenge
+    private lateinit var saveButton: Button
     private var route: ArrayList<Location>? = null
     private lateinit var latLng:  ArrayList<LatLng>
     private var elevationGain: Double = 0.0
@@ -45,20 +48,24 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
 
+
     }
 
     override fun onMapReady(p0: GoogleMap) {
         mMap = p0
 
-
-
         mMap.addPolyline(PolylineOptions().addAll(latLng))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng[1]))
+        //TODO(zoom to the route, not to the first point) are
+        //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng[0],5f))
     }
 
     private fun initVariables() {
 
-        //TODO(convert gson string back to location points)
+        dbHelper = ChallengeDbHelper(this)
+        saveButton = findViewById(R.id.saveChallengeInDetailsButton)
+        saveButton.setOnClickListener {
+            saveChallenge()
+        }
 
         avgSpeedTextView = findViewById(R.id.challengeDetailsAvgSpeedTextView)
         distanceTextView = findViewById(R.id.challengeDetailsDistanceTextView)
@@ -68,17 +75,15 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         maxSpeedTextView = findViewById(R.id.challengeDetailsMaxSpeedTextView)
 
         with(challenge){
-            durationTextView.text = dur.toString()
-            avgSpeedTextView.text = avg.toString()
-            distanceTextView.text = dst.toString()
+            durationTextView.text = DateUtils.formatElapsedTime(dur)
+            avgSpeedTextView.text = "%.2f".format(avg) + " km/h"
+            distanceTextView.text = "%.2f".format(dst) + " km"
             challengeTypeTextView.text = type
-            maxSpeedTextView.text = mS.toString()
+            maxSpeedTextView.text = "%.2f".format(mS) + " km/h"
             val type =  object : TypeToken<ArrayList<Location>>() {}.type
             route = Gson().fromJson<ArrayList<Location>>(stringRoute, type)
         }
 
-        //TODO(calculate all data: evaluation, avg etc..)
-        //TODO(consider calculating them in service)
         if(route != null) {
             var prevLocation: Location? = null
             latLng = ArrayList()
@@ -96,8 +101,21 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         Log.i("DETAILS","gained: $elevationGain, loss: $elevationLoss")
+    }
 
+    /**
+     * Save challenge to the SQLite database
+     */
+    private fun saveChallenge() {
 
+        if (challengeNameEditText.text.isEmpty()) {
+            challengeNameEditText.error = "Please name the challenge!"
+            return
+        }
+        challenge.n = challengeNameEditText.text.toString()
+        dbHelper.addChallenge(challenge)
+        Log.i("DETAILS", dbHelper.getAllChallenges().toString())
+        Log.i("DETAILS", dbHelper.getItemCount().toString())
 
     }
 }

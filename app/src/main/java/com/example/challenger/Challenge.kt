@@ -10,11 +10,11 @@ data class Challenge(
     val id: String = "",
     var n: String = "",
     var type: String = "",
-    val dst: Double = 0.0,
+    var dst: Double = 0.0,
     //max speed
-    val mS : Double = 0.0,
-    val avg: Double = 0.0,
-    val dur: Double = 0.0,
+    var mS: Double = 0.0,
+    var avg: Double = 0.0,
+    var dur: Long = 0,
     //route
-    val stringRoute: String = ""
+    var stringRoute: String = ""
 ) : Parcelable

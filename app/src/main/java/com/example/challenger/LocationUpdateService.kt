@@ -11,7 +11,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
-import com.google.firebase.database.DatabaseReference
 
 
 class LocationUpdatesService : Service() {
@@ -24,18 +23,30 @@ class LocationUpdatesService : Service() {
     private var mLocationCallback: LocationCallback? = null
     private var mServiceHandler: Handler? = null
     private var mLocation: Location? = null
-    private var distance: Float = 0.0f
-    private lateinit var mRef: DatabaseReference
-    lateinit var route: ArrayList<Location>
+    private var timerIsRunning: Boolean = false
+    var maxSpeed: Float = 0f
+        private set
+    var distance: Float = 0.0f
+        private set
+    var duration: Long = 0
+        private set
+    private var start: Long = 0
+    var route: ArrayList<Location>? = ArrayList()
+        private set
+
+
+    //TODO(create and store details for challenge)
 
     override fun onCreate() {
 
-        val sharedPreferences = getSharedPreferences(MainActivity.UID_SHARED_PREF,Context.MODE_PRIVATE)
+        val sharedPreferences =
+            getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)
 
-        Log.i(TAG,sharedPreferences.getString(MainActivity.FINAL_USER_ID,"").toString() + " is the user id")
-        val uid: String = sharedPreferences.getString(MainActivity.FINAL_USER_ID,"").toString()
-
-        mRef = SplashScreenActivity.usersDatabase.child(uid).child("challenges")
+        Log.i(
+            TAG,
+            sharedPreferences.getString(MainActivity.FINAL_USER_ID, "")
+                .toString() + " is the user id"
+        )
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         mLocationCallback = object : LocationCallback() {
@@ -82,6 +93,7 @@ class LocationUpdatesService : Service() {
         mChangingConfiguration = true
     }
 
+    //region service binding
     override fun onBind(intent: Intent): IBinder? {
 
         Log.i(TAG, "in onBind()")
@@ -104,19 +116,44 @@ class LocationUpdatesService : Service() {
             Log.i(TAG, "Starting foreground service")
 
             if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
-                startForegroundService(Intent(this,LocationUpdatesService::class.java))
+                startForegroundService(Intent(this, LocationUpdatesService::class.java))
             } else {
                 startForeground(NOTIFICATION_ID, getNotification())
             }
         }
         return true
     }
+    //endregion
 
     override fun onDestroy() {
         mServiceHandler!!.removeCallbacksAndMessages(null)
     }
 
+    //region location handling
     fun requestLocationUpdates() {
+
+        start = System.currentTimeMillis()
+        timerIsRunning = true
+
+        object : Thread() {
+            override fun run() {
+                while (timerIsRunning) {
+                    try {
+                        val intent = Intent(ACTION_BROADCAST)
+                        intent.putExtra(DISTANCE, distance)
+                        intent.putExtra(EXTRA_LOCATION, mLocation)
+                        intent.putExtra(DURATION, System.currentTimeMillis() - start + duration)
+                        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
+                        sleep(1000)
+                    } catch (e: InterruptedException) {
+                        Log.i(TAG, "thread interrupted")
+                    }
+                }
+                Log.i(TAG, "thread stopped")
+            }
+        }.start()
+
+
         Log.i(TAG, "Requesting location updates")
         setRequestingLocationUpdates(this, true)
         startService(Intent(applicationContext, LocationUpdatesService::class.java))
@@ -135,6 +172,9 @@ class LocationUpdatesService : Service() {
     }
 
     fun removeLocationUpdates() {
+
+        timerIsRunning = false
+        duration += System.currentTimeMillis() - start
         Log.i(TAG, "Removing location updates")
         try {
             mFusedLocationClient!!.removeLocationUpdates(mLocationCallback)
@@ -155,15 +195,19 @@ class LocationUpdatesService : Service() {
         Log.i(TAG, "New location: $location")
         if (mLocation != null) {
             distance += location.distanceTo(mLocation)
-            route.add(location)
+            if (location.hasSpeed()) {
+                if (maxSpeed < location.speed)
+                    maxSpeed = location.speed
+            }
+            route?.add(location)
         }
         mLocation = location
-
+/*
         val intent = Intent(ACTION_BROADCAST)
         intent.putExtra(DISTANCE, distance)
         intent.putExtra(EXTRA_LOCATION, location)
         LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
-
+*/
         if (serviceIsRunningInForeground(this)) {
             mNotificationManager!!.notify(
                 NOTIFICATION_ID,
@@ -174,9 +218,10 @@ class LocationUpdatesService : Service() {
 
     fun finishAndSaveRoute() {
         removeLocationUpdates()
+
     }
 
-    private fun filterLocation(location: Location?) : Boolean {
+    private fun filterLocation(location: Location?): Boolean {
         //TODO(not implemented)
         return true
     }
@@ -188,6 +233,7 @@ class LocationUpdatesService : Service() {
         mLocationRequest!!.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
     }
+    //endregion
 
     inner class LocalBinder : Binder() {
         val service: LocationUpdatesService
@@ -198,6 +244,7 @@ class LocationUpdatesService : Service() {
         val manager = context.getSystemService(
             Context.ACTIVITY_SERVICE
         ) as ActivityManager
+        //there is no replacement yet
         for (service in manager.getRunningServices(Int.MAX_VALUE)) {
             if (javaClass.name == service.service.className) {
                 if (service.foreground) {
@@ -207,6 +254,7 @@ class LocationUpdatesService : Service() {
         }
         return false
     }
+
     private fun getNotification(): Notification? {
 
         val text: String = getLocationText(mLocation) as String
@@ -245,7 +293,8 @@ class LocationUpdatesService : Service() {
             "$PACKAGE_NAME.broadcast"
         const val EXTRA_LOCATION =
             "$PACKAGE_NAME.location"
-        const val DISTANCE =  "$PACKAGE_NAME.distance"
+        const val DISTANCE = "$PACKAGE_NAME.distance"
+        const val DURATION = "$PACKAGE_NAME.duration"
         private const val EXTRA_STARTED_FROM_NOTIFICATION =
             PACKAGE_NAME +
                     ".started_from_notification"
@@ -253,7 +302,6 @@ class LocationUpdatesService : Service() {
         private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 2000
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
-        private const val SMALLEST_DISPLACEMENT = 10f
         private const val NOTIFICATION_ID = 12345678
     }
 }

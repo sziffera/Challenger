@@ -8,10 +8,10 @@ import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.text.format.DateUtils
 import android.util.Log
 import android.view.View
 import android.widget.Button
-import android.widget.Chronometer
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -35,6 +35,7 @@ SharedPreferences.OnSharedPreferenceChangeListener {
     companion object {
         private const val REQUEST = 200
         private const val REQUEST_CODE_BACKGROUND = 1545
+        private val TAG = this::class.java.simpleName
     }
 
     private lateinit var mMap: GoogleMap
@@ -42,11 +43,11 @@ SharedPreferences.OnSharedPreferenceChangeListener {
     private lateinit var distanceTextView: TextView
     private lateinit var stopButton: Button
     private lateinit var startStopButton: Button
-    private lateinit var chronometer: Chronometer
+    private lateinit var durationTextView: TextView
     private var gpsService: LocationUpdatesService? = null
     private val tag = "RECORDER"
     private var mBound = false
-    private var savedDistance = 0.0f
+
     private val myReceiver: MyReceiver = MyReceiver()
 
     private val serviceConnection = object : ServiceConnection {
@@ -70,6 +71,7 @@ SharedPreferences.OnSharedPreferenceChangeListener {
         if (!checkPermissions()) {
             permissionRequest()
         }
+        durationTextView = findViewById(id.recorderDurationTextView)
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(id.map) as SupportMapFragment
@@ -94,7 +96,6 @@ SharedPreferences.OnSharedPreferenceChangeListener {
             .registerOnSharedPreferenceChangeListener(this)
 
         startStopButton = findViewById(id.startChallengeRecording)
-        chronometer = findViewById(id.chronometer)
         speedTextView = findViewById(id.challengeRecorderSpeedTextView)
         distanceTextView = findViewById(id.challengeRecorderDistanceTextView)
         //TODO(calculate elapsed time for chronometer)
@@ -114,17 +115,31 @@ SharedPreferences.OnSharedPreferenceChangeListener {
             val gson = Gson()
             val stringJson = gson.toJson(gpsService?.route)
 
-
-            Log.i(tag,"$stringJson is the string Gson")
             gpsService?.finishAndSaveRoute()
-            startActivity(
-                Intent(this, ChallengeDetailsActivity::class.java)
-                    .putExtra(
-                        "challenge",
-                        Challenge("dd","name", "running", 10.3, 10.4, 20.1, 10.0,
-                            stringJson)
-                    )
-            )
+
+            if (gpsService != null) {
+                val duration: Long = gpsService!!.duration.div(1000)
+                val distance = gpsService!!.distance.div(1000.0)
+                val avg: Double = distance / duration.div(3600.0)
+                startActivity(
+                    Intent(this, ChallengeDetailsActivity::class.java)
+                        .putExtra(
+                            "challenge",
+                            Challenge(
+                                "",
+                                "running",
+                                distance,
+                                gpsService!!.maxSpeed.times(3.6),
+                                avg,
+                                duration,
+                                stringJson
+                            ).also {
+                                Log.i(TAG, "the sent challenge is: $it")
+                            }
+                        )
+                )
+                finish()
+            }
 
         }
         bindService(
@@ -134,17 +149,6 @@ SharedPreferences.OnSharedPreferenceChangeListener {
         )
         setButtonState(requestingLocationUpdates(this))
     }
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-
 
     override fun onMapReady(googleMap: GoogleMap) {
 
@@ -174,7 +178,6 @@ SharedPreferences.OnSharedPreferenceChangeListener {
         super.onPause()
     }
 
-
     private fun setButtonState(requestingLocationUpdates: Boolean) {
 
         if (requestingLocationUpdates) {
@@ -190,15 +193,24 @@ SharedPreferences.OnSharedPreferenceChangeListener {
     }
 
     private inner class MyReceiver : BroadcastReceiver() {
+        //text does not depend on language
         @SuppressLint("SetTextI18n")
         override fun onReceive(context: Context?, intent: Intent) {
 
             val location: Location? =
                 intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION)
             val rawDistance: Float = intent.getFloatExtra(LocationUpdatesService.DISTANCE, 0.0f)
-            savedDistance = rawDistance
+            val duration: Long = intent.getLongExtra(LocationUpdatesService.DURATION, 0).also {
+                Log.i("RECORDER", (it / 1000).toString())
+            }
+
             val distance: String = "%.2f".format(rawDistance / 1000)
+            val avgSpeed = rawDistance.div(duration).also {
+                Log.i(TAG, "avg speed: $it")
+            }
+            durationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
             distanceTextView.text = "$distance km"
+
 
             if (location != null) {
 
