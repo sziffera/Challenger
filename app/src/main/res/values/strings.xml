@@ -31,4 +31,5 @@
     <string name="avgspeed">avgSpeed</string>
     <string name="duration">duration</string>
     <string name="max_speed">max Speed</string>
+    <string name="show_more">show more</string>
 </resources>

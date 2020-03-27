@@ -3,7 +3,6 @@ package com.example.challenger
 import android.content.Context
 import android.location.Location
 import androidx.preference.PreferenceManager
-import java.util.*
 
 const val KEY_REQUESTING_LOCATION_UPDATES = "requestingLocationUpdates"
 
@@ -28,6 +27,10 @@ fun getLocationText(location: Location?): CharSequence {
 
 fun getLocationTitle(context: Context): String? {
     return  "hehe"
+}
+
+fun getStringFromNumber(floatingPoint: Int, value: Number): String {
+    return "%.${floatingPoint}f".format(value)
 }
 
 

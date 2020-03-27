@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private  var uid: String? = null
 
     private lateinit var newChallengeButton: Button
+    private lateinit var showMoreChallengeButton: Button
     private lateinit var recordActivityButton: Button
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: FirebaseRecyclerAdapter<Challenge, UserViewHolder>
@@ -50,13 +51,18 @@ class MainActivity : AppCompatActivity() {
         sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
 
         recordActivityButton = findViewById(R.id.recordActivityButton)
+        showMoreChallengeButton = findViewById(R.id.showMoreButton)
         newChallengeButton = findViewById(R.id.createChallengeButton)
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this.applicationContext)
 
         recordActivityButton.setOnClickListener {
-
             intent = Intent(applicationContext, ChallengeRecorderActivity::class.java)
+            startActivity(intent)
+        }
+
+        showMoreChallengeButton.setOnClickListener {
+            intent = Intent(application, AllChallengeActivity::class.java)
             startActivity(intent)
         }
 

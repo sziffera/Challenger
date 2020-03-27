@@ -128,6 +128,7 @@ SharedPreferences.OnSharedPreferenceChangeListener {
                             Challenge(
                                 "",
                                 "running",
+                                "",
                                 distance,
                                 gpsService!!.maxSpeed.times(3.6),
                                 avg,

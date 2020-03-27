@@ -53,7 +53,7 @@
 
 
             <TextView
-                android:id="@+id/textView5"
+                android:id="@+id/avgSpeedText"
                 android:gravity="center"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -74,7 +74,7 @@
                 android:text="@string/duration" />
 
             <TextView
-                android:id="@+id/textView4"
+                android:id="@+id/maxSpeedText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
