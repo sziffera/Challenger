@@ -2,7 +2,10 @@ package com.example.challenger
 
 import android.content.Context
 import android.location.Location
+import android.util.Log
 import androidx.preference.PreferenceManager
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 
 const val KEY_REQUESTING_LOCATION_UPDATES = "requestingLocationUpdates"
 
@@ -31,6 +34,15 @@ fun getLocationTitle(context: Context): String? {
 
 fun getStringFromNumber(floatingPoint: Int, value: Number): String {
     return "%.${floatingPoint}f".format(value)
+}
+
+fun zoomToRoute(items: ArrayList<LatLng>): LatLngBounds {
+    val builder = LatLngBounds.builder()
+    for (i in items) {
+        Log.i("Utils", i.toString())
+        builder.include(i)
+    }
+    return builder.build()
 }
 
 

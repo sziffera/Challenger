@@ -19,6 +19,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.firebase.ui.database.FirebaseRecyclerAdapter
 import com.firebase.ui.database.FirebaseRecyclerOptions
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 
@@ -55,6 +57,9 @@ class MainActivity : AppCompatActivity() {
         newChallengeButton = findViewById(R.id.createChallengeButton)
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this.applicationContext)
+
+        val client: FusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(this)
 
         recordActivityButton.setOnClickListener {
             intent = Intent(applicationContext, ChallengeRecorderActivity::class.java)

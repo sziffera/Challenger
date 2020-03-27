@@ -1,6 +1,5 @@
 package com.example.challenger
 
-import android.location.Location
 import android.os.Bundle
 import android.text.InputType
 import android.text.format.DateUtils
@@ -9,6 +8,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -29,8 +29,9 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var challenge: Challenge
     private lateinit var saveStartButton: Button
-    private var route: ArrayList<Location>? = null
-    private lateinit var latLng:  ArrayList<LatLng>
+    private var route: ArrayList<LatLng>? = null
+
+    //private lateinit var latLng:  ArrayList<LatLng>
     private var elevationGain: Double = 0.0
     private var elevationLoss: Double = 0.0
 
@@ -52,6 +53,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 startChallenge()
             }
             challengeNameEditText.inputType = InputType.TYPE_NULL
+            challengeNameEditText.setText(challenge.n)
         } else {
             saveStartButton.setOnClickListener {
                 saveChallenge()
@@ -63,14 +65,16 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             .findFragmentById(R.id.challengeDetailsMap) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-
-
     }
 
     override fun onMapReady(p0: GoogleMap) {
         mMap = p0
 
-        mMap.addPolyline(PolylineOptions().addAll(latLng))
+        mMap.addPolyline(PolylineOptions().addAll(route))
+        val bound = route?.let { zoomToRoute(it) }
+        val padding = 50
+        val cu = CameraUpdateFactory.newLatLngBounds(bound, padding)
+        mMap.animateCamera(cu)
         //TODO(zoom to the route, not to the first point) are
         //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng[0],5f))
     }
@@ -96,10 +100,12 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             distanceTextView.text = getStringFromNumber(3, dst) + " km"
             challengeTypeTextView.text = type
             maxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
-            val type =  object : TypeToken<ArrayList<Location>>() {}.type
-            route = Gson().fromJson<ArrayList<Location>>(stringRoute, type)
+            val type = object : TypeToken<ArrayList<LatLng>>() {}.type
+            route = Gson().fromJson<ArrayList<LatLng>>(stringRoute, type).also {
+                Log.i("ChallengeDetails route", it.toString())
+            }
         }
-
+/*
         if(route != null) {
             var prevLocation: Location? = null
             latLng = ArrayList()
@@ -117,6 +123,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         Log.i("DETAILS","gained: $elevationGain, loss: $elevationLoss")
+
+ */
     }
 
     /**

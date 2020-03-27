@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.model.LatLng
 
 
 class LocationUpdatesService : Service() {
@@ -31,7 +32,7 @@ class LocationUpdatesService : Service() {
     var duration: Long = 0
         private set
     private var start: Long = 0
-    var route: ArrayList<Location>? = ArrayList()
+    var route: ArrayList<LatLng>? = ArrayList()
         private set
 
 
@@ -199,7 +200,7 @@ class LocationUpdatesService : Service() {
                 if (maxSpeed < location.speed)
                     maxSpeed = location.speed
             }
-            route?.add(location)
+            route?.add(LatLng(location.latitude, location.longitude))
         }
         mLocation = location
 /*

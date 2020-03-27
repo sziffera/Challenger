@@ -19,6 +19,7 @@ class AllChallengeActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.allChallengeRecyclerView)
         dbHelper = ChallengeDbHelper(this)
 
+
         with(recyclerView) {
             layoutManager = LinearLayoutManager(applicationContext)
             adapter = ChallengeRecyclerViewAdapter(dbHelper.getAllChallenges())

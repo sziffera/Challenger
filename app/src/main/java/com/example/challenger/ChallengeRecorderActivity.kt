@@ -201,14 +201,11 @@ SharedPreferences.OnSharedPreferenceChangeListener {
             val location: Location? =
                 intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION)
             val rawDistance: Float = intent.getFloatExtra(LocationUpdatesService.DISTANCE, 0.0f)
-            val duration: Long = intent.getLongExtra(LocationUpdatesService.DURATION, 0).also {
-                Log.i("RECORDER", (it / 1000).toString())
-            }
+            val duration: Long = intent.getLongExtra(LocationUpdatesService.DURATION, 0)
 
             val distance: String = "%.2f".format(rawDistance / 1000)
-            val avgSpeed = rawDistance.div(duration).also {
-                Log.i(TAG, "avg speed: $it")
-            }
+            val avgSpeed = rawDistance.div(duration)
+
             durationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
             distanceTextView.text = "$distance km"
 
