@@ -26,6 +26,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 
 
@@ -98,7 +99,7 @@ SharedPreferences.OnSharedPreferenceChangeListener {
         startStopButton = findViewById(id.startChallengeRecording)
         speedTextView = findViewById(id.challengeRecorderSpeedTextView)
         distanceTextView = findViewById(id.challengeRecorderDistanceTextView)
-        //TODO(calculate elapsed time for chronometer)
+
         startStopButton.setOnClickListener {
 
             if (requestingLocationUpdates(this)) {
@@ -209,6 +210,7 @@ SharedPreferences.OnSharedPreferenceChangeListener {
             durationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
             distanceTextView.text = "$distance km"
 
+            mMap.addPolyline(PolylineOptions().addAll(gpsService?.route))
 
             if (location != null) {
 

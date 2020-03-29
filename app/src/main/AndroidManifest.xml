@@ -19,6 +19,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:largeHeap="true"
         android:theme="@style/AppTheme">
 
         <!--
@@ -31,18 +32,14 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
+            android:resource="@drawable/ic_launcher_round"
             android:value="@string/google_maps_key" />
 
-        <activity
-            android:name=".MapsActivity"
-            android:label="@string/title_activity_maps"></activity>
-        <activity android:name=".DemoActivity" />
 
         <service
-            android:name=".LocationProviderService"
+            android:name=".LocationUpdatesService"
             android:enabled="true"
             android:foregroundServiceType="location" />
-        <service android:name=".LocationUpdatesService" />
 
         <activity
             android:name=".ChallengeRecorderActivity"

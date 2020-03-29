@@ -5,13 +5,18 @@ import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.os.*
+import android.speech.tts.TextToSpeech
+import android.text.format.DateUtils
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class LocationUpdatesService : Service() {
@@ -25,6 +30,7 @@ class LocationUpdatesService : Service() {
     private var mServiceHandler: Handler? = null
     private var mLocation: Location? = null
     private var timerIsRunning: Boolean = false
+    private lateinit var textToSpeech: TextToSpeech
     var maxSpeed: Float = 0f
         private set
     var distance: Float = 0.0f
@@ -39,6 +45,17 @@ class LocationUpdatesService : Service() {
     //TODO(create and store details for challenge)
 
     override fun onCreate() {
+
+        textToSpeech = TextToSpeech(this, TextToSpeech.OnInitListener {
+            if (it == TextToSpeech.SUCCESS) {
+                val result: Int = textToSpeech.setLanguage(Locale.US)
+                if (result == TextToSpeech.LANG_MISSING_DATA ||
+                    result == TextToSpeech.LANG_NOT_SUPPORTED
+                ) {
+                    Log.v(TAG, "Language is not available.")
+                }
+            }
+        })
 
         val sharedPreferences =
             getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)
@@ -128,6 +145,8 @@ class LocationUpdatesService : Service() {
 
     override fun onDestroy() {
         mServiceHandler!!.removeCallbacksAndMessages(null)
+        textToSpeech.stop()
+        textToSpeech.shutdown()
     }
 
     //region location handling
@@ -135,11 +154,20 @@ class LocationUpdatesService : Service() {
 
         start = System.currentTimeMillis()
         timerIsRunning = true
-
+        var counter = 0
         object : Thread() {
             override fun run() {
                 while (timerIsRunning) {
                     try {
+                        if (counter % 60 == 0 && counter > 0) {
+                            textToSpeech.speak(
+                                "The distance is" + getStringFromNumber(
+                                    1,
+                                    distance / 1000
+                                ) + "km", TextToSpeech.QUEUE_FLUSH, null
+                            )
+                        }
+                        counter++
                         val intent = Intent(ACTION_BROADCAST)
                         intent.putExtra(DISTANCE, distance)
                         intent.putExtra(EXTRA_LOCATION, mLocation)
@@ -195,12 +223,17 @@ class LocationUpdatesService : Service() {
 
         Log.i(TAG, "New location: $location")
         if (mLocation != null) {
-            distance += location.distanceTo(mLocation)
-            if (location.hasSpeed()) {
-                if (maxSpeed < location.speed)
-                    maxSpeed = location.speed
+            val tempDistance = location.distanceTo(mLocation)
+
+            //cycling faster than 90km/h is unlikely
+            if (tempDistance < 25) {
+                if (location.hasSpeed()) {
+                    if (maxSpeed < location.speed)
+                        maxSpeed = location.speed
+                }
+                distance += tempDistance
+                route?.add(LatLng(location.latitude, location.longitude))
             }
-            route?.add(LatLng(location.latitude, location.longitude))
         }
         mLocation = location
 /*
@@ -258,29 +291,52 @@ class LocationUpdatesService : Service() {
 
     private fun getNotification(): Notification? {
 
-        val text: String = getLocationText(mLocation) as String
 
         val activityPendingIntent = PendingIntent.getActivity(
             this, 0,
             Intent(this, ChallengeRecorderActivity::class.java), 0
         )
+
         val builder =
             NotificationCompat.Builder(this, CHANNEL_ID)
                 .addAction(
-                    R.drawable.password_icon, getString(R.string.launch_activity),
+                    R.drawable.ic_play_circle_outline_24px, getString(R.string.launch_activity),
                     activityPendingIntent
                 )
-                .setContentText(text)
-                .setContentTitle(getLocationText(null))
+                .setLargeIcon(
+                    BitmapFactory.decodeResource(
+                        this.resources,
+                        R.mipmap.ic_launcher_round
+                    )
+                )
+                .setContentText(getNotificationText())
+                .setContentTitle(getString(R.string.challenge_recording))
                 .setOngoing(true)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setTicker(text)
+                .setSmallIcon(R.mipmap.ic_launcher_round)
+                .setContentIntent(activityPendingIntent)
+                .setTicker(getNotificationText())
+                .setOnlyAlertOnce(true)
                 .setWhen(System.currentTimeMillis())
+                .setAutoCancel(true)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             builder.setChannelId(CHANNEL_ID)
         }
         return builder.build()
+    }
+
+    private fun getNotificationText(): String {
+        return getString(R.string.distance) + ": " + getStringFromNumber(
+            1,
+            distance / 1000
+        ) + getString(R.string.km) + ", " + getString(
+            R.string.duration
+        ) + ": " + DateUtils.formatElapsedTime(
+            (System.currentTimeMillis() - start + duration) / 1000
+        )
+
     }
 
     companion object {

@@ -109,6 +109,8 @@ class ChallengeDbHelper(context: Context) :
         const val KEY_MAX_SPEED = "maxSpeed"
         const val KEY_DISTANCE = "distance"
         const val KEY_DURATION = "duration"
+        const val KEY_ELEVATION_GAIN = "elevationGain"
+        const val KEY_ELEVATION_LOSS = "elevationLoss"
         const val KEY_TYPE = "type"
         const val KEY_ROUTE = "route"
     }

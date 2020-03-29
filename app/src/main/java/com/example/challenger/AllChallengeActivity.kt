@@ -22,7 +22,7 @@ class AllChallengeActivity : AppCompatActivity() {
 
         with(recyclerView) {
             layoutManager = LinearLayoutManager(applicationContext)
-            adapter = ChallengeRecyclerViewAdapter(dbHelper.getAllChallenges())
+            adapter = ChallengeRecyclerViewAdapter(dbHelper.getAllChallenges(), applicationContext)
             addItemDecoration(
                 DividerItemDecoration(
                     recyclerView.context,

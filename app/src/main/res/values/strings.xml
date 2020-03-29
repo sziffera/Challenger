@@ -32,4 +32,7 @@
     <string name="duration">duration</string>
     <string name="max_speed">max Speed</string>
     <string name="show_more">show more</string>
+    <string name="km">km</string>
+    <string name="km_h">km/h</string>
+    <string name="challenge_recording">Challenge Recording</string>
 </resources>

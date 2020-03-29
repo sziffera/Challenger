@@ -36,6 +36,7 @@ fun getStringFromNumber(floatingPoint: Int, value: Number): String {
     return "%.${floatingPoint}f".format(value)
 }
 
+
 fun zoomToRoute(items: ArrayList<LatLng>): LatLngBounds {
     val builder = LatLngBounds.builder()
     for (i in items) {

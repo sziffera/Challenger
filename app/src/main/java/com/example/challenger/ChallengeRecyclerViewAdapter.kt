@@ -13,7 +13,8 @@ import androidx.recyclerview.widget.RecyclerView
 
 
 class ChallengeRecyclerViewAdapter(
-    private val challenges: ArrayList<Challenge>
+    private val challenges: ArrayList<Challenge>,
+    private val mContext: Context
 ) :
     RecyclerView.Adapter<ChallengeRecyclerViewAdapter.ViewHolder>() {
 
@@ -64,9 +65,12 @@ class ChallengeRecyclerViewAdapter(
             name.text = challenge.n
             type.text = challenge.type
             duration.text = DateUtils.formatElapsedTime(challenge.dur)
-            distance.text = getStringFromNumber(3, challenge.dst)
-            avgSpeed.text = getStringFromNumber(1, challenge.avg)
-            maxSpeed.text = getStringFromNumber(1, challenge.mS)
+            distance.text =
+                getStringFromNumber(2, challenge.dst) + " " + mContext.getString(R.string.km)
+            avgSpeed.text =
+                getStringFromNumber(1, challenge.avg) + " " + mContext.getString(R.string.km_h)
+            maxSpeed.text =
+                getStringFromNumber(1, challenge.mS) + " " + mContext.getString(R.string.km_h)
 
         }
     }

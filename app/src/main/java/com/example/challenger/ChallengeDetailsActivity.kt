@@ -95,15 +95,13 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         maxSpeedTextView = findViewById(R.id.challengeDetailsMaxSpeedTextView)
 
         with(challenge){
+            val typeJson = object : TypeToken<ArrayList<LatLng>>() {}.type
+            route = Gson().fromJson<ArrayList<LatLng>>(stringRoute, typeJson)
             durationTextView.text = DateUtils.formatElapsedTime(dur)
             avgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
             distanceTextView.text = getStringFromNumber(3, dst) + " km"
             challengeTypeTextView.text = type
             maxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
-            val type = object : TypeToken<ArrayList<LatLng>>() {}.type
-            route = Gson().fromJson<ArrayList<LatLng>>(stringRoute, type).also {
-                Log.i("ChallengeDetails route", it.toString())
-            }
         }
 /*
         if(route != null) {
