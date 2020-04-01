@@ -10,11 +10,21 @@
     <TextView
         android:id="@+id/recorderDurationTextView"
         android:gravity="center"
-        android:layout_marginVertical="20dp"
-        android:textSize="50sp"
+        android:layout_marginTop="10dp"
+        android:textSize="70sp"
         android:layout_width="match_parent"
+        android:letterSpacing="0.1"
         android:layout_height="wrap_content"
         android:text="@string/_00_00" />
+
+    <TextView
+        android:id="@+id/differenceTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorStop"
+        android:gravity="center"
+        android:text="@string/_1_minute"
+        android:textSize="25sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -31,7 +41,7 @@
             android:gravity="center"
             android:text="@string/_0_0_km"
             android:textColor="@android:color/white"
-            android:textSize="30sp" />
+            android:textSize="40sp" />
 
         <TextView
             android:id="@+id/challengeRecorderSpeedTextView"
@@ -41,7 +51,7 @@
             android:gravity="center"
             android:text="@string/_0_0_km_h"
             android:textColor="@android:color/white"
-            android:textSize="30sp" />
+            android:textSize="40sp" />
 
 
     </LinearLayout>
@@ -56,27 +66,48 @@
         tools:context=".ChallengeRecorderActivity" />
 
     <Button
-        android:id="@+id/startChallengeRecording"
+        android:id="@+id/firstStartButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginHorizontal="10dp"
-        android:layout_marginTop="15dp"
+        android:layout_marginVertical="20dp"
+        android:layout_marginHorizontal="12dp"
+        android:textSize="17sp"
         android:background="@drawable/round_edittext"
-        android:text="@string/start"
-        android:textColor="@android:color/background_dark" />
+        android:textColor="@color/colorStop"
+        android:text="@string/start" />
 
-    <Button
-        android:id="@+id/stopRecording"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginHorizontal="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="15dp"
-        android:background="@drawable/round_edittext"
-        android:backgroundTint="@color/colorStop"
-        android:text="@string/stop" />
+        android:orientation="horizontal">
+
+
+        <Button
+            android:id="@+id/startChallengeRecording"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginVertical="20dp"
+            android:background="@drawable/round_edittext"
+            android:text="@string/start"
+            android:textSize="17sp"
+            android:textColor="@color/colorStop" />
+
+        <Button
+            android:id="@+id/stopRecording"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:textSize="17sp"
+            android:layout_marginStart="3dp"
+            android:layout_marginVertical="20dp"
+            android:background="@drawable/round_edittext"
+            android:backgroundTint="@color/colorStop"
+            android:text="@string/finish" />
+
+    </LinearLayout>
 
 
 </LinearLayout>
