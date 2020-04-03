@@ -1,5 +1,6 @@
 package com.example.challenger
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.text.format.DateUtils
@@ -28,10 +29,12 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var maxSpeedTextView: TextView
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var challenge: Challenge
+    private var previousChallenge: Challenge? = null
     private lateinit var saveStartButton: Button
-    private var route: ArrayList<LatLng>? = null
-
-    //private lateinit var latLng:  ArrayList<LatLng>
+    private var route: ArrayList<MyLocation>? = null
+    private var latLngRoute: ArrayList<LatLng> = ArrayList()
+    private var update: Boolean = false
+    private var isItAChallenge: Boolean = false
     private var elevationGain: Double = 0.0
     private var elevationLoss: Double = 0.0
 
@@ -41,19 +44,37 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         //TODO(flag to indicate the visibility of save button)
 
         val intent = intent
-        challenge = intent.getParcelableExtra("challenge") as Challenge
+        challenge = intent.getParcelableExtra(CHALLENGE_OBJECT) as Challenge
         Log.i("CHALLENGE DETAILS",challenge.toString())
 
         challengeNameEditText = findViewById(R.id.challengeDetailsNameEditText)
         saveStartButton = findViewById(R.id.saveChallengeInDetailsButton)
 
-        if (intent.hasExtra("start")) {
+        isItAChallenge = intent.getBooleanExtra(IS_IT_A_CHALLENGE, false).also {
+            Log.i(TAG, "$IS_IT_A_CHALLENGE is $it")
+        }
+        update = intent.getBooleanExtra(UPDATE, false).also {
+            Log.i(TAG, "$UPDATE is $it")
+        }
+
+        previousChallenge = intent.getParcelableExtra(PREVIOUS_CHALLENGE) as Challenge?
+
+
+        if (isItAChallenge) {
             saveStartButton.text = getString(R.string.start)
             saveStartButton.setOnClickListener {
                 startChallenge()
             }
             challengeNameEditText.inputType = InputType.TYPE_NULL
             challengeNameEditText.setText(challenge.n)
+
+        } else if (update) {
+            saveStartButton.text = getString(R.string.update)
+            challengeNameEditText.inputType = InputType.TYPE_NULL
+            challengeNameEditText.setText(previousChallenge?.n)
+            saveStartButton.setOnClickListener {
+                updateChallenge()
+            }
         } else {
             saveStartButton.setOnClickListener {
                 saveChallenge()
@@ -68,19 +89,53 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     override fun onMapReady(p0: GoogleMap) {
-        mMap = p0
 
-        mMap.addPolyline(PolylineOptions().addAll(route))
-        val bound = route?.let { zoomToRoute(it) }
+        if (route != null) {
+            for (item in route!!) {
+                latLngRoute.add(item.latLng)
+            }
+        }
+
+        mMap = p0
+        mMap.addPolyline(PolylineOptions().addAll(latLngRoute))
+        val bound = zoomToRoute(latLngRoute)
         val padding = 50
         val cu = CameraUpdateFactory.newLatLngBounds(bound, padding)
         mMap.animateCamera(cu)
-        //TODO(zoom to the route, not to the first point) are
-        //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng[0],5f))
+
     }
 
     private fun startChallenge() {
-        //TODO(not implemented)
+
+        val intent = Intent(this, ChallengeRecorderActivity::class.java)
+        intent.putExtra(ChallengeRecorderActivity.CHALLENGE, true)
+        intent.putExtra(ChallengeRecorderActivity.RECORDED_CHALLENGE, challenge)
+        dbHelper.close()
+        startActivity(intent)
+    }
+
+    private fun updateChallenge() {
+
+        previousChallenge?.id?.toInt()?.let { dbHelper.updateChallenge(it, challenge) }
+        startMainActivity()
+    }
+
+    private fun saveChallenge() {
+
+        if (challengeNameEditText.text.isEmpty()) {
+            challengeNameEditText.error = "Please name the challenge!"
+            return
+        }
+        challenge.n = challengeNameEditText.text.toString()
+        dbHelper.addChallenge(challenge)
+
+        startMainActivity()
+    }
+
+    private fun startMainActivity() {
+        startActivity(Intent(this, MainActivity::class.java))
+        dbHelper.close()
+        finish()
     }
 
     private fun initVariables() {
@@ -95,49 +150,29 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         maxSpeedTextView = findViewById(R.id.challengeDetailsMaxSpeedTextView)
 
         with(challenge){
-            val typeJson = object : TypeToken<ArrayList<LatLng>>() {}.type
-            route = Gson().fromJson<ArrayList<LatLng>>(stringRoute, typeJson)
+            val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+            route = Gson().fromJson<ArrayList<MyLocation>>(routeAsString, typeJson)
             durationTextView.text = DateUtils.formatElapsedTime(dur)
             avgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
             distanceTextView.text = getStringFromNumber(3, dst) + " km"
             challengeTypeTextView.text = type
             maxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
         }
-/*
-        if(route != null) {
-            var prevLocation: Location? = null
-            latLng = ArrayList()
-            for (location in this.route!!) {
-                latLng.add(LatLng(location.latitude,location.longitude))
-                if(prevLocation != null && location.hasAltitude()) {
-                    val tempElevation: Double = location.altitude - prevLocation.altitude
-                    if (tempElevation < 0)
-                        elevationLoss += tempElevation
-                    else
-                        elevationGain += tempElevation
-                }
-                prevLocation = location
-            }
-        }
 
-        Log.i("DETAILS","gained: $elevationGain, loss: $elevationLoss")
 
- */
     }
 
     /**
      * Save challenge to the SQLite database
      */
-    private fun saveChallenge() {
 
-        if (challengeNameEditText.text.isEmpty()) {
-            challengeNameEditText.error = "Please name the challenge!"
-            return
-        }
-        challenge.n = challengeNameEditText.text.toString()
-        dbHelper.addChallenge(challenge)
-        Log.i("DETAILS", dbHelper.getAllChallenges().toString())
-        Log.i("DETAILS", dbHelper.getItemCount().toString())
 
+    companion object {
+        private val TAG = this::class.java.simpleName
+        private const val CHALLENGE_DETAILS = "challengeDetails"
+        const val CHALLENGE_OBJECT = "$CHALLENGE_DETAILS.object"
+        const val IS_IT_A_CHALLENGE = "$CHALLENGE_DETAILS.isChallenge"
+        const val UPDATE = "$CHALLENGE_DETAILS.update"
+        const val PREVIOUS_CHALLENGE = "$CHALLENGE_DETAILS.previousChallenge"
     }
 }

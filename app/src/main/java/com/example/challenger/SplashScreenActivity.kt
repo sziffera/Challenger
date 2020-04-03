@@ -2,6 +2,7 @@ package com.example.challenger
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.PixelFormat
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
@@ -26,6 +27,8 @@ class SplashScreenActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        window.setFormat(PixelFormat.RGBA_8888);
 
         val firebaseSharedPreferences = getSharedPreferences(OFFLINE, Context.MODE_PRIVATE)
 

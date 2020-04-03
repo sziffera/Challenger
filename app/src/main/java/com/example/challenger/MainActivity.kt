@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
 
         recordActivityButton.setOnClickListener {
             intent = Intent(applicationContext, ChallengeRecorderActivity::class.java)
+            intent.putExtra(ChallengeRecorderActivity.CHALLENGE, false)
             startActivity(intent)
         }
 

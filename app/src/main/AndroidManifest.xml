@@ -9,6 +9,7 @@
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -31,18 +32,18 @@
              You can define the keys for the debug and release targets in src/debug/ and src/release/.
         -->
         <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:resource="@drawable/ic_launcher_round"
-            android:value="@string/google_maps_key" />
-
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyDpBjRDYIqeQx4chmQ-ocGgl57X8U2civU" />
 
         <service
             android:name=".LocationUpdatesService"
             android:enabled="true"
             android:foregroundServiceType="location" />
+        <service android:name=".ChallengerService" />
 
         <activity
             android:name=".ChallengeRecorderActivity"
+            android:noHistory="true"
             android:label="@string/title_activity_challenge_recorder" />
         <activity android:name=".ChallengeDetailsActivity" />
         <activity android:name=".CreateChallengeActivity" />

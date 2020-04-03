@@ -18,7 +18,7 @@ class ChallengeDbHelper(context: Context) :
                 "$KEY_MAX_SPEED TEXT," +
                 "$KEY_AVG_SPEED TEXT," +
                 "$KEY_DURATION TEXT," +
-                "$KEY_ROUTE TEXT)"
+                "$KEY_STRING_ROUTE TEXT)"
         db.execSQL(createTable)
     }
 
@@ -37,7 +37,7 @@ class ChallengeDbHelper(context: Context) :
             put(KEY_DURATION, challenge.dur)
             put(KEY_AVG_SPEED, challenge.avg)
             put(KEY_MAX_SPEED, challenge.mS)
-            put(KEY_ROUTE, challenge.stringRoute)
+            put(KEY_STRING_ROUTE, challenge.routeAsString)
         }
         db.insert(DATABASE_NAME, null, contentValues)
         db.close().also {
@@ -62,7 +62,7 @@ class ChallengeDbHelper(context: Context) :
                         getDouble(getColumnIndex(KEY_MAX_SPEED)),
                         getDouble(getColumnIndex(KEY_AVG_SPEED)),
                         getLong(getColumnIndex(KEY_DURATION)),
-                        getString(getColumnIndex(KEY_ROUTE))
+                        getString(getColumnIndex(KEY_STRING_ROUTE))
                     )
                 }
                 challenges.add(challenge)
@@ -95,7 +95,7 @@ class ChallengeDbHelper(context: Context) :
                 KEY_DISTANCE,
                 KEY_MAX_SPEED,
                 KEY_AVG_SPEED,
-                KEY_ROUTE
+                KEY_STRING_ROUTE
             ),
             "$KEY_ID=?",
             arrayOf(
@@ -116,7 +116,7 @@ class ChallengeDbHelper(context: Context) :
                 getDouble(getColumnIndex(KEY_MAX_SPEED)),
                 getDouble(getColumnIndex(KEY_AVG_SPEED)),
                 getLong(getColumnIndex(KEY_DURATION)),
-                getString(getColumnIndex(KEY_ROUTE))
+                getString(getColumnIndex(KEY_STRING_ROUTE))
             )
         }
         cursor.close()
@@ -124,7 +124,7 @@ class ChallengeDbHelper(context: Context) :
         return challenge
     }
 
-    fun updateChallenge(challenge: Challenge): Int {
+    fun updateChallenge(id: Int, challenge: Challenge): Int {
         val db: SQLiteDatabase = this.writableDatabase
         val contentValues: ContentValues = ContentValues()
         with(contentValues) {
@@ -133,16 +133,16 @@ class ChallengeDbHelper(context: Context) :
             put(KEY_DURATION, challenge.dur)
             put(KEY_AVG_SPEED, challenge.avg)
             put(KEY_MAX_SPEED, challenge.mS)
-            put(KEY_ROUTE, challenge.stringRoute)
+            put(KEY_STRING_ROUTE, challenge.routeAsString)
         }
 
-        return db.update(DATABASE_NAME, contentValues, "$KEY_ID = ?", arrayOf(challenge.id))
+        return db.update(DATABASE_NAME, contentValues, "$KEY_ID = ?", arrayOf(id.toString()))
     }
 
 
     companion object {
         private const val TAG = "ChallengeDbHelper"
-        const val DATABASE_VERSION = 1
+        const val DATABASE_VERSION = 3
         const val DATABASE_NAME = "challenges"
         const val KEY_ID = "challengeId"
         const val KEY_NAME = "challengeName"
@@ -150,9 +150,9 @@ class ChallengeDbHelper(context: Context) :
         const val KEY_MAX_SPEED = "maxSpeed"
         const val KEY_DISTANCE = "distance"
         const val KEY_DURATION = "duration"
+        const val KEY_STRING_ROUTE = "stringRoute"
         const val KEY_ELEVATION_GAIN = "elevationGain"
         const val KEY_ELEVATION_LOSS = "elevationLoss"
         const val KEY_TYPE = "type"
-        const val KEY_ROUTE = "route"
     }
 }

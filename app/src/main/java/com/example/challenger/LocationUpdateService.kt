@@ -2,8 +2,10 @@ package com.example.challenger
 
 
 import android.app.*
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.location.Location
@@ -27,24 +29,53 @@ class LocationUpdatesService : Service() {
     private var mLocationRequest: LocationRequest? = null
     private var mFusedLocationClient: FusedLocationProviderClient? = null
     private var mLocationCallback: LocationCallback? = null
+    private val mReceiver: ChallengeUpdateReceiver = ChallengeUpdateReceiver()
     private var mServiceHandler: Handler? = null
+
+    //the difference in case of challenge in ms
+    private var difference: Long = 0
+
+    //helps calculating the time difference
+    private var counter: Int = 0
     private var mLocation: Location? = null
+    private var currentSpeed: Float = 0f
+    var route: ArrayList<LatLng> = ArrayList()
+        private set
+
+    //the UI updater thread is running while this is true
     private var timerIsRunning: Boolean = false
+
+    //stores the route
+    var myRoute: ArrayList<MyLocation> = ArrayList()
+        private set
     private lateinit var textToSpeech: TextToSpeech
+
+    //in m/s
     var maxSpeed: Float = 0f
         private set
+
+    //in m
     var distance: Float = 0.0f
         private set
+
+    //in ms
     var duration: Long = 0
         private set
+
+    //helps calculating the time
     private var start: Long = 0
-    var route: ArrayList<LatLng>? = ArrayList()
-        private set
+
 
 
     //TODO(create and store details for challenge)
 
     override fun onCreate() {
+
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            mReceiver,
+            IntentFilter(CHALLENGE_BROADCAST)
+        )
 
         textToSpeech = TextToSpeech(this, TextToSpeech.OnInitListener {
             if (it == TextToSpeech.SUCCESS) {
@@ -73,7 +104,7 @@ class LocationUpdatesService : Service() {
                 onNewLocation(locationResult.lastLocation)
             }
         }
-        route = ArrayList()
+
         createLocationRequest()
         val handlerThread = HandlerThread(TAG)
         handlerThread.start()
@@ -144,6 +175,9 @@ class LocationUpdatesService : Service() {
     //endregion
 
     override fun onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(
+            mReceiver
+        )
         mServiceHandler!!.removeCallbacksAndMessages(null)
         textToSpeech.stop()
         textToSpeech.shutdown()
@@ -152,27 +186,40 @@ class LocationUpdatesService : Service() {
     //region location handling
     fun requestLocationUpdates() {
 
+
         start = System.currentTimeMillis()
         timerIsRunning = true
-        var counter = 0
+        var threadCounter = 0
         object : Thread() {
             override fun run() {
                 while (timerIsRunning) {
                     try {
-                        if (counter % 60 == 0 && counter > 0) {
+
+                        //TODO(deprecated)
+
+                        if (threadCounter % 20 == 0 && threadCounter > 0) {
                             textToSpeech.speak(
                                 "The distance is" + getStringFromNumber(
                                     1,
                                     distance / 1000
                                 ) + "km", TextToSpeech.QUEUE_FLUSH, null
                             )
+
+                            if (ChallengeRecorderActivity.challenge) {
+                                updateDifference()
+                            }
+
                         }
-                        counter++
+                        threadCounter++
                         val intent = Intent(ACTION_BROADCAST)
                         intent.putExtra(DISTANCE, distance)
                         intent.putExtra(EXTRA_LOCATION, mLocation)
                         intent.putExtra(DURATION, System.currentTimeMillis() - start + duration)
+                        if (ChallengeRecorderActivity.challenge)
+                            intent.putExtra(DIFFERENCE, difference)
                         LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
+
+
                         sleep(1000)
                     } catch (e: InterruptedException) {
                         Log.i(TAG, "thread interrupted")
@@ -221,7 +268,7 @@ class LocationUpdatesService : Service() {
 
     private fun onNewLocation(location: Location) {
 
-        Log.i(TAG, "New location: $location")
+
         if (mLocation != null) {
             val tempDistance = location.distanceTo(mLocation)
 
@@ -232,7 +279,16 @@ class LocationUpdatesService : Service() {
                         maxSpeed = location.speed
                 }
                 distance += tempDistance
-                route?.add(LatLng(location.latitude, location.longitude))
+                currentSpeed = location.speed
+                route.add(LatLng(location.latitude, location.longitude))
+                myRoute.add(
+                    MyLocation(
+                        distance,
+                        System.currentTimeMillis() - start + duration,
+                        location.speed,
+                        LatLng(location.latitude, location.longitude)
+                    )
+                )
             }
         }
         mLocation = location
@@ -252,7 +308,6 @@ class LocationUpdatesService : Service() {
 
     fun finishAndSaveRoute() {
         removeLocationUpdates()
-
     }
 
     private fun filterLocation(location: Location?): Boolean {
@@ -274,7 +329,30 @@ class LocationUpdatesService : Service() {
             get() = this@LocationUpdatesService
     }
 
+    /**
+     * updates the difference in seconds compared to the previous challenge
+     */
+    private fun updateDifference() {
+
+        while (counter < previousChallenge.size) {
+            if (distance <= previousChallenge[counter].distance) {
+                Log.i(
+                    TAG,
+                    "the distance is: $distance, the compared challenge is ${previousChallenge[counter]}"
+                )
+                difference =
+                    (System.currentTimeMillis() - start + duration) - previousChallenge[counter].time
+                return
+            }
+            counter++
+        }
+    }
+
+    /**
+     * determines whether a service is running in the foreground or not
+     */
     private fun serviceIsRunningInForeground(context: Context): Boolean {
+        //TODO(DEPRECATED)
         val manager = context.getSystemService(
             Context.ACTIVITY_SERVICE
         ) as ActivityManager
@@ -287,6 +365,8 @@ class LocationUpdatesService : Service() {
             }
         }
         return false
+
+
     }
 
     private fun getNotification(): Notification? {
@@ -339,6 +419,24 @@ class LocationUpdatesService : Service() {
 
     }
 
+    private inner class ChallengeUpdateReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+
+            val desiredDistance: Float =
+                intent.getFloatExtra(ChallengerService.DISTANCE_BROADCAST, 0f)
+            val time: Long = intent.getLongExtra(ChallengerService.TIME_BROADCAST, 0)
+
+            if (mLocation != null) {
+                difference =
+                    (this@LocationUpdatesService.distance - desiredDistance).div(mLocation!!.speed)
+                        .also {
+                            Log.i(TAG, "$it is the difference")
+                        }.toLong()
+            }
+        }
+
+    }
+
     companion object {
 
         private const val PACKAGE_NAME =
@@ -346,8 +444,10 @@ class LocationUpdatesService : Service() {
         private val TAG = LocationUpdatesService::class.java.simpleName
 
         private const val CHANNEL_ID = "channel_01"
+        const val CHALLENGE_BROADCAST = "$PACKAGE_NAME.challengeBroadcast"
         const val ACTION_BROADCAST =
             "$PACKAGE_NAME.broadcast"
+        const val DIFFERENCE = "difference"
         const val EXTRA_LOCATION =
             "$PACKAGE_NAME.location"
         const val DISTANCE = "$PACKAGE_NAME.distance"
@@ -360,5 +460,7 @@ class LocationUpdatesService : Service() {
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
         private const val NOTIFICATION_ID = 12345678
+        var previousChallenge: ArrayList<MyLocation> = ArrayList()
+
     }
 }

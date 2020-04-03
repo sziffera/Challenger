@@ -16,5 +16,6 @@ data class Challenge(
     var avg: Double = 0.0,
     var dur: Long = 0,
     //route
-    var stringRoute: String = ""
+    //var stringRoute: String = "",
+    var routeAsString: String = ""
 ) : Parcelable

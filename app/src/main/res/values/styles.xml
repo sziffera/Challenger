@@ -11,7 +11,7 @@
     </style>
     <style name="AppTheme.Launcher" parent="Theme.AppCompat.Light.NoActionBar">
 
-        <item name="android:windowBackground">@mipmap/launch_image</item>
+        <item name="android:windowBackground">@drawable/launch_img</item>
     </style>
 
 </resources>

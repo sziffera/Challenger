@@ -29,6 +29,7 @@ class AllChallengeActivity : AppCompatActivity() {
                     DividerItemDecoration.VERTICAL
                 )
             )
+            dbHelper.close()
         }
 
     }

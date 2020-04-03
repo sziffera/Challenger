@@ -35,7 +35,7 @@ import kotlin.math.absoluteValue
 
 
 class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
-SharedPreferences.OnSharedPreferenceChangeListener {
+    SharedPreferences.OnSharedPreferenceChangeListener {
 
     companion object {
         private const val REQUEST = 200
@@ -93,9 +93,7 @@ SharedPreferences.OnSharedPreferenceChangeListener {
             val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
             val route =
                 Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
-            LocationUpdatesService.previousChallenge = route.also {
-                Log.i(TAG, "the route is: $route")
-            }
+            LocationUpdatesService.previousChallenge = route
 
         } else {
             this.differenceTextView.visibility = View.GONE
@@ -188,7 +186,6 @@ SharedPreferences.OnSharedPreferenceChangeListener {
 
         finishButton.setOnClickListener {
             val gson = Gson()
-            val stringJson = gson.toJson(gpsService?.route)
             val myLocationArrayString = gson.toJson(gpsService?.myRoute)
 
             gpsService?.finishAndSaveRoute()
@@ -197,29 +194,34 @@ SharedPreferences.OnSharedPreferenceChangeListener {
                 val duration: Long = gpsService!!.duration.div(1000)
                 val distance = gpsService!!.distance.div(1000.0)
                 val avg: Double = distance / duration.div(3600.0)
-                startActivity(
-                    Intent(this, ChallengeDetailsActivity::class.java)
-                        .putExtra(
-                            "challenge",
-                            Challenge(
-                                "",
-                                "running",
-                                "",
-                                distance,
-                                gpsService!!.maxSpeed.times(3.6),
-                                avg,
-                                duration,
-                                stringJson,
-                                myLocationArrayString
-                            ).also {
-                                Log.i(TAG, "the sent challenge is: $it")
-                            }
-                        )
-                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                )
-                with(buttonSharedPreferences.edit()) {
-                    putBoolean("started", false)
-                    commit()
+                val myIntent = Intent(this, ChallengeDetailsActivity::class.java)
+                    .putExtra(
+                        ChallengeDetailsActivity.CHALLENGE_OBJECT,
+                        Challenge(
+                            "",
+                            "running",
+                            "",
+                            distance,
+                            gpsService!!.maxSpeed.times(3.6),
+                            avg,
+                            duration,
+                            myLocationArrayString
+                        ).also {
+                            Log.i(TAG, "the sent challenge is: $it")
+                        }
+                    )
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+                if (challenge) {
+                    with(myIntent) {
+                        putExtra(ChallengeDetailsActivity.UPDATE, true)
+                        putExtra(ChallengeDetailsActivity.PREVIOUS_CHALLENGE, recordedChallenge)
+                    }
+                    startActivity(myIntent)
+                    with(buttonSharedPreferences.edit()) {
+                        putBoolean("started", false)
+                        commit()
+                    }
                 }
 
             }

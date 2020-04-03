@@ -2,7 +2,6 @@ package com.example.challenger
 
 import android.content.Context
 import android.location.Location
-import android.util.Log
 import androidx.preference.PreferenceManager
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -40,7 +39,6 @@ fun getStringFromNumber(floatingPoint: Int, value: Number): String {
 fun zoomToRoute(items: ArrayList<LatLng>): LatLngBounds {
     val builder = LatLngBounds.builder()
     for (i in items) {
-        Log.i("Utils", i.toString())
         builder.include(i)
     }
     return builder.build()
