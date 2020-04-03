@@ -26,8 +26,12 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.android.synthetic.main.activity_challenge_recorder.*
+import kotlin.math.absoluteValue
 
 
 class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
@@ -36,17 +40,26 @@ SharedPreferences.OnSharedPreferenceChangeListener {
     companion object {
         private const val REQUEST = 200
         private const val REQUEST_CODE_BACKGROUND = 1545
+        const val CHALLENGE = "challenge"
+        const val RECORDED_CHALLENGE = "recorded"
         private val TAG = this::class.java.simpleName
+
+        //indicates whether it is a simple recording or a challenge
+        var challenge: Boolean = false
+            private set
     }
 
     private lateinit var mMap: GoogleMap
     private lateinit var speedTextView: TextView
     private lateinit var distanceTextView: TextView
-    private lateinit var stopButton: Button
+    private lateinit var finishButton: Button
+    private lateinit var firstStartButton: Button
+    private var recordedChallenge: Challenge? = null
     private lateinit var startStopButton: Button
     private lateinit var durationTextView: TextView
     private var gpsService: LocationUpdatesService? = null
-    private val tag = "RECORDER"
+    private val latLngBoundsBuilder = LatLngBounds.builder()
+    private lateinit var buttonSharedPreferences: SharedPreferences
     private var mBound = false
 
     private val myReceiver: MyReceiver = MyReceiver()
@@ -69,9 +82,33 @@ SharedPreferences.OnSharedPreferenceChangeListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(layout.activity_challenge_recorder)
+
+        //get the bool which indicates whether it is a simple recorder or a challenger
+        val intent = intent
+        challenge = intent.getBooleanExtra(CHALLENGE, false).also {
+            Log.i(TAG, "$it is the bool")
+        }
+        if (challenge) {
+            recordedChallenge = intent.getParcelableExtra(RECORDED_CHALLENGE)
+            val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+            val route =
+                Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
+            LocationUpdatesService.previousChallenge = route.also {
+                Log.i(TAG, "the route is: $route")
+            }
+
+        } else {
+            this.differenceTextView.visibility = View.GONE
+        }
+
+
+
+
+
         if (!checkPermissions()) {
             permissionRequest()
         }
+
         durationTextView = findViewById(id.recorderDurationTextView)
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
@@ -96,7 +133,43 @@ SharedPreferences.OnSharedPreferenceChangeListener {
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)
 
+        buttonSharedPreferences = getSharedPreferences("button", 0)
+
+        val alreadyStarted = buttonSharedPreferences.getBoolean("started", false)
+
         startStopButton = findViewById(id.startChallengeRecording)
+        finishButton = findViewById(id.stopRecording)
+        firstStartButton = findViewById(R.id.firstStartButton)
+
+        if (!alreadyStarted) {
+            startStopButton.visibility = View.GONE
+            finishButton.visibility = View.GONE
+        } else
+            firstStartButton.visibility = View.GONE
+
+
+        firstStartButton.setOnClickListener {
+            gpsService?.requestLocationUpdates()
+            /*
+            if (challenge) {
+                Log.i(TAG,"challenging started")
+                val serviceIntent = Intent(this,ChallengerService::class.java)
+                serviceIntent.putExtra(ChallengerService.CHALLENGE_ROUTE,recordedChallenge?.routeAsString)
+                serviceIntent.putExtra(ChallengerService.CHALLENGE_TIME,recordedChallenge?.dst)
+                startService(serviceIntent)
+            }
+             */
+
+            it.visibility = View.GONE
+            startStopButton.visibility = View.VISIBLE
+            finishButton.visibility = View.VISIBLE
+            with(buttonSharedPreferences.edit()) {
+                putBoolean("started", true)
+                apply()
+            }
+
+        }
+
         speedTextView = findViewById(id.challengeRecorderSpeedTextView)
         distanceTextView = findViewById(id.challengeRecorderDistanceTextView)
 
@@ -110,11 +183,13 @@ SharedPreferences.OnSharedPreferenceChangeListener {
             }
             setButtonState(requestingLocationUpdates(this))
         }
-        stopButton = findViewById(id.stopRecording)
-        stopButton.visibility = View.INVISIBLE
-        stopButton.setOnClickListener {
+
+
+
+        finishButton.setOnClickListener {
             val gson = Gson()
             val stringJson = gson.toJson(gpsService?.route)
+            val myLocationArrayString = gson.toJson(gpsService?.myRoute)
 
             gpsService?.finishAndSaveRoute()
 
@@ -134,14 +209,21 @@ SharedPreferences.OnSharedPreferenceChangeListener {
                                 gpsService!!.maxSpeed.times(3.6),
                                 avg,
                                 duration,
-                                stringJson
+                                stringJson,
+                                myLocationArrayString
                             ).also {
                                 Log.i(TAG, "the sent challenge is: $it")
                             }
                         )
+                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 )
-                finish()
+                with(buttonSharedPreferences.edit()) {
+                    putBoolean("started", false)
+                    commit()
+                }
+
             }
+            finish()
 
         }
         bindService(
@@ -164,6 +246,10 @@ SharedPreferences.OnSharedPreferenceChangeListener {
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.0f))
         }
 
+        if (challenge) {
+            //TODO(zoom to the route)
+        }
+
 
     }
 
@@ -184,13 +270,9 @@ SharedPreferences.OnSharedPreferenceChangeListener {
 
         if (requestingLocationUpdates) {
             startStopButton.text = getString(string.pause)
-            startStopButton.backgroundTintList =
-                ContextCompat.getColorStateList(this, R.color.colorPause)
-            stopButton.visibility = View.VISIBLE
+            finishButton.visibility = View.VISIBLE
         } else {
             startStopButton.text = getString(string.start)
-            startStopButton.backgroundTintList =
-                ContextCompat.getColorStateList(this, R.color.colorStart)
         }
     }
 
@@ -199,6 +281,17 @@ SharedPreferences.OnSharedPreferenceChangeListener {
         @SuppressLint("SetTextI18n")
         override fun onReceive(context: Context?, intent: Intent) {
 
+            //TODO(action to determine what is received)
+/*
+            if (intent.action == LocationUpdatesService.ACTION_DIFFERENCE_BROADCAST) {
+                val diff = intent.getLongExtra(LocationUpdatesService.DIFFERENCE,0)
+                differenceTextView.text = DateUtils.formatElapsedTime(diff)
+                if(diff < 0) {
+                    differenceTextView.setTextColor(Color.GREEN)
+                } else
+                    differenceTextView.setTextColor(Color.RED)
+            }
+*/
             val location: Location? =
                 intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION)
             val rawDistance: Float = intent.getFloatExtra(LocationUpdatesService.DISTANCE, 0.0f)
@@ -207,21 +300,44 @@ SharedPreferences.OnSharedPreferenceChangeListener {
             val distance: String = "%.2f".format(rawDistance / 1000)
             val avgSpeed = rawDistance.div(duration)
 
+            if (challenge) {
+                val difference = intent.getLongExtra(LocationUpdatesService.DIFFERENCE, 0).div(1000)
+                if (difference < 0) {
+                    differenceTextView.text =
+                        "-" + DateUtils.formatElapsedTime(difference.absoluteValue)
+                    differenceTextView.setTextColor(
+                        ContextCompat.getColor(
+                            this@ChallengeRecorderActivity,
+                            color.colorMinus
+                        )
+                    )
+                } else {
+                    differenceTextView.text = "+" + DateUtils.formatElapsedTime(difference)
+                    differenceTextView.setTextColor(
+                        ContextCompat.getColor(
+                            this@ChallengeRecorderActivity,
+                            color.colorPlus
+                        )
+                    )
+                }
+            }
+
             durationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
             distanceTextView.text = "$distance km"
 
             mMap.addPolyline(PolylineOptions().addAll(gpsService?.route))
 
+
             if (location != null) {
 
-                Log.i(tag, location.toString())
+                //latLngBoundsBuilder.include(LatLng(location.latitude,location.longitude))
+                //mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(latLngBoundsBuilder.build(),1000))
                 val latLng = LatLng(location.latitude, location.longitude)
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
                 val speed = location.speed * 3.6
                 speedTextView.text = "${"%.1f".format(speed)} km/h"
 
             }
-
         }
     }
 
@@ -320,4 +436,6 @@ SharedPreferences.OnSharedPreferenceChangeListener {
             )
         }
     }
+
+
 }
