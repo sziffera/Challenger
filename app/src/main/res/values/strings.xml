@@ -38,4 +38,16 @@
     <string name="_1_minute">+1 minute</string>
     <string name="finish">Finish</string>
     <string name="update">Update</string>
+    <string name="update_challenge">Update challenge</string>
+    <string name="challenge_this_activity">Challenge this activity</string>
+    <string name="hi_user">Hi user!</string>
+    <string name="_0">0</string>
+    <string name="total_km">Total km</string>
+    <string name="profile_icon">profile icon</string>
+    <string name="cycling">cycling</string>
+
+    <string-array name="activity_types">
+        <item>cycling</item>
+        <item>running</item>
+    </string-array>
 </resources>

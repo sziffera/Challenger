@@ -23,6 +23,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
+import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -58,6 +59,10 @@ class MainActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this.applicationContext)
 
+        userProfileimageButton.setOnClickListener {
+            startActivity(Intent(this, UserProfileActivity::class.java))
+        }
+
         val client: FusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(this)
 
@@ -65,6 +70,10 @@ class MainActivity : AppCompatActivity() {
             intent = Intent(applicationContext, ChallengeRecorderActivity::class.java)
             intent.putExtra(ChallengeRecorderActivity.CHALLENGE, false)
             startActivity(intent)
+        }
+
+        createChallengeButton.setOnClickListener {
+            startActivity(Intent(this, CreateChallengeActivity::class.java))
         }
 
         showMoreChallengeButton.setOnClickListener {
@@ -87,6 +96,8 @@ class MainActivity : AppCompatActivity() {
         }
         userRef = SplashScreenActivity.usersDatabase.child(uid!!)
         challengeReference = SplashScreenActivity.challengesDatabase
+
+
 
         Log.i("ID", sharedPreferences.getString(FINAL_USER_ID,"").toString())
     }

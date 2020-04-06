@@ -8,12 +8,14 @@ import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -36,14 +38,19 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var update: Boolean = false
     private var isItAChallenge: Boolean = false
     private var elevationGain: Double = 0.0
+    private var avgSpeed: Double = 0.0
     private var elevationLoss: Double = 0.0
+    private var start: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_challenge_details)
         //TODO(flag to indicate the visibility of save button)
 
+        start = System.currentTimeMillis()
+
         val intent = intent
+
         challenge = intent.getParcelableExtra(CHALLENGE_OBJECT) as Challenge
         Log.i("CHALLENGE DETAILS",challenge.toString())
 
@@ -57,27 +64,30 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.i(TAG, "$UPDATE is $it")
         }
 
+        //can be null
         previousChallenge = intent.getParcelableExtra(PREVIOUS_CHALLENGE) as Challenge?
 
-
-        if (isItAChallenge) {
-            saveStartButton.text = getString(R.string.start)
-            saveStartButton.setOnClickListener {
-                startChallenge()
+        when {
+            isItAChallenge -> {
+                saveStartButton.text = getString(R.string.challenge_this_activity)
+                saveStartButton.setOnClickListener {
+                    startChallenge()
+                }
+                challengeNameEditText.inputType = InputType.TYPE_NULL
+                challengeNameEditText.setText(challenge.n)
             }
-            challengeNameEditText.inputType = InputType.TYPE_NULL
-            challengeNameEditText.setText(challenge.n)
-
-        } else if (update) {
-            saveStartButton.text = getString(R.string.update)
-            challengeNameEditText.inputType = InputType.TYPE_NULL
-            challengeNameEditText.setText(previousChallenge?.n)
-            saveStartButton.setOnClickListener {
-                updateChallenge()
+            update -> {
+                saveStartButton.text = getString(R.string.update_challenge)
+                challengeNameEditText.inputType = InputType.TYPE_NULL
+                challengeNameEditText.setText(previousChallenge?.n)
+                saveStartButton.setOnClickListener {
+                    updateChallenge()
+                }
             }
-        } else {
-            saveStartButton.setOnClickListener {
-                saveChallenge()
+            else -> {
+                saveStartButton.setOnClickListener {
+                    saveChallenge()
+                }
             }
         }
 
@@ -88,20 +98,53 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+
     override fun onMapReady(p0: GoogleMap) {
 
+        Log.i(TAG, "onMapReady ${System.currentTimeMillis() - start}ms")
+        mMap = p0
+
+        val builder = LatLngBounds.builder()
+        val fetchData = System.currentTimeMillis()
         if (route != null) {
             for (item in route!!) {
+                builder.include(item.latLng)
                 latLngRoute.add(item.latLng)
             }
+            /*
+            for (i in 0..route!!.size - 2) {
+                builder.include(route!![i].latLng)
+                val speed = (route!![i].speed + route!![i+1].speed).times(1.8)
+                if (speed >= avgSpeed) {
+
+                    val line: Polyline = mMap.addPolyline(
+                        PolylineOptions()
+                            .add(route!![i].latLng, route!![i+1].latLng)
+                            .color(Color.GREEN)
+                    )
+
+
+                } else {
+                    val line: Polyline = mMap.addPolyline(
+                        PolylineOptions()
+                            .add(route!![i].latLng, route!![i+1].latLng)
+                            .color(Color.RED)
+                    )
+
+                }
+            }*/
+        }
+        Log.i(TAG, "fetch data: ${System.currentTimeMillis() - fetchData}ms")
+
+        mMap.setOnMapLoadedCallback {
+            Log.i(TAG, "onMapLoadedCallback ${System.currentTimeMillis() - start}ms")
+            mMap.addPolyline(PolylineOptions().addAll(latLngRoute))
+            //val bound = zoomToRoute(latLngRoute)
+            val padding = 50
+            val cu = CameraUpdateFactory.newLatLngBounds(builder.build(), padding)
+            mMap.animateCamera(cu)
         }
 
-        mMap = p0
-        mMap.addPolyline(PolylineOptions().addAll(latLngRoute))
-        val bound = zoomToRoute(latLngRoute)
-        val padding = 50
-        val cu = CameraUpdateFactory.newLatLngBounds(bound, padding)
-        mMap.animateCamera(cu)
 
     }
 
@@ -116,7 +159,13 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun updateChallenge() {
 
-        previousChallenge?.id?.toInt()?.let { dbHelper.updateChallenge(it, challenge) }
+        if (previousChallenge != null) {
+            challenge.n = previousChallenge!!.n
+            dbHelper.updateChallenge(previousChallenge!!.id.toInt(), challenge)
+            Toast.makeText(this, "Challenge updated successfully!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Cant update challenge", Toast.LENGTH_LONG).show()
+        }
         startMainActivity()
     }
 
@@ -128,7 +177,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         challenge.n = challengeNameEditText.text.toString()
         dbHelper.addChallenge(challenge)
-
+        Toast.makeText(this, "Challenge saved successfully", Toast.LENGTH_SHORT).show()
         startMainActivity()
     }
 
@@ -150,12 +199,15 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         maxSpeedTextView = findViewById(R.id.challengeDetailsMaxSpeedTextView)
 
         with(challenge){
+            val time = System.currentTimeMillis()
             val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
             route = Gson().fromJson<ArrayList<MyLocation>>(routeAsString, typeJson)
+            Log.i(TAG, "GSON time is ${System.currentTimeMillis() - time}ms")
             durationTextView.text = DateUtils.formatElapsedTime(dur)
             avgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
             distanceTextView.text = getStringFromNumber(3, dst) + " km"
             challengeTypeTextView.text = type
+            avgSpeed = this.avg
             maxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
         }
 
@@ -165,7 +217,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     /**
      * Save challenge to the SQLite database
      */
-
 
     companion object {
         private val TAG = this::class.java.simpleName

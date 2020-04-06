@@ -66,6 +66,14 @@
         android:layout_weight="1"
         tools:context=".ChallengeRecorderActivity" />
 
+
+    <Spinner
+        android:layout_marginTop="20dp"
+        android:id="@+id/activitySelectorSpinner"
+        android:layout_width="wrap_content"
+        android:layout_gravity="center"
+        android:layout_height="wrap_content" />
+
     <Button
         android:id="@+id/firstStartButton"
         android:layout_width="match_parent"
@@ -76,6 +84,7 @@
         android:background="@drawable/round_edittext"
         android:textColor="@color/colorStop"
         android:text="@string/start" />
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -90,6 +99,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="12dp"
             android:layout_marginVertical="20dp"
+            android:visibility="gone"
             android:background="@drawable/round_edittext"
             android:text="@string/start"
             android:textSize="17sp"
@@ -102,6 +112,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
             android:textSize="17sp"
+            android:visibility="gone"
             android:layout_marginStart="3dp"
             android:layout_marginVertical="20dp"
             android:background="@drawable/round_edittext"

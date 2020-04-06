@@ -18,9 +18,10 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
         android:largeHeap="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:screenOrientation="portrait"
+        android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
         <!--
@@ -43,7 +44,7 @@
 
         <activity
             android:name=".ChallengeRecorderActivity"
-            android:noHistory="true"
+            android:launchMode="singleTop"
             android:label="@string/title_activity_challenge_recorder" />
         <activity android:name=".ChallengeDetailsActivity" />
         <activity android:name=".CreateChallengeActivity" />

@@ -11,6 +11,8 @@ import android.os.IBinder
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -35,19 +37,9 @@ import kotlin.math.absoluteValue
 
 
 class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
-    SharedPreferences.OnSharedPreferenceChangeListener {
+    SharedPreferences.OnSharedPreferenceChangeListener, AdapterView.OnItemSelectedListener {
 
-    companion object {
-        private const val REQUEST = 200
-        private const val REQUEST_CODE_BACKGROUND = 1545
-        const val CHALLENGE = "challenge"
-        const val RECORDED_CHALLENGE = "recorded"
-        private val TAG = this::class.java.simpleName
 
-        //indicates whether it is a simple recording or a challenge
-        var challenge: Boolean = false
-            private set
-    }
 
     private lateinit var mMap: GoogleMap
     private lateinit var speedTextView: TextView
@@ -85,23 +77,40 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         //get the bool which indicates whether it is a simple recorder or a challenger
         val intent = intent
-        challenge = intent.getBooleanExtra(CHALLENGE, false).also {
-            Log.i(TAG, "$it is the bool")
+
+        createdChallenge = intent.getBooleanExtra(CREATED_CHALLENGE_INTENT, false).also {
+            Log.i(TAG, "$it is the created challenge bool")
         }
-        if (challenge) {
-            recordedChallenge = intent.getParcelableExtra(RECORDED_CHALLENGE)
-            val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
-            val route =
-                Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
-            LocationUpdatesService.previousChallenge = route
+
+        if (createdChallenge) {
+            distance = intent.getIntExtra(DISTANCE, 0).also {
+                Log.i(TAG, "$it is the got distance")
+            }
+            avgSpeed = intent.getDoubleExtra(AVG_SPEED, 0.0).also {
+                Log.i(TAG, "$it is the got avgSpeed")
+            }
+            avgSpeed = avgSpeed.div(3.6)
 
         } else {
-            this.differenceTextView.visibility = View.GONE
+
+            challenge = intent.getBooleanExtra(CHALLENGE, false).also {
+                Log.i(TAG, "$it is the bool")
+            }
+
+            if (challenge) {
+                recordedChallenge = intent.getParcelableExtra(RECORDED_CHALLENGE)
+                val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+                val route =
+                    Gson().fromJson<ArrayList<MyLocation>>(
+                        recordedChallenge!!.routeAsString,
+                        typeJson
+                    )
+                LocationUpdatesService.previousChallenge = route
+
+            } else {
+                this.differenceTextView.visibility = View.GONE
+            }
         }
-
-
-
-
 
         if (!checkPermissions()) {
             permissionRequest()
@@ -112,7 +121,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         val mapFragment = supportFragmentManager
             .findFragmentById(id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
     }
 
     override fun onStop() {
@@ -139,24 +147,34 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         finishButton = findViewById(id.stopRecording)
         firstStartButton = findViewById(R.id.firstStartButton)
 
+        ArrayAdapter.createFromResource(
+            this,
+            R.array.activity_types,
+            android.R.layout.simple_spinner_item
+        ).also { adapter ->
+            // Specify the layout to use when the list of choices appears
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            // Apply the adapter to the spinner
+            activitySelectorSpinner.adapter = adapter
+        }
+        activitySelectorSpinner.onItemSelectedListener = this
+
+
+
         if (!alreadyStarted) {
             startStopButton.visibility = View.GONE
             finishButton.visibility = View.GONE
-        } else
+            firstStartButton.visibility = View.VISIBLE
+        } else {
             firstStartButton.visibility = View.GONE
-
+            startStopButton.visibility = View.VISIBLE
+            finishButton.visibility = View.VISIBLE
+        }
 
         firstStartButton.setOnClickListener {
+
             gpsService?.requestLocationUpdates()
-            /*
-            if (challenge) {
-                Log.i(TAG,"challenging started")
-                val serviceIntent = Intent(this,ChallengerService::class.java)
-                serviceIntent.putExtra(ChallengerService.CHALLENGE_ROUTE,recordedChallenge?.routeAsString)
-                serviceIntent.putExtra(ChallengerService.CHALLENGE_TIME,recordedChallenge?.dst)
-                startService(serviceIntent)
-            }
-             */
+
 
             it.visibility = View.GONE
             startStopButton.visibility = View.VISIBLE
@@ -185,47 +203,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
 
         finishButton.setOnClickListener {
-            val gson = Gson()
-            val myLocationArrayString = gson.toJson(gpsService?.myRoute)
-
-            gpsService?.finishAndSaveRoute()
-
-            if (gpsService != null) {
-                val duration: Long = gpsService!!.duration.div(1000)
-                val distance = gpsService!!.distance.div(1000.0)
-                val avg: Double = distance / duration.div(3600.0)
-                val myIntent = Intent(this, ChallengeDetailsActivity::class.java)
-                    .putExtra(
-                        ChallengeDetailsActivity.CHALLENGE_OBJECT,
-                        Challenge(
-                            "",
-                            "running",
-                            "",
-                            distance,
-                            gpsService!!.maxSpeed.times(3.6),
-                            avg,
-                            duration,
-                            myLocationArrayString
-                        ).also {
-                            Log.i(TAG, "the sent challenge is: $it")
-                        }
-                    )
-                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-
-                if (challenge) {
-                    with(myIntent) {
-                        putExtra(ChallengeDetailsActivity.UPDATE, true)
-                        putExtra(ChallengeDetailsActivity.PREVIOUS_CHALLENGE, recordedChallenge)
-                    }
-                    startActivity(myIntent)
-                    with(buttonSharedPreferences.edit()) {
-                        putBoolean("started", false)
-                        commit()
-                    }
-                }
-
-            }
-            finish()
+            finishChallenge()
 
         }
         bindService(
@@ -278,6 +256,52 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         }
     }
 
+    private fun finishChallenge() {
+        val gson = Gson()
+        val myLocationArrayString = gson.toJson(gpsService?.myRoute)
+
+        gpsService?.finishAndSaveRoute()
+
+        if (gpsService != null) {
+            val duration: Long = gpsService!!.duration.div(1000)
+            val distance = gpsService!!.distance.div(1000.0)
+            val avg: Double = distance / duration.div(3600.0)
+            val myIntent = Intent(this, ChallengeDetailsActivity::class.java)
+                .putExtra(
+                    ChallengeDetailsActivity.CHALLENGE_OBJECT,
+                    Challenge(
+                        "",
+                        "",
+                        selectedActivity,
+                        distance,
+                        gpsService!!.maxSpeed.times(3.6),
+                        avg,
+                        duration,
+                        myLocationArrayString
+                    ).also {
+                        Log.i(TAG, "the sent challenge is: $it")
+                    }
+                )
+
+
+            if (challenge) {
+                with(myIntent) {
+                    putExtra(ChallengeDetailsActivity.UPDATE, true)
+                    //putExtra(ChallengeDetailsActivity.CHALLENGE_ID, challengeId)
+                    putExtra(ChallengeDetailsActivity.PREVIOUS_CHALLENGE, recordedChallenge)
+                }
+
+            }
+            with(buttonSharedPreferences.edit()) {
+                putBoolean("started", false)
+                commit()
+            }
+            startActivity(myIntent)
+        }
+
+        finish()
+    }
+
     private inner class MyReceiver : BroadcastReceiver() {
         //text does not depend on language
         @SuppressLint("SetTextI18n")
@@ -302,7 +326,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             val distance: String = "%.2f".format(rawDistance / 1000)
             val avgSpeed = rawDistance.div(duration)
 
-            if (challenge) {
+            if (challenge || createdChallenge) {
                 val difference = intent.getLongExtra(LocationUpdatesService.DIFFERENCE, 0).div(1000)
                 if (difference < 0) {
                     differenceTextView.text =
@@ -439,5 +463,34 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         }
     }
 
+    override fun onNothingSelected(parent: AdapterView<*>?) {
 
+    }
+
+    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        selectedActivity = parent?.getItemAtPosition(position).toString()
+    }
+
+    companion object {
+        private const val REQUEST = 200
+        private const val REQUEST_CODE_BACKGROUND = 1545
+        const val CHALLENGE = "challenge"
+        const val RECORDED_CHALLENGE = "recorded"
+        const val CREATED_CHALLENGE_INTENT = "createdChallenge"
+        var createdChallenge: Boolean = false
+            private set
+        const val AVG_SPEED = "avgSpeed"
+        const val DISTANCE = "distance"
+        private val TAG = this::class.java.simpleName
+        private lateinit var selectedActivity: String
+
+        //indicates whether it is a simple recording or a challenge
+        var challenge: Boolean = false
+            private set
+        var avgSpeed: Double = 0.0
+            private set
+        var distance: Int = 0
+            private set
+        //private var challengeId: String = ""
+    }
 }

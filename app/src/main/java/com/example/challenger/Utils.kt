@@ -27,14 +27,9 @@ fun getLocationText(location: Location?): CharSequence {
     return if (location == null) "Unknown location" else "(" + location.latitude + ", " + location.longitude + ")"
 }
 
-fun getLocationTitle(context: Context): String? {
-    return  "hehe"
-}
-
 fun getStringFromNumber(floatingPoint: Int, value: Number): String {
     return "%.${floatingPoint}f".format(value)
 }
-
 
 fun zoomToRoute(items: ArrayList<LatLng>): LatLngBounds {
     val builder = LatLngBounds.builder()

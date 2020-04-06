@@ -139,6 +139,18 @@ class ChallengeDbHelper(context: Context) :
         return db.update(DATABASE_NAME, contentValues, "$KEY_ID = ?", arrayOf(id.toString()))
     }
 
+    fun deleteChallenge(id: String): Boolean {
+
+        val db: SQLiteDatabase = this.writableDatabase
+
+        return db.delete(
+            DATABASE_NAME,
+            "$KEY_ID=?",
+            arrayOf(id)
+        ) > 0
+
+    }
+
 
     companion object {
         private const val TAG = "ChallengeDbHelper"

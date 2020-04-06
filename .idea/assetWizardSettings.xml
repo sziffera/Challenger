@@ -152,9 +152,8 @@
                         <option name="values">
                           <map>
                             <entry key="assetSourceType" value="FILE" />
-                            <entry key="opacityPercent" value="70" />
-                            <entry key="outputName" value="ic_play_circle_outline_24px" />
-                            <entry key="sourceFile" value="$USER_HOME$/Downloads/play_circle_outline-24px.svg" />
+                            <entry key="outputName" value="run_icon" />
+                            <entry key="sourceFile" value="$PROJECT_DIR$/Design/directions_run-24px.svg" />
                           </map>
                         </option>
                       </PersistentState>
