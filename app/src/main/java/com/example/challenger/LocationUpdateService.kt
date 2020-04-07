@@ -2,10 +2,8 @@ package com.example.challenger
 
 
 import android.app.*
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.location.Location
@@ -29,53 +27,44 @@ class LocationUpdatesService : Service() {
     private var mLocationRequest: LocationRequest? = null
     private var mFusedLocationClient: FusedLocationProviderClient? = null
     private var mLocationCallback: LocationCallback? = null
-    private val mReceiver: ChallengeUpdateReceiver = ChallengeUpdateReceiver()
     private var mServiceHandler: Handler? = null
 
-    //the difference in case of challenge in ms
+    /** the difference in case of challenge in ms */
     private var difference: Long = 0
 
-    //helps calculating the time difference
+    /** helps calculating the time difference */
     private var counter: Int = 0
     private var mLocation: Location? = null
     private var currentSpeed: Float = 0f
     var route: ArrayList<LatLng> = ArrayList()
         private set
 
-    //the UI updater thread is running while this is true
+    /** the UI updater thread is running while this is true */
     private var timerIsRunning: Boolean = false
 
-    //stores the route
+    /** stores the route */
     var myRoute: ArrayList<MyLocation> = ArrayList()
         private set
     private lateinit var textToSpeech: TextToSpeech
 
-    //in m/s
+    /** maxSpeed in m/s */
     var maxSpeed: Float = 0f
         private set
 
-    //in m
+    /** in m */
     var distance: Float = 0.0f
         private set
 
-    //in ms
+    /** in m */
     var duration: Long = 0
         private set
 
-    //helps calculating the time
+    /** helps calculating the duration */
     private var start: Long = 0
 
 
-
-    //TODO(create and store details for challenge)
-
     override fun onCreate() {
 
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-            mReceiver,
-            IntentFilter(CHALLENGE_BROADCAST)
-        )
 
         textToSpeech = TextToSpeech(this, TextToSpeech.OnInitListener {
             if (it == TextToSpeech.SUCCESS) {
@@ -138,6 +127,13 @@ class LocationUpdatesService : Service() {
         return START_NOT_STICKY
     }
 
+    override fun onDestroy() {
+        setRequestingLocationUpdates(this, false)
+        mServiceHandler!!.removeCallbacksAndMessages(null)
+        textToSpeech.stop()
+        textToSpeech.shutdown()
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         mChangingConfiguration = true
@@ -176,19 +172,16 @@ class LocationUpdatesService : Service() {
     }
     //endregion
 
-    override fun onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(
-            mReceiver
-        )
-        setRequestingLocationUpdates(this, false)
-        mServiceHandler!!.removeCallbacksAndMessages(null)
-        textToSpeech.stop()
-        textToSpeech.shutdown()
-    }
+
 
     //region location handling
-    fun requestLocationUpdates() {
 
+    /**
+     * Requesting location updates from the FusedLocationProviderClient.
+     * Starts a new thread as well to send broadcast to the RecorderActivity in every sec.
+     * In case of a challenge, this thread calls the updateDifference() function
+     */
+    fun requestLocationUpdates() {
 
         start = System.currentTimeMillis()
         timerIsRunning = true
@@ -201,7 +194,7 @@ class LocationUpdatesService : Service() {
 
                         //TODO(deprecated)
 
-                        if (threadCounter % 20 == 0 && threadCounter > 0) {
+                        if (threadCounter % 60 == 0 && threadCounter > 0) {
                             textToSpeech.speak(
                                 "The distance is" + getStringFromNumber(
                                     1,
@@ -252,6 +245,11 @@ class LocationUpdatesService : Service() {
         }
     }
 
+    /**
+     * Removes location updates and sets the bool false which stops the
+     * thread started in requestLocationUpdates()
+     */
+
     fun removeLocationUpdates() {
 
         timerIsRunning = false
@@ -270,9 +268,14 @@ class LocationUpdatesService : Service() {
         }
     }
 
-
+    /**
+     * This method invoked when the location has changed.
+     * Stores the new location's LatLng points and the current distance
+     * with speed and time.
+     * Refreshes the mLocation variable as well
+     * Sends notification when the service is running in foreground
+     */
     private fun onNewLocation(location: Location) {
-
 
         if (mLocation != null) {
             val tempDistance = location.distanceTo(mLocation)
@@ -297,12 +300,7 @@ class LocationUpdatesService : Service() {
             }
         }
         mLocation = location
-/*
-        val intent = Intent(ACTION_BROADCAST)
-        intent.putExtra(DISTANCE, distance)
-        intent.putExtra(EXTRA_LOCATION, location)
-        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
-*/
+
         if (serviceIsRunningInForeground(this)) {
             mNotificationManager!!.notify(
                 NOTIFICATION_ID,
@@ -335,7 +333,15 @@ class LocationUpdatesService : Service() {
     }
 
     /**
-     * updates the difference in seconds compared to the previous challenge
+     * updates the difference in milliseconds compared to the previous challenge
+     * the difference is calculated based on the challenge type.
+     * If it is a recorded challenge:
+     *  The method finds the nearest distance to the current distance in the recorded challenge and
+     *  and compares the times.
+     * If it is a created challenge:
+     *  The method calculates where the user should be based on the given avg speed, then calculates
+     *  the distance difference. Based on the user's speed, the time difference is calculated from
+     *  the distance difference.
      */
     private fun updateDifference() {
 
@@ -376,6 +382,7 @@ class LocationUpdatesService : Service() {
 
     /**
      * determines whether a service is running in the foreground or not
+     * This method will be replaced to avoid using deprecated functions
      */
     private fun serviceIsRunningInForeground(context: Context): Boolean {
         //TODO(DEPRECATED)
@@ -396,7 +403,6 @@ class LocationUpdatesService : Service() {
     }
 
     private fun getNotification(): Notification? {
-
 
         val activityPendingIntent = PendingIntent.getActivity(
             this, 0,
@@ -433,6 +439,9 @@ class LocationUpdatesService : Service() {
         return builder.build()
     }
 
+    /**
+     * creates text for the notification with time and duration
+     */
     private fun getNotificationText(): String {
         return getString(R.string.distance) + ": " + getStringFromNumber(
             1,
@@ -442,24 +451,6 @@ class LocationUpdatesService : Service() {
         ) + ": " + DateUtils.formatElapsedTime(
             (System.currentTimeMillis() - start + duration) / 1000
         )
-
-    }
-
-    private inner class ChallengeUpdateReceiver : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent) {
-
-            val desiredDistance: Float =
-                intent.getFloatExtra(ChallengerService.DISTANCE_BROADCAST, 0f)
-            val time: Long = intent.getLongExtra(ChallengerService.TIME_BROADCAST, 0)
-
-            if (mLocation != null) {
-                difference =
-                    (this@LocationUpdatesService.distance - desiredDistance).div(mLocation!!.speed)
-                        .also {
-                            Log.i(TAG, "$it is the difference")
-                        }.toLong()
-            }
-        }
 
     }
 

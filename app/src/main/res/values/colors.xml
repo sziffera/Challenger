@@ -7,6 +7,7 @@
     <color name="colorStart">#636363</color>
     <color name="colorStop">#851432</color>
     <color name="colorPause">#636363</color>
+    <color name="colorSecondaryLight">#98e4fd</color>
     <color name="colorMinus">#98e4fd</color>
     <color name="colorPlus">#f79ba3</color>
 </resources>

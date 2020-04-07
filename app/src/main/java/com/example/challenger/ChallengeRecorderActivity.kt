@@ -1,7 +1,6 @@
 package com.example.challenger
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.*
 import android.content.pm.PackageManager
 import android.location.Location
@@ -11,10 +10,10 @@ import android.os.IBinder
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
+import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -30,6 +29,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.material.chip.Chip
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.android.synthetic.main.activity_challenge_recorder.*
@@ -37,7 +37,7 @@ import kotlin.math.absoluteValue
 
 
 class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
-    SharedPreferences.OnSharedPreferenceChangeListener, AdapterView.OnItemSelectedListener {
+    SharedPreferences.OnSharedPreferenceChangeListener {
 
 
 
@@ -75,8 +75,19 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         super.onCreate(savedInstanceState)
         setContentView(layout.activity_challenge_recorder)
 
-        //get the bool which indicates whether it is a simple recorder or a challenger
-        val intent = intent
+
+        with(cyclingChip) {
+            isAllCaps = true
+            textSize = 17f
+        }
+        with(runningChip) {
+            isAllCaps = true
+            textSize = 17f
+        }
+        activityChooserChipGroup.setOnCheckedChangeListener { _, checkedId ->
+            activityType = activityChooserChipGroup.findViewById<Chip>(checkedId)?.text
+        }
+
 
         createdChallenge = intent.getBooleanExtra(CREATED_CHALLENGE_INTENT, false).also {
             Log.i(TAG, "$it is the created challenge bool")
@@ -98,6 +109,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             }
 
             if (challenge) {
+
+                activityChooserChipGroup.visibility = View.GONE
+
                 recordedChallenge = intent.getParcelableExtra(RECORDED_CHALLENGE)
                 val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
                 val route =
@@ -105,6 +119,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                         recordedChallenge!!.routeAsString,
                         typeJson
                     )
+                activityType = recordedChallenge?.type
                 LocationUpdatesService.previousChallenge = route
 
             } else {
@@ -117,6 +132,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         }
 
         durationTextView = findViewById(id.recorderDurationTextView)
+        durationTextView.visibility = View.GONE
+        challengeDataLinearLayout.visibility = View.GONE
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(id.map) as SupportMapFragment
@@ -147,19 +164,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         finishButton = findViewById(id.stopRecording)
         firstStartButton = findViewById(R.id.firstStartButton)
 
-        ArrayAdapter.createFromResource(
-            this,
-            R.array.activity_types,
-            android.R.layout.simple_spinner_item
-        ).also { adapter ->
-            // Specify the layout to use when the list of choices appears
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            // Apply the adapter to the spinner
-            activitySelectorSpinner.adapter = adapter
-        }
-        activitySelectorSpinner.onItemSelectedListener = this
-
-
 
         if (!alreadyStarted) {
             startStopButton.visibility = View.GONE
@@ -173,12 +177,30 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         firstStartButton.setOnClickListener {
 
+            if (activityType == null) {
+                //Toast.makeText(this,"Please select an activity",Toast.LENGTH_SHORT).show()
+                activityChooserChipGroup.startAnimation(
+                    AnimationUtils.loadAnimation(
+                        this,
+                        R.anim.shake
+                    )
+                )
+                return@setOnClickListener
+            }
+
+
             gpsService?.requestLocationUpdates()
-
-
+            if (activityType == "running")
+                activityTypeImageView.setImageResource(R.drawable.running)
+            activityTypeImageView.visibility = View.VISIBLE
+            chooseAnActivity.visibility = View.GONE
+            durationTextView.visibility = View.VISIBLE
+            challengeDataLinearLayout.visibility = View.VISIBLE
             it.visibility = View.GONE
+            activityChooserChipGroup.visibility = View.GONE
             startStopButton.visibility = View.VISIBLE
             finishButton.visibility = View.VISIBLE
+
             with(buttonSharedPreferences.edit()) {
                 putBoolean("started", true)
                 apply()
@@ -222,8 +244,10 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         fusedLocationClient.lastLocation.addOnSuccessListener {
-            val latLng = LatLng(it.latitude, it.longitude)
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.0f))
+            if (it != null) {
+                val latLng = LatLng(it.latitude, it.longitude)
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.0f))
+            }
         }
 
         if (challenge) {
@@ -257,73 +281,73 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     private fun finishChallenge() {
-        val gson = Gson()
-        val myLocationArrayString = gson.toJson(gpsService?.myRoute)
+
 
         gpsService?.finishAndSaveRoute()
 
-        if (gpsService != null) {
-            val duration: Long = gpsService!!.duration.div(1000)
-            val distance = gpsService!!.distance.div(1000.0)
-            val avg: Double = distance / duration.div(3600.0)
-            val myIntent = Intent(this, ChallengeDetailsActivity::class.java)
-                .putExtra(
-                    ChallengeDetailsActivity.CHALLENGE_OBJECT,
-                    Challenge(
-                        "",
-                        "",
-                        selectedActivity,
-                        distance,
-                        gpsService!!.maxSpeed.times(3.6),
-                        avg,
-                        duration,
-                        myLocationArrayString
-                    ).also {
-                        Log.i(TAG, "the sent challenge is: $it")
+        with(buttonSharedPreferences.edit()) {
+            putBoolean("started", false)
+            commit()
+        }
+        activityType = null
+
+        if (gpsService?.myRoute!!.size < 1) {
+            Toast.makeText(this, "No location points included", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+
+        } else {
+
+            if (gpsService != null) {
+                val gson = Gson()
+                val myLocationArrayString = gson.toJson(gpsService?.myRoute)
+                val duration: Long = gpsService!!.duration.div(1000)
+                val distance = gpsService!!.distance.div(1000.0)
+                val avg: Double = distance / duration.div(3600.0)
+                val myIntent = Intent(this, ChallengeDetailsActivity::class.java)
+                    .putExtra(
+                        ChallengeDetailsActivity.CHALLENGE_OBJECT,
+                        Challenge(
+                            "",
+                            "",
+                            activityType.toString(),
+                            distance,
+                            gpsService!!.maxSpeed.times(3.6),
+                            avg,
+                            duration,
+                            myLocationArrayString
+                        ).also {
+                            Log.i(TAG, "the sent challenge is: $it")
+                        }
+                    )
+
+
+                if (challenge) {
+                    with(myIntent) {
+                        putExtra(ChallengeDetailsActivity.UPDATE, true)
+                        //putExtra(ChallengeDetailsActivity.CHALLENGE_ID, challengeId)
+                        putExtra(ChallengeDetailsActivity.PREVIOUS_CHALLENGE, recordedChallenge)
                     }
-                )
 
-
-            if (challenge) {
-                with(myIntent) {
-                    putExtra(ChallengeDetailsActivity.UPDATE, true)
-                    //putExtra(ChallengeDetailsActivity.CHALLENGE_ID, challengeId)
-                    putExtra(ChallengeDetailsActivity.PREVIOUS_CHALLENGE, recordedChallenge)
                 }
 
+                startActivity(myIntent)
             }
-            with(buttonSharedPreferences.edit()) {
-                putBoolean("started", false)
-                commit()
-            }
-            startActivity(myIntent)
-        }
 
-        finish()
+            finish()
+        }
     }
 
     private inner class MyReceiver : BroadcastReceiver() {
-        //text does not depend on language
-        @SuppressLint("SetTextI18n")
+
         override fun onReceive(context: Context?, intent: Intent) {
 
-            //TODO(action to determine what is received)
-/*
-            if (intent.action == LocationUpdatesService.ACTION_DIFFERENCE_BROADCAST) {
-                val diff = intent.getLongExtra(LocationUpdatesService.DIFFERENCE,0)
-                differenceTextView.text = DateUtils.formatElapsedTime(diff)
-                if(diff < 0) {
-                    differenceTextView.setTextColor(Color.GREEN)
-                } else
-                    differenceTextView.setTextColor(Color.RED)
-            }
-*/
             val location: Location? =
                 intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION)
             val rawDistance: Float = intent.getFloatExtra(LocationUpdatesService.DISTANCE, 0.0f)
             val duration: Long = intent.getLongExtra(LocationUpdatesService.DURATION, 0)
 
-            val distance: String = "%.2f".format(rawDistance / 1000)
+
             val avgSpeed = rawDistance.div(duration)
 
             if (challenge || createdChallenge) {
@@ -349,7 +373,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             }
 
             durationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
-            distanceTextView.text = "$distance km"
+            distanceTextView.text = "${getStringFromNumber(2, rawDistance / 1000)} km"
 
             mMap.addPolyline(PolylineOptions().addAll(gpsService?.route))
 
@@ -361,11 +385,12 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 val latLng = LatLng(location.latitude, location.longitude)
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
                 val speed = location.speed * 3.6
-                speedTextView.text = "${"%.1f".format(speed)} km/h"
+                speedTextView.text = getStringFromNumber(1, speed) + " km/h"
 
             }
         }
     }
+
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
         if (key.equals(KEY_REQUESTING_LOCATION_UPDATES)) {
@@ -463,14 +488,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         }
     }
 
-    override fun onNothingSelected(parent: AdapterView<*>?) {
-
-    }
-
-    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-        selectedActivity = parent?.getItemAtPosition(position).toString()
-    }
-
     companion object {
         private const val REQUEST = 200
         private const val REQUEST_CODE_BACKGROUND = 1545
@@ -482,15 +499,15 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         const val AVG_SPEED = "avgSpeed"
         const val DISTANCE = "distance"
         private val TAG = this::class.java.simpleName
-        private lateinit var selectedActivity: String
 
-        //indicates whether it is a simple recording or a challenge
+        private var activityType: CharSequence? = null
+
+        /** indicates whether it is a simple recording or a challenge */
         var challenge: Boolean = false
             private set
         var avgSpeed: Double = 0.0
             private set
         var distance: Int = 0
             private set
-        //private var challengeId: String = ""
     }
 }

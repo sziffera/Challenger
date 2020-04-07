@@ -3,7 +3,6 @@ package com.example.challenger
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_create_challenge.*
 
@@ -13,7 +12,7 @@ class CreateChallengeActivity : AppCompatActivity() {
     private var seconds: Int = 0
     private var avgSpeed: Double = 0.0
 
-    @RequiresApi(Build.VERSION_CODES.M)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_challenge)
@@ -27,7 +26,10 @@ class CreateChallengeActivity : AppCompatActivity() {
             avgSpeedTextView.text = "AVG SPEED: " + getStringFromNumber(1, avgSpeed) + "KM/H"
         }
 
-        timePicker.hour = 0
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            timePicker.hour = 0
+            timePicker.minute = 0
+        }
         timePicker.setOnTimeChangedListener { view, hourOfDay, minute ->
             seconds = hourOfDay.times(3600) + minute.times(60)
             avgSpeed = distance.times(3600.0).div(seconds)

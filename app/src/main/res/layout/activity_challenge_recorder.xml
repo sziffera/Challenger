@@ -3,15 +3,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/gradient_background"
     android:orientation="vertical">
 
+    <fragment
+        android:id="@+id/map"
+        android:layout_marginHorizontal="10dp"
+        class="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="20dp"
+        tools:context=".ChallengeRecorderActivity" />
 
     <TextView
         android:id="@+id/recorderDurationTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
+        android:visibility="gone"
         android:gravity="center"
         android:letterSpacing="0.1"
         android:text="@string/_00_00"
@@ -22,12 +34,14 @@
         android:id="@+id/differenceTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         android:textColor="@color/colorMinus"
         android:gravity="center"
         android:text="@string/_00_00"
         android:textSize="35sp" />
 
     <LinearLayout
+        android:id="@+id/challengeDataLinearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginVertical="20dp"
@@ -58,21 +72,58 @@
     </LinearLayout>
 
 
-    <fragment
-        android:id="@+id/map"
-        class="com.google.android.gms.maps.SupportMapFragment"
+    <TextView
+        android:id="@+id/chooseAnActivity"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        tools:context=".ChallengeRecorderActivity" />
+        android:layout_height="wrap_content"
+        android:textSize="25sp"
+        android:gravity="center"
+        android:layout_marginVertical="10dp"
+        android:textAllCaps="true"
+        android:text="@string/choose_an_activity" />
 
+    <ImageView
+        android:id="@+id/activityTypeImageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/cycling"
+        android:visibility="gone"
+        android:contentDescription="@string/activity_type" />
 
-    <Spinner
-        android:layout_marginTop="20dp"
-        android:id="@+id/activitySelectorSpinner"
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/activityChooserChipGroup"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_height="wrap_content" />
+        android:theme="@style/Theme.MaterialComponents.Light"
+        app:singleSelection="true">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/cyclingChip"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cycling"
+            android:textAllCaps="true"
+            android:textColor="@android:color/white"
+            android:textSize="17sp"
+            app:chipBackgroundColor="@color/bg_chip_state_list"
+            app:chipIcon="@drawable/cycling"
+            app:chipIconEnabled="true" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/runningChip"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/running"
+            android:textAllCaps="true"
+            android:textColor="@android:color/white"
+            android:textSize="17sp"
+            app:chipBackgroundColor="@color/bg_chip_state_list"
+            app:chipIcon="@drawable/running"
+            app:chipIconEnabled="true" />
+    </com.google.android.material.chip.ChipGroup>
 
     <Button
         android:id="@+id/firstStartButton"
@@ -82,6 +133,7 @@
         android:layout_marginHorizontal="12dp"
         android:textSize="17sp"
         android:background="@drawable/round_edittext"
+
         android:textColor="@color/colorStop"
         android:text="@string/start" />
 

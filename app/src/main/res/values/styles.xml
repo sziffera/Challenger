@@ -10,9 +10,10 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
     <style name="AppTheme.Launcher" parent="Theme.AppCompat.Light.NoActionBar">
-
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="android:windowBackground">@drawable/launch_img</item>
     </style>
+
 
     <style name="MyBase.TimePicker" parent="Theme.AppCompat.Light.Dialog">
         <item name="android:background">@android:color/transparent</item>

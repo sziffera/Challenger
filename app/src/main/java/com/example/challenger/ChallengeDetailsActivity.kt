@@ -19,6 +19,7 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.io.File
 
 class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -45,13 +46,15 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_challenge_details)
-        //TODO(flag to indicate the visibility of save button)
+
 
         start = System.currentTimeMillis()
 
-        val intent = intent
 
         challenge = intent.getParcelableExtra(CHALLENGE_OBJECT) as Challenge
+        val gson = Gson()
+        val data = gson.toJson(challenge)
+        File("titi.txt").writeText(data)
         Log.i("CHALLENGE DETAILS",challenge.toString())
 
         challengeNameEditText = findViewById(R.id.challengeDetailsNameEditText)
@@ -205,7 +208,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.i(TAG, "GSON time is ${System.currentTimeMillis() - time}ms")
             durationTextView.text = DateUtils.formatElapsedTime(dur)
             avgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
-            distanceTextView.text = getStringFromNumber(3, dst) + " km"
+            distanceTextView.text = getStringFromNumber(1, dst) + " km"
             challengeTypeTextView.text = type
             avgSpeed = this.avg
             maxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
@@ -214,9 +217,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
-    /**
-     * Save challenge to the SQLite database
-     */
 
     companion object {
         private val TAG = this::class.java.simpleName

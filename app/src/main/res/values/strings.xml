@@ -45,6 +45,8 @@
     <string name="total_km">Total km</string>
     <string name="profile_icon">profile icon</string>
     <string name="cycling">cycling</string>
+    <string name="choose_an_activity">choose an activity:</string>
+    <string name="activity_type">activity type</string>
 
     <string-array name="activity_types">
         <item>cycling</item>

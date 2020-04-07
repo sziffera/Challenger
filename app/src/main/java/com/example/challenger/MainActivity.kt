@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.text.format.DateUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -97,7 +98,19 @@ class MainActivity : AppCompatActivity() {
         userRef = SplashScreenActivity.usersDatabase.child(uid!!)
         challengeReference = SplashScreenActivity.challengesDatabase
 
+        syncToFirebase.setOnClickListener {
+            val dbHelper = ChallengeDbHelper(this)
+            val list = dbHelper.getAllChallenges()
 
+            for (item in list) {
+                val key = challengeReference.push().key
+                challengeReference.child(key!!).setValue(item).addOnCompleteListener {
+                    Log.i("MAINSYNC", it.toString())
+                }
+            }
+            dbHelper.close()
+
+        }
 
         Log.i("ID", sharedPreferences.getString(FINAL_USER_ID,"").toString())
     }
@@ -125,9 +138,12 @@ class MainActivity : AppCompatActivity() {
                     position: Int,
                     model: Challenge
                 ) {
-                    holder.distance.text = model.dst.toString() + " km"
-                    holder.duration.text = model.dur.toString() + " minutes"
+                    holder.distance.text = getStringFromNumber(1, model.dst) + " km"
+                    holder.duration.text = DateUtils.formatElapsedTime(model.dur)
                     holder.type.text = model.type
+                    holder.name.text = model.n
+                    holder.avg.text = getStringFromNumber(1, model.avg) + " km/h"
+                    holder.max.text = getStringFromNumber(1, model.mS) + " km/h"
                 }
 
                 override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
@@ -153,6 +169,9 @@ class MainActivity : AppCompatActivity() {
         val distance: TextView = itemView.findViewById(R.id.challengeDistanceText)
         val duration: TextView = itemView.findViewById(R.id.challengeDurationText)
         val type: TextView = itemView.findViewById(R.id.challengeTypeText)
+        val name: TextView = itemView.findViewById(R.id.challengeNameTextView)
+        val avg: TextView = itemView.findViewById(R.id.avgSpeedText)
+        val max: TextView = itemView.findViewById(R.id.maxSpeedText)
 
     }
 
