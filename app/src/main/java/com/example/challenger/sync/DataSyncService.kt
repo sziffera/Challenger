@@ -4,12 +4,14 @@ import android.app.job.JobParameters
 import android.app.job.JobService
 
 class DataSyncService : JobService() {
+
     override fun onStopJob(params: JobParameters?): Boolean {
-        TODO("Not yet implemented")
+        return false
     }
 
     override fun onStartJob(params: JobParameters?): Boolean {
-        TODO("Not yet implemented")
+        DataSyncAsyncTask().execute(applicationContext)
+        return false
     }
 
 }

@@ -289,7 +289,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             putBoolean("started", false)
             commit()
         }
-        activityType = null
+
+        Log.i(TAG, "activity type is $activityType")
+
 
         if (gpsService?.myRoute!!.size < 1) {
             Toast.makeText(this, "No location points included", Toast.LENGTH_SHORT).show()
@@ -336,6 +338,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
             finish()
         }
+        activityType = null
     }
 
     private inner class MyReceiver : BroadcastReceiver() {

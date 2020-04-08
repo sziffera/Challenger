@@ -101,12 +101,14 @@ class MainActivity : AppCompatActivity() {
         syncToFirebase.setOnClickListener {
             val dbHelper = ChallengeDbHelper(this)
             val list = dbHelper.getAllChallenges()
+            challengeReference.child("6").removeValue()
 
             for (item in list) {
-                val key = challengeReference.push().key
-                challengeReference.child(key!!).setValue(item).addOnCompleteListener {
-                    Log.i("MAINSYNC", it.toString())
-                }
+
+
+                //challengeReference.child(item.id).setValue(item).addOnCompleteListener {
+                //   Log.i("MAINSYNC", it.toString())
+                //}
             }
             dbHelper.close()
 

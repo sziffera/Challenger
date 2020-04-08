@@ -40,6 +40,9 @@
             android:enabled="true"
             android:foregroundServiceType="location" />
         <service android:name=".ChallengerService" />
+        <service
+            android:name=".sync.DataSyncService"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <activity
             android:name=".ChallengeRecorderActivity"

@@ -57,7 +57,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="13dp"
         android:layout_marginEnd="30dp"
-        android:text="sync"
+        android:textSize="10sp"
+        android:text="test - dont use"
         app:layout_constraintEnd_toStartOf="@+id/showMoreButton"
         app:layout_constraintTop_toBottomOf="@+id/recyclerView" />
 

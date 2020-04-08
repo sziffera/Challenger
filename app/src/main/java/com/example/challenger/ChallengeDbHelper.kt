@@ -4,7 +4,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 
 class ChallengeDbHelper(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
@@ -27,7 +26,7 @@ class ChallengeDbHelper(context: Context) :
         onCreate(db)
     }
 
-    fun addChallenge(challenge: Challenge) {
+    fun addChallenge(challenge: Challenge): Long {
         val db: SQLiteDatabase = this.writableDatabase
         val contentValues: ContentValues = ContentValues()
         with(contentValues) {
@@ -39,10 +38,7 @@ class ChallengeDbHelper(context: Context) :
             put(KEY_MAX_SPEED, challenge.mS)
             put(KEY_STRING_ROUTE, challenge.routeAsString)
         }
-        db.insert(DATABASE_NAME, null, contentValues)
-        db.close().also {
-            Log.i(TAG, "DB write success $challenge")
-        }
+        return db.insert(DATABASE_NAME, null, contentValues)
     }
 
     fun getAllChallenges(): ArrayList<Challenge> {

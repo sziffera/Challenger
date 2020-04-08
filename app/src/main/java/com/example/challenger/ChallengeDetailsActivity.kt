@@ -1,5 +1,9 @@
 package com.example.challenger
 
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
@@ -10,6 +14,9 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.challenger.sync.DataSyncService
+import com.example.challenger.sync.KEY_SYNC
+import com.example.challenger.sync.KEY_SYNC_DATA
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -19,7 +26,6 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.io.File
 
 class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -52,9 +58,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         challenge = intent.getParcelableExtra(CHALLENGE_OBJECT) as Challenge
-        val gson = Gson()
-        val data = gson.toJson(challenge)
-        File("titi.txt").writeText(data)
         Log.i("CHALLENGE DETAILS",challenge.toString())
 
         challengeNameEditText = findViewById(R.id.challengeDetailsNameEditText)
@@ -163,8 +166,11 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateChallenge() {
 
         if (previousChallenge != null) {
+
             challenge.n = previousChallenge!!.n
             dbHelper.updateChallenge(previousChallenge!!.id.toInt(), challenge)
+
+            updateSyncQueue(previousChallenge!!.id)
             Toast.makeText(this, "Challenge updated successfully!", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "Cant update challenge", Toast.LENGTH_LONG).show()
@@ -179,9 +185,54 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             return
         }
         challenge.n = challengeNameEditText.text.toString()
-        dbHelper.addChallenge(challenge)
+        val id = dbHelper.addChallenge(challenge).also {
+            Log.i(TAG, "the id of the inserted item is: $it")
+        }
+
+        updateSyncQueue(id.toString())
         Toast.makeText(this, "Challenge saved successfully", Toast.LENGTH_SHORT).show()
         startMainActivity()
+    }
+
+    private fun updateSyncQueue(id: String) {
+
+        val sharedPref = getSharedPreferences(KEY_SYNC, Context.MODE_PRIVATE)
+        val stringData = sharedPref.getString(KEY_SYNC_DATA, null)
+        if (stringData != null) {
+            val typeJson = object : TypeToken<HashMap<String, String>>() {}.type
+            val mMap = Gson().fromJson<HashMap<String, String>>(stringData, typeJson)
+            mMap[id] = "upload".also {
+                Log.i(TAG, "the synQueue map contains: $it")
+            }
+            val updatedStringData = Gson().toJson(mMap)
+            with(sharedPref.edit()) {
+                putString(KEY_SYNC_DATA, updatedStringData)
+                apply()
+            }
+        } else {
+            val mMap = HashMap<String, String>()
+            mMap[id] = "update".also {
+                Log.i(TAG, "the synQueue map contains: $it")
+            }
+            val newStringData = Gson().toJson(mMap)
+            with(sharedPref.edit()) {
+                putString(KEY_SYNC_DATA, newStringData)
+                apply()
+            }
+        }
+        jobScheduler()
+    }
+
+    private fun jobScheduler() {
+        Log.i(TAG, "the job has been scheduled")
+        val jobScheduler: JobScheduler =
+            getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+        jobScheduler.cancelAll()
+        val componentName = ComponentName(this, DataSyncService::class.java)
+        val jobInfo = JobInfo.Builder(1, componentName)
+            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
+            .build()
+        jobScheduler.schedule(jobInfo)
     }
 
     private fun startMainActivity() {
