@@ -473,7 +473,7 @@ class LocationUpdatesService : Service() {
             PACKAGE_NAME +
                     ".started_from_notification"
 
-        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 2000
+        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 3000
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
         const val NOTIFICATION_ID = 12345678

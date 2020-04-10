@@ -7,6 +7,8 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.challenger.sync.KEY_DELETE
+import com.example.challenger.sync.updateSharedPrefForSync
 
 
 class AllChallengeActivity : AppCompatActivity() {
@@ -23,9 +25,6 @@ class AllChallengeActivity : AppCompatActivity() {
         dbHelper = ChallengeDbHelper(this)
         challenges = dbHelper.getAllChallenges()
 
-
-
-
         with(recyclerView) {
             layoutManager = LinearLayoutManager(applicationContext)
             adapter = ChallengeRecyclerViewAdapter(challenges, applicationContext)
@@ -35,7 +34,6 @@ class AllChallengeActivity : AppCompatActivity() {
                     DividerItemDecoration.VERTICAL
                 )
             )
-
         }
 
         ItemTouchHelper(object : ItemTouchHelper.Callback() {
@@ -62,6 +60,7 @@ class AllChallengeActivity : AppCompatActivity() {
 
                 challenges.removeAt(pos)
                 recyclerView.adapter?.notifyItemRemoved(pos)
+                updateSharedPrefForSync(applicationContext, challenge.id, KEY_DELETE)
                 dbHelper.deleteChallenge(challenge.id)
             }
 

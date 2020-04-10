@@ -35,7 +35,7 @@ class SplashScreenActivity : AppCompatActivity() {
         //make firebase database available offline
         if(!firebaseSharedPreferences.contains(OFFLINE)) {
             mDatabase = FirebaseDatabase.getInstance().apply {
-                setPersistenceEnabled(true)
+                //setPersistenceEnabled(true)
             }
             with(firebaseSharedPreferences.edit()) {
                 this.putBoolean(OFFLINE,true)
@@ -45,8 +45,8 @@ class SplashScreenActivity : AppCompatActivity() {
             mDatabase = FirebaseDatabase.getInstance()
 
 
-        usersDatabase = mDatabase.getReference(USERS).apply { keepSynced(true) }
-        challengesDatabase = mDatabase.getReference(CHALLENGES).apply { keepSynced(true) }
+        usersDatabase = mDatabase.getReference(USERS)
+        challengesDatabase = mDatabase.getReference(CHALLENGES)
 
 
         val userSharedPreferences = getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)

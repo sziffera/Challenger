@@ -20,8 +20,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.firebase.ui.database.FirebaseRecyclerAdapter
 import com.firebase.ui.database.FirebaseRecyclerOptions
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import kotlinx.android.synthetic.main.activity_main.*
@@ -52,6 +50,7 @@ class MainActivity : AppCompatActivity() {
 
         mAuth = FirebaseAuth.getInstance()
 
+
         sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
 
         recordActivityButton = findViewById(R.id.recordActivityButton)
@@ -64,8 +63,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, UserProfileActivity::class.java))
         }
 
-        val client: FusedLocationProviderClient =
-            LocationServices.getFusedLocationProviderClient(this)
+
 
         recordActivityButton.setOnClickListener {
             intent = Intent(applicationContext, ChallengeRecorderActivity::class.java)
@@ -99,18 +97,11 @@ class MainActivity : AppCompatActivity() {
         challengeReference = SplashScreenActivity.challengesDatabase
 
         syncToFirebase.setOnClickListener {
-            val dbHelper = ChallengeDbHelper(this)
-            val list = dbHelper.getAllChallenges()
-            challengeReference.child("6").removeValue()
 
-            for (item in list) {
-
-
-                //challengeReference.child(item.id).setValue(item).addOnCompleteListener {
-                //   Log.i("MAINSYNC", it.toString())
-                //}
+            challengeReference.child("5").removeValue().addOnFailureListener {
+                Log.i("FIREBASE", "tried to delete invalid data: $it")
             }
-            dbHelper.close()
+
 
         }
 

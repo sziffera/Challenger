@@ -79,7 +79,7 @@ class ChallengeDbHelper(context: Context) :
         return count
     }
 
-    fun getChallenge(id: Int): Challenge {
+    fun getChallenge(id: Int): Challenge? {
         val db: SQLiteDatabase = this.writableDatabase
         val cursor = db.query(
             DATABASE_NAME,
@@ -102,22 +102,24 @@ class ChallengeDbHelper(context: Context) :
             null,
             null
         )
-        cursor.moveToFirst()
-        val challenge = with(cursor) {
-            Challenge(
-                getInt(getColumnIndex(KEY_ID)).toString(),
-                getString(getColumnIndex(KEY_NAME)),
-                getString(getColumnIndex(KEY_TYPE)),
-                getDouble(getColumnIndex(KEY_DISTANCE)),
-                getDouble(getColumnIndex(KEY_MAX_SPEED)),
-                getDouble(getColumnIndex(KEY_AVG_SPEED)),
-                getLong(getColumnIndex(KEY_DURATION)),
-                getString(getColumnIndex(KEY_STRING_ROUTE))
-            )
+        if (cursor.moveToFirst()) {
+            return with(cursor) {
+                Challenge(
+                    getInt(getColumnIndex(KEY_ID)).toString(),
+                    getString(getColumnIndex(KEY_NAME)),
+                    getString(getColumnIndex(KEY_TYPE)),
+                    getDouble(getColumnIndex(KEY_DISTANCE)),
+                    getDouble(getColumnIndex(KEY_MAX_SPEED)),
+                    getDouble(getColumnIndex(KEY_AVG_SPEED)),
+                    getLong(getColumnIndex(KEY_DURATION)),
+                    getString(getColumnIndex(KEY_STRING_ROUTE))
+                )
+            }
         }
+
         cursor.close()
 
-        return challenge
+        return null
     }
 
     fun updateChallenge(id: Int, challenge: Challenge): Int {

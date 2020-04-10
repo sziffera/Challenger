@@ -1,8 +1,5 @@
 package com.example.challenger
 
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -14,9 +11,10 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.challenger.sync.DataSyncService
 import com.example.challenger.sync.KEY_SYNC
 import com.example.challenger.sync.KEY_SYNC_DATA
+import com.example.challenger.sync.KEY_UPLOAD
+import com.example.challenger.sync.updateSharedPrefForSync
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -26,6 +24,7 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.google.maps.android.PolyUtil
 
 class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -144,6 +143,11 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         mMap.setOnMapLoadedCallback {
             Log.i(TAG, "onMapLoadedCallback ${System.currentTimeMillis() - start}ms")
+            val polyline = PolylineOptions().addAll(latLngRoute)
+            val decodedRoute = PolyUtil.encode(latLngRoute).also {
+                Log.i(TAG, "the encoded route is: $it")
+            }
+            Log.i(TAG, "length of latlng: ${latLngRoute.size}")
             mMap.addPolyline(PolylineOptions().addAll(latLngRoute))
             //val bound = zoomToRoute(latLngRoute)
             val padding = 50
@@ -169,8 +173,9 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
             challenge.n = previousChallenge!!.n
             dbHelper.updateChallenge(previousChallenge!!.id.toInt(), challenge)
+            updateSharedPrefForSync(applicationContext, previousChallenge!!.id, KEY_UPLOAD)
+            //updateSyncQueue(previousChallenge!!.id)
 
-            updateSyncQueue(previousChallenge!!.id)
             Toast.makeText(this, "Challenge updated successfully!", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "Cant update challenge", Toast.LENGTH_LONG).show()
@@ -188,8 +193,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         val id = dbHelper.addChallenge(challenge).also {
             Log.i(TAG, "the id of the inserted item is: $it")
         }
-
-        updateSyncQueue(id.toString())
+        updateSharedPrefForSync(applicationContext, id.toString(), KEY_UPLOAD)
+        //updateSyncQueue(id.toString())
         Toast.makeText(this, "Challenge saved successfully", Toast.LENGTH_SHORT).show()
         startMainActivity()
     }
@@ -220,26 +225,15 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 apply()
             }
         }
-        jobScheduler()
+        //startWorkManager()
     }
 
-    private fun jobScheduler() {
-        Log.i(TAG, "the job has been scheduled")
-        val jobScheduler: JobScheduler =
-            getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        jobScheduler.cancelAll()
-        val componentName = ComponentName(this, DataSyncService::class.java)
-        val jobInfo = JobInfo.Builder(1, componentName)
-            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
-            .build()
-        jobScheduler.schedule(jobInfo)
-    }
 
     private fun startMainActivity() {
         startActivity(Intent(this, MainActivity::class.java))
         dbHelper.close()
-        finish()
     }
+
 
     private fun initVariables() {
 
