@@ -8,12 +8,34 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="fontFamily">@font/segoe</item>
         <item name="android:textColor">@android:color/white</item>
+
+        <item name="android:windowActivityTransitions">true</item>
+
     </style>
     <style name="AppTheme.Launcher" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="android:windowBackground">@drawable/launch_img</item>
     </style>
 
+    <style name="AlertDialogCustom" parent="Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="buttonBarNeutralButtonStyle">@style/NeutralButtonStyle</item>
+        <item name="android:windowTitleStyle">@style/DialogTitle</item>
+        <item name="android:windowBackground">@color/colorStop</item>
+        <item name="android:colorAccent">#FFFFFF</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+    </style>
+
+    <style name="DialogTitle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="textAllCaps">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="NeutralButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:textSize">20sp</item>
+    </style>
 
     <style name="MyBase.TimePicker" parent="Theme.AppCompat.Light.Dialog">
         <item name="android:background">@android:color/transparent</item>

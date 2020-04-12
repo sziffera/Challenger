@@ -28,7 +28,7 @@
     <string name="running">running</string>
     <string name="name">Name</string>
     <string name="distance">distance</string>
-    <string name="avgspeed">avgSpeed</string>
+    <string name="avgspeed">avg Speed</string>
     <string name="duration">duration</string>
     <string name="max_speed">max Speed</string>
     <string name="show_more">show more</string>
@@ -47,6 +47,16 @@
     <string name="cycling">cycling</string>
     <string name="choose_an_activity">choose an activity:</string>
     <string name="activity_type">activity type</string>
+    <string name="details">details</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="forgot_password_2">Forgot password</string>
+    <string name="reset_password">Reset password</string>
+    <string name="sign_out">Sign-out</string>
+    <string name="settings_icon">settings icon</string>
+    <string name="update_your_profile">Update your profile</string>
+    <string name="update_profile">Update profile</string>
+    <string name="avg_pace">avg pace</string>
+    <string name="_0_00_min_km">0:00 min/km</string>
 
     <string-array name="activity_types">
         <item>cycling</item>

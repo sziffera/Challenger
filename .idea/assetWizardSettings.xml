@@ -152,8 +152,8 @@
                         <option name="values">
                           <map>
                             <entry key="assetSourceType" value="FILE" />
-                            <entry key="outputName" value="run_icon" />
-                            <entry key="sourceFile" value="$PROJECT_DIR$/Design/directions_run-24px.svg" />
+                            <entry key="outputName" value="ic_notification_important_24px" />
+                            <entry key="sourceFile" value="$PROJECT_DIR$/Design/notification_important-24px.svg" />
                           </map>
                         </option>
                       </PersistentState>

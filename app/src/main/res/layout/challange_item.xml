@@ -1,86 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
 
-    android:id="@+id/challengeItemLinearLayout"
-
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/challengeItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="12dp"
-    android:background="#4D000000"
-    android:orientation="vertical">
+    android:background="#4D000000">
 
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/challengeNameTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:textColor="@color/colorPlus"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:textAllCaps="true"
+        android:textSize="17sp"
+        android:text="@string/name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/challengeDistanceText"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <TextView
-            android:id="@+id/challengeNameTextView"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:layout_height="wrap_content"
-            android:text="@string/name" />
+        android:layout_marginStart="24dp"
+        android:textAllCaps="true"
+        android:layout_marginBottom="4dp"
+        android:gravity="center"
+        android:text="@string/distance"
+        app:layout_constraintBottom_toTopOf="@+id/challengeDurationText"
+        app:layout_constraintStart_toEndOf="@+id/challengeTypeImageView" />
 
-        <TextView
-            android:id="@+id/challengeTypeText"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="@string/running" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/avgSpeedText"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="10dp"
-        android:baselineAligned="false"
-        android:orientation="horizontal">
+        android:layout_marginStart="24dp"
+        android:layout_marginBottom="12dp"
+        android:gravity="center"
+        android:text="@string/avgspeed"
+        android:textAllCaps="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/challengeTypeImageView" />
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+    <TextView
+        android:id="@+id/challengeDurationText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginBottom="4dp"
+        android:textAllCaps="true"
+        android:gravity="center"
+        android:text="@string/duration"
+        app:layout_constraintBottom_toTopOf="@id/avgSpeedText"
+        app:layout_constraintStart_toEndOf="@+id/challengeTypeImageView" />
 
-            <TextView
-                android:id="@+id/challengeDistanceText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/distance" />
+    <ImageView
+        android:id="@+id/challengeTypeImageView"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="16dp"
+        android:tint="@color/colorMinus"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:contentDescription="@string/activity_type"
+        app:layout_constraintBottom_toBottomOf="@id/challengeItem"
+        app:layout_constraintStart_toStartOf="@+id/challengeItem"
+        app:layout_constraintTop_toBottomOf="@id/challengeNameTextView"
+        app:layout_constraintVertical_bias="1.0"
+        app:srcCompat="@drawable/cycling" />
+
+    <ImageButton
+        android:id="@+id/DetailsImageButton"
+        android:layout_width="60dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="16dp"
+        android:tint="@color/colorMinus"
+        android:background="@android:color/transparent"
+        android:layout_marginBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_keyboard_arrow_right_24px" />
 
 
-            <TextView
-                android:id="@+id/avgSpeedText"
-                android:gravity="center"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/avgspeed" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/challengeDurationText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/duration" />
-
-            <TextView
-                android:id="@+id/maxSpeedText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/max_speed" />
-
-        </LinearLayout>
-    </LinearLayout>
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

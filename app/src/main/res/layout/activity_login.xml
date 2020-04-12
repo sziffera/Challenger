@@ -83,6 +83,13 @@
             android:textSize="17sp"
             android:text="@string/sign_in" />
 
+        <Button
+            android:id="@+id/forgotPassworButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:background="@android:color/transparent"
+            android:text="@string/forgot_password" />
 
 
         <!--<com.google.android.gms.common.SignInButton

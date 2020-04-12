@@ -50,7 +50,7 @@
             android:layout_marginTop="25dp"
             android:layout_marginBottom="15dp"
             android:layout_height="wrap_content"
-            android:drawableStart="@drawable/ic_account_circle_24px"
+            android:drawableStart="@drawable/ic_account_circle_small"
             android:autofillHints="@string/username"
             android:background="@drawable/round_edittext"
             android:ems="10"
