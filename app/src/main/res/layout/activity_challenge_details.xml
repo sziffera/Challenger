@@ -64,12 +64,12 @@
             <androidx.gridlayout.widget.GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+
                 android:layout_marginHorizontal="20dp"
                 android:background="@color/colorLightOpacity"
                 android:padding="10dp"
                 app:columnCount="2"
-                app:rowCount="5">
+                app:rowCount="7">
 
 
                 <TextView
@@ -223,8 +223,80 @@
                     app:layout_row="4"
                     app:layout_rowWeight="1" />
 
+                <TextView
+
+                    android:id="@+id/elevationGainedTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:gravity="fill"
+                    android:text="@string/_0_00_min_km"
+                    android:textAllCaps="true"
+                    android:textSize="15sp"
+                    app:layout_column="1"
+                    app:layout_columnWeight="1"
+                    app:layout_gravity="right"
+                    app:layout_row="5"
+                    app:layout_rowWeight="1" />
+
+                <TextView
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:gravity="fill"
+                    android:text="@string/elevation_gained"
+                    android:textAllCaps="true"
+                    android:textSize="15sp"
+                    app:layout_column="0"
+                    app:layout_columnWeight="1"
+                    app:layout_gravity="center|left"
+                    app:layout_row="5"
+                    app:layout_rowWeight="1" />
+
+                <TextView
+
+                    android:id="@+id/elevationLostTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:gravity="fill"
+                    android:text="@string/_0_00_min_km"
+                    android:textAllCaps="true"
+                    android:textSize="15sp"
+                    app:layout_column="1"
+                    app:layout_columnWeight="1"
+                    app:layout_gravity="right"
+                    app:layout_row="6"
+                    app:layout_rowWeight="1" />
+
+                <TextView
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:gravity="fill"
+                    android:text="@string/elevetion_lost"
+                    android:textAllCaps="true"
+                    android:textSize="15sp"
+                    app:layout_column="0"
+                    app:layout_columnWeight="1"
+                    app:layout_gravity="center|left"
+                    app:layout_row="6"
+                    app:layout_rowWeight="1" />
+
 
             </androidx.gridlayout.widget.GridLayout>
+
+            <Button
+                android:id="@+id/showChartsButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="12dp"
+                android:background="@drawable/round_edittext"
+                android:text="@string/show_charts"
+                android:textColor="@color/colorAccent"
+                android:textSize="17sp" />
 
         </LinearLayout>
     </ScrollView>

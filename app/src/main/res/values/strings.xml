@@ -57,6 +57,9 @@
     <string name="update_profile">Update profile</string>
     <string name="avg_pace">avg pace</string>
     <string name="_0_00_min_km">0:00 min/km</string>
+    <string name="elevation_gained">elevation gained</string>
+    <string name="elevetion_lost">elevetion lost</string>
+    <string name="show_charts">show charts</string>
 
     <string-array name="activity_types">
         <item>cycling</item>

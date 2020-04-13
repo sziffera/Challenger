@@ -74,6 +74,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         super.onCreate(savedInstanceState)
         setContentView(layout.activity_challenge_recorder)
 
+
         Log.i(
             TAG, "${ChallengeManager.isUpdate} is the update and isChallenge is" +
                     "${ChallengeManager.isChallenge} - should be false"
@@ -469,12 +470,14 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             .setNeutralButton(
                 "Ok"
             ) { dialog, _ ->
+                clean()
                 startActivity(
                     Intent(
                         this,
                         MainActivity::class.java
                     ).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 )
+                finish()
                 dialog.dismiss()
             }
 
@@ -484,6 +487,15 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     }
     //endregion AlertMessages
 
+
+    private fun clean() {
+        with(buttonSharedPreferences.edit()) {
+            putBoolean("started", false)
+            commit()
+        }
+        activityType = null
+        challenge = false
+    }
 
     //region permission requests
     //TODO(use just one permission request function)
@@ -587,19 +599,18 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 Log.i(TAG, "the avg speed is: $it")
             }
 
+            mMap.addPolyline(
+                PolylineOptions()
+                    .addAll(gpsService?.route)
+                    .color(R.color.colorPlus)
+            )
+
             if (challenge || createdChallenge) {
+
                 val difference = intent.getLongExtra(LocationUpdatesService.DIFFERENCE, 0).div(1000)
+
                 if (difference < 0) {
 
-                    mMap.addPolyline(
-                        PolylineOptions().addAll(gpsService?.route)
-                            .color(
-                                ContextCompat.getColor(
-                                    this@ChallengeRecorderActivity,
-                                    R.color.colorMinus
-                                )
-                            )
-                    )
                     differenceTextView.text =
                         "-" + DateUtils.formatElapsedTime(difference.absoluteValue)
                     differenceTextView.setTextColor(
@@ -610,15 +621,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     )
                 } else {
 
-                    mMap.addPolyline(
-                        PolylineOptions().addAll(gpsService?.route)
-                            .color(
-                                ContextCompat.getColor(
-                                    this@ChallengeRecorderActivity,
-                                    R.color.colorPlus
-                                )
-                            )
-                    )
                     differenceTextView.text = "+" + DateUtils.formatElapsedTime(difference)
                     differenceTextView.setTextColor(
                         ContextCompat.getColor(
@@ -631,8 +633,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
             durationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
             distanceTextView.text = "${getStringFromNumber(2, rawDistance / 1000)} km"
-
-
 
 
             if (location != null) {
@@ -671,4 +671,5 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         var distance: Int = 0
             private set
     }
+
 }

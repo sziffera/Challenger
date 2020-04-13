@@ -28,6 +28,7 @@ class LocationUpdatesService : Service() {
     private var mFusedLocationClient: FusedLocationProviderClient? = null
     private var mLocationCallback: LocationCallback? = null
     private var mServiceHandler: Handler? = null
+    private lateinit var handlerThread: HandlerThread
 
     /** the difference in case of challenge in ms */
     private var difference: Long = 0
@@ -45,6 +46,13 @@ class LocationUpdatesService : Service() {
     /** stores the route */
     var myRoute: ArrayList<MyLocation> = ArrayList()
         private set
+
+    /** stores the last 4 altitude */
+    private var altitudes: ArrayList<Double> = ArrayList(4)
+
+    /** the corrected altitude value from the last for altitude */
+    private var correctedAltitude = 0.0
+
     private lateinit var textToSpeech: TextToSpeech
 
     /** maxSpeed in m/s */
@@ -61,7 +69,6 @@ class LocationUpdatesService : Service() {
 
     /** helps calculating the duration */
     private var start: Long = 0
-
 
     override fun onCreate() {
 
@@ -90,16 +97,19 @@ class LocationUpdatesService : Service() {
         mLocationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
+                Log.i(TAG, "location callback new location")
                 onNewLocation(locationResult.lastLocation)
             }
         }
 
         createLocationRequest()
-        val handlerThread = HandlerThread(TAG)
+        getLastLocation()
+
+        handlerThread = HandlerThread(TAG)
         handlerThread.start()
         mServiceHandler = Handler(handlerThread.looper)
-        mNotificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        mNotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name: CharSequence = getString(R.string.app_name)
@@ -111,6 +121,8 @@ class LocationUpdatesService : Service() {
             mChannel.lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
             mNotificationManager!!.createNotificationChannel(mChannel)
         }
+
+        //startForeground(NOTIFICATION_ID,getNotification())
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
@@ -125,10 +137,12 @@ class LocationUpdatesService : Service() {
             removeLocationUpdates()
             stopSelf()
         }
+        //startForeground(NOTIFICATION_ID,getNotification())
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
+        Log.i(TAG, "Ondestroy")
         setRequestingLocationUpdates(this, false)
         mServiceHandler!!.removeCallbacksAndMessages(null)
         textToSpeech.stop()
@@ -160,14 +174,7 @@ class LocationUpdatesService : Service() {
         Log.i(TAG, "Last client unbound from service")
 
         if (!mChangingConfiguration && requestingLocationUpdates(this)) {
-            Log.i(TAG, "Starting foreground service")
-
-            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
-                startForegroundService(Intent(this, LocationUpdatesService::class.java))
-            } else {
                 startForeground(NOTIFICATION_ID, getNotification())
-            }
-
         }
         return true
     }
@@ -177,12 +184,14 @@ class LocationUpdatesService : Service() {
 
     //region location handling
 
+
     /**
      * Requesting location updates from the FusedLocationProviderClient.
      * Starts a new thread as well to send broadcast to the RecorderActivity in every sec.
      * In case of a challenge, this thread calls the updateDifference() function
      */
     fun requestLocationUpdates() {
+
 
         start = System.currentTimeMillis()
         timerIsRunning = true
@@ -235,8 +244,9 @@ class LocationUpdatesService : Service() {
         try {
             mFusedLocationClient!!.requestLocationUpdates(
                 mLocationRequest,
-                mLocationCallback, Looper.myLooper()
+                mLocationCallback, handlerThread.looper
             )
+            Log.i(TAG, "location request done")
         } catch (unlikely: SecurityException) {
             setRequestingLocationUpdates(this, false)
             Log.e(
@@ -259,6 +269,7 @@ class LocationUpdatesService : Service() {
         try {
             mFusedLocationClient!!.removeLocationUpdates(mLocationCallback)
             setRequestingLocationUpdates(this, false)
+            handlerThread.quit()
             stopSelf()
         } catch (unlikely: SecurityException) {
             setRequestingLocationUpdates(this, true)
@@ -266,6 +277,21 @@ class LocationUpdatesService : Service() {
                 TAG,
                 "Lost location permission. Could not remove updates. $unlikely"
             )
+        }
+    }
+
+    private fun getLastLocation() {
+        try {
+            mFusedLocationClient!!.lastLocation
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful && task.result != null) {
+                        mLocation = task.result
+                    } else {
+                        Log.w(TAG, "Failed to get location.")
+                    }
+                }
+        } catch (unlikely: SecurityException) {
+            Log.e(TAG, "Lost location permission.$unlikely")
         }
     }
 
@@ -278,6 +304,7 @@ class LocationUpdatesService : Service() {
      */
     private fun onNewLocation(location: Location) {
 
+        Log.i(TAG, "new location got")
         if (mLocation != null) {
             val tempDistance = location.distanceTo(mLocation)
 
@@ -290,15 +317,20 @@ class LocationUpdatesService : Service() {
                 distance += tempDistance
                 currentSpeed = location.speed
                 route.add(LatLng(location.latitude, location.longitude))
+
+                if (location.hasAltitude())
+                    handleNewAltitude(location.altitude)
+
                 myRoute.add(
                     MyLocation(
                         distance,
                         System.currentTimeMillis() - start + duration,
                         location.speed,
+                        correctedAltitude,
                         LatLng(location.latitude, location.longitude)
                     )
                 )
-                Log.i(TAG, "the altitude is: ${location.altitude}")
+
             }
         }
         mLocation = location
@@ -322,10 +354,16 @@ class LocationUpdatesService : Service() {
 
     private fun createLocationRequest() {
         mLocationRequest = LocationRequest()
+        with(mLocationRequest!!) {
+            interval = UPDATE_INTERVAL_IN_MILLISECONDS
+            fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            smallestDisplacement = 0F
+            maxWaitTime = 0
+        }
         mLocationRequest!!.interval = UPDATE_INTERVAL_IN_MILLISECONDS
         mLocationRequest!!.fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
         mLocationRequest!!.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-
     }
     //endregion
 
@@ -334,12 +372,32 @@ class LocationUpdatesService : Service() {
             get() = this@LocationUpdatesService
     }
 
+    /** handles the new altitude and updates the corrected altitude variable. */
+    //TODO(does not work)
+    private fun handleNewAltitude(altitude: Double) {
+        if (altitudes.size == 4) {
+            altitudes.removeAt(0)
+            altitudes.add(altitude)
+        } else {
+            altitudes.add(altitude)
+        }
+
+        var sum = 0.0
+        for (item in altitudes) {
+            sum += item
+        }
+
+        correctedAltitude = sum.div(altitudes.size)
+
+    }
+
     /**
      * updates the difference in milliseconds compared to the previous challenge
      * the difference is calculated based on the challenge type.
      * If it is a recorded challenge:
      *  The method finds the nearest distance to the current distance in the recorded challenge and
      *  and compares the times.
+     *  (Maybe the next point is closer, but this does not matter in this case)
      * If it is a created challenge:
      *  The method calculates where the user should be based on the given avg speed, then calculates
      *  the distance difference. Based on the user's speed, the time difference is calculated from
@@ -383,7 +441,6 @@ class LocationUpdatesService : Service() {
         val manager = context.getSystemService(
             Context.ACTIVITY_SERVICE
         ) as ActivityManager
-        //there is no replacement yet
         for (service in manager.getRunningServices(Int.MAX_VALUE)) {
             if (javaClass.name == service.service.className) {
                 if (service.foreground) {
@@ -393,10 +450,17 @@ class LocationUpdatesService : Service() {
         }
         return false
 
-
     }
 
     private fun getNotification(): Notification? {
+
+        val intent = Intent(this, LocationUpdatesService::class.java)
+        intent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, true)
+
+        val servicePendingIntent = PendingIntent.getService(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
         val activityPendingIntent = PendingIntent.getActivity(
             this, 0,
@@ -420,6 +484,7 @@ class LocationUpdatesService : Service() {
                 .setOngoing(true)
                 .setSmallIcon(R.mipmap.ic_launcher_round)
                 .setContentIntent(activityPendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setTicker(getNotificationText())
                 .setOnlyAlertOnce(true)
                 .setWhen(System.currentTimeMillis())
@@ -469,8 +534,10 @@ class LocationUpdatesService : Service() {
                     ".started_from_notification"
 
         private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 3000
-        private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
-            UPDATE_INTERVAL_IN_MILLISECONDS / 2
+        private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS: Long = 3000
+
+        //UPDATE_INTERVAL_IN_MILLISECONDS / 2
+        private const val MAX_WAIT: Long = 5000
         const val NOTIFICATION_ID = 12345678
         var previousChallenge: ArrayList<MyLocation> = ArrayList()
 

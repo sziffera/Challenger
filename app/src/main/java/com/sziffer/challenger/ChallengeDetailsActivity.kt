@@ -22,6 +22,7 @@ import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import kotlinx.android.synthetic.main.activity_challenge_details.*
+import kotlin.math.absoluteValue
 
 
 class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -106,11 +107,28 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val builder = LatLngBounds.builder()
         val fetchData = System.currentTimeMillis()
+        var temp = 1
         if (route != null) {
             for (item in route!!) {
+                if (temp < route!!.size) {
+                    val tempElevation = route!![temp].altitude
+                    val diff = tempElevation - item.altitude
+                    Log.i(TAG, "the altitude difference is: $diff")
+                    if (diff < 0) {
+                        elevationLoss += diff.absoluteValue
+                    } else {
+                        elevationGain += diff
+                    }
+                    temp++
+                }
                 builder.include(item.latLng)
                 latLngRoute.add(item.latLng)
             }
+
+            elevationGainedTextView.text = getStringFromNumber(0, elevationGain) + " m"
+            elevationLostTextView.text = getStringFromNumber(0, elevationLoss) + " m"
+
+            Log.i(TAG, "Elevation data. Gained: $elevationGain, loss: $elevationLoss")
             /*
             for (i in 0..route!!.size - 2) {
                 builder.include(route!![i].latLng)
