@@ -10,10 +10,13 @@ import android.provider.Settings
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.view.animation.Interpolator
 import android.view.animation.LinearInterpolator
 import android.widget.Button
+import android.widget.CheckBox
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -81,6 +84,13 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         )
 
         initChips()
+
+        autoPauseCheckBox.setOnClickListener {
+            val checkBox = it as CheckBox
+            autoPause = checkBox.isChecked
+            Log.i(TAG, "autopause is: $autoPause")
+        }
+
         createdChallenge = intent.getBooleanExtra(CREATED_CHALLENGE_INTENT, false).also {
             Log.i(TAG, "$it is the created challenge bool")
         }
@@ -166,9 +176,13 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             firstStartButton.visibility = View.VISIBLE
         } else {
             firstStartButton.visibility = View.GONE
+            autoPauseCheckBox.visibility = View.GONE
             chooseAnActivity.visibility = View.GONE
             activityChooserChipGroup.visibility = View.GONE
-            startStopButton.visibility = View.VISIBLE
+            if (autoPause) {
+                startStopButton.visibility = View.GONE
+            } else
+                startStopButton.visibility = View.VISIBLE
             finishButton.visibility = View.VISIBLE
         }
 
@@ -200,6 +214,13 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
             gpsService?.requestLocationUpdates()
 
+            if (autoPause) {
+                startStopButton.visibility = View.GONE
+                val params = finishButton.layoutParams as LinearLayout.LayoutParams
+                params.setMargins(12, 20, 12, 20)
+                finishButton.layoutParams = params
+            } else
+                startStopButton.visibility = View.VISIBLE
 
             if (activityType == "running")
                 activityTypeImageView.setImageResource(R.drawable.running)
@@ -209,8 +230,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             challengeDataLinearLayout.visibility = View.VISIBLE
             it.visibility = View.GONE
             activityChooserChipGroup.visibility = View.GONE
-            startStopButton.visibility = View.VISIBLE
+
             finishButton.visibility = View.VISIBLE
+            autoPauseCheckBox.visibility = View.GONE
 
             if (createdChallenge || challenge) {
                 differenceTextView.visibility = View.VISIBLE
@@ -315,7 +337,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
 
         gpsService?.finishAndSaveRoute()
-
+        autoPause = false
         with(buttonSharedPreferences.edit()) {
             putBoolean("started", false)
             commit()
@@ -332,7 +354,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             if (gpsService != null) {
                 val gson = Gson()
                 val myLocationArrayString = gson.toJson(gpsService?.myRoute)
-                val duration: Long = gpsService!!.duration.div(1000)
+                val duration: Long = gpsService!!.durationHelper.div(1000)
                 val distance = gpsService!!.distance.div(1000.0)
                 val avg: Double = distance / duration.div(3600.0)
                 val myIntent = Intent(this, ChallengeDetailsActivity::class.java)
@@ -583,7 +605,26 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             )
         }
     }
-    //endregion persmission requests
+    //endregion permission requests
+
+    private fun View.setMargins(
+        left: Int? = null,
+        top: Int? = null,
+        right: Int? = null,
+        bottom: Int? = null
+    ) {
+        val lp = layoutParams as? ViewGroup.MarginLayoutParams
+            ?: return
+
+        lp.setMargins(
+            left ?: lp.leftMargin,
+            top ?: lp.topMargin,
+            right ?: lp.rightMargin,
+            bottom ?: lp.rightMargin
+        )
+
+        layoutParams = lp
+    }
 
     private inner class MyReceiver : BroadcastReceiver() {
 
@@ -665,6 +706,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         /** indicates whether it is a simple recording or a challenge */
         var challenge: Boolean = false
+            private set
+        var autoPause: Boolean = false
             private set
         var avgSpeed: Double = 0.0
             private set

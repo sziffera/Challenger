@@ -45,6 +45,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginVertical="20dp"
+        android:visibility="gone"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -124,6 +125,17 @@
             app:chipIcon="@drawable/running"
             app:chipIconEnabled="true" />
     </com.google.android.material.chip.ChipGroup>
+
+
+    <CheckBox
+        android:id="@+id/autoPauseCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:buttonTint="#FFFFFF"
+        android:text="@string/auto_pause"
+        android:textAllCaps="true"
+        android:textColor="@android:color/white" />
 
     <Button
         android:id="@+id/firstStartButton"

@@ -60,9 +60,16 @@
     <string name="elevation_gained">elevation gained</string>
     <string name="elevetion_lost">elevetion lost</string>
     <string name="show_charts">show charts</string>
-
     <string-array name="activity_types">
         <item>cycling</item>
         <item>running</item>
     </string-array>
+    <string name="title_activity_chart_details">ChartDetailsActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="map">Map</string>
+    <string name="table">Table</string>
+    <string name="chart">Chart</string>
+    <string name="auto_pause">Auto pause</string>
 </resources>

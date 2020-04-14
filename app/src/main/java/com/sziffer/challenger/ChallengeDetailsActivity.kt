@@ -69,6 +69,19 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         //can be null
         previousChallenge = intent.getParcelableExtra(PREVIOUS_CHALLENGE) as Challenge?
 
+        showChartsButton.setOnClickListener {
+            if (route == null) {
+                Toast.makeText(this, "Please wait a few seconds", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+            startActivity(
+                Intent(this, ChartsActivity::class.java)
+                    .putParcelableArrayListExtra(ChartsActivity.CHALLENGE_DATA_ARRAY, route)
+                    .putExtra(ChartsActivity.AVG_SPEED, challenge.avg)
+            )
+        }
+
+
         when {
             isItAChallenge -> {
                 saveStartButton.text = getString(R.string.challenge_this_activity)
@@ -107,12 +120,29 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val builder = LatLngBounds.builder()
         val fetchData = System.currentTimeMillis()
+        var all = 0.0
         var temp = 1
+        val alts: ArrayList<Double> = ArrayList()
+        var tmpDst = 0f
         if (route != null) {
             for (item in route!!) {
-                if (temp < route!!.size) {
-                    val tempElevation = route!![temp].altitude
-                    val diff = tempElevation - item.altitude
+
+                tmpDst += item.distance
+                if (tmpDst >= 100f) {
+                    alts.add(item.altitude)
+                    tmpDst = 0f
+                }
+
+
+                builder.include(item.latLng)
+                latLngRoute.add(item.latLng)
+            }
+
+            for (item in alts) {
+                if (temp < alts.size) {
+                    all += item
+                    val tempElevation = alts[temp]
+                    val diff = tempElevation - item
                     Log.i(TAG, "the altitude difference is: $diff")
                     if (diff < 0) {
                         elevationLoss += diff.absoluteValue
@@ -121,9 +151,10 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                     temp++
                 }
-                builder.include(item.latLng)
-                latLngRoute.add(item.latLng)
             }
+
+            Log.i(TAG, "the altitude list is $alts")
+            Log.i(TAG, "all is $all")
 
             elevationGainedTextView.text = getStringFromNumber(0, elevationGain) + " m"
             elevationLostTextView.text = getStringFromNumber(0, elevationLoss) + " m"

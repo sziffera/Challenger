@@ -43,6 +43,11 @@ class LocationUpdatesService : Service() {
     /** the UI updater thread is running while this is true */
     private var timerIsRunning: Boolean = false
 
+    /** bool for handling auto pause */
+    private var zeroSpeed: Boolean = false
+
+    /** measures the elapsed time, while the user's speed was zero */
+    private var zeroSpeedPauseTime: Long = 0
     /** stores the route */
     var myRoute: ArrayList<MyLocation> = ArrayList()
         private set
@@ -63,8 +68,8 @@ class LocationUpdatesService : Service() {
     var distance: Float = 0.0f
         private set
 
-    /** in m */
-    var duration: Long = 0
+    /** in ms */
+    var durationHelper: Long = 0
         private set
 
     /** helps calculating the duration */
@@ -203,30 +208,44 @@ class LocationUpdatesService : Service() {
                     try {
 
                         //TODO(deprecated)
+                        //TODO(refresh and speak based on settings)
+                        //always false if auto pause is off
+                        if (!zeroSpeed) {
 
-                        if (threadCounter % 10 == 0 && threadCounter > 0) {
-                            textToSpeech.speak(
-                                "The distance is" + getStringFromNumber(
-                                    1,
-                                    distance / 1000
-                                ) + "km", TextToSpeech.QUEUE_FLUSH, null
+                            if (threadCounter % 10 == 0 && threadCounter > 0) {
+                                textToSpeech.speak(
+                                    "The distance is" + getStringFromNumber(
+                                        1,
+                                        distance / 1000
+                                    ) + "km", TextToSpeech.QUEUE_FLUSH, null
+                                )
+
+                                if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge) {
+                                    updateDifference()
+                                }
+
+                            }
+                            threadCounter++
+                            val intent = Intent(ACTION_BROADCAST)
+                            intent.putExtra(DISTANCE, distance)
+                            intent.putExtra(EXTRA_LOCATION, mLocation)
+                            intent.putExtra(
+                                DURATION,
+                                System.currentTimeMillis() - start + durationHelper
                             )
 
-                            if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge) {
-                                updateDifference()
+                            if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge)
+                                intent.putExtra(DIFFERENCE, difference)
+                            LocalBroadcastManager.getInstance(applicationContext)
+                                .sendBroadcast(intent)
+
+                            if (serviceIsRunningInForeground(this@LocationUpdatesService)) {
+                                mNotificationManager!!.notify(
+                                    NOTIFICATION_ID,
+                                    getNotification()
+                                )
                             }
-
                         }
-                        threadCounter++
-                        val intent = Intent(ACTION_BROADCAST)
-                        intent.putExtra(DISTANCE, distance)
-                        intent.putExtra(EXTRA_LOCATION, mLocation)
-                        intent.putExtra(DURATION, System.currentTimeMillis() - start + duration)
-                        if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge)
-                            intent.putExtra(DIFFERENCE, difference)
-                        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
-
-
 
                         sleep(1000)
                     } catch (e: InterruptedException) {
@@ -264,13 +283,11 @@ class LocationUpdatesService : Service() {
     fun removeLocationUpdates() {
 
         timerIsRunning = false
-        duration += System.currentTimeMillis() - start
+        durationHelper += System.currentTimeMillis() - start
         Log.i(TAG, "Removing location updates")
         try {
             mFusedLocationClient!!.removeLocationUpdates(mLocationCallback)
             setRequestingLocationUpdates(this, false)
-            handlerThread.quit()
-            stopSelf()
         } catch (unlikely: SecurityException) {
             setRequestingLocationUpdates(this, true)
             Log.e(
@@ -313,6 +330,27 @@ class LocationUpdatesService : Service() {
                 if (location.hasSpeed()) {
                     if (maxSpeed < location.speed)
                         maxSpeed = location.speed
+
+                    //if auto pause is set
+                    if (ChallengeRecorderActivity.autoPause) {
+                        // for auto pause, sets the bool
+                        if (location.speed < 2) {
+                            Log.i(TAG, "zeroSpeed is: $zeroSpeed")
+                            //if the user has just stopped
+                            if (!zeroSpeed) {
+                                zeroSpeedPauseTime = System.currentTimeMillis()
+                            }
+                            zeroSpeed = true
+                        } else {
+                            Log.i(TAG, "zeroSpeed is in else: $zeroSpeed")
+                            //the user's speed was zero
+                            if (zeroSpeed) {
+                                durationHelper -= System.currentTimeMillis() - zeroSpeedPauseTime
+                            }
+                            zeroSpeed = false
+                        }
+                    }
+
                 }
                 distance += tempDistance
                 currentSpeed = location.speed
@@ -324,7 +362,7 @@ class LocationUpdatesService : Service() {
                 myRoute.add(
                     MyLocation(
                         distance,
-                        System.currentTimeMillis() - start + duration,
+                        System.currentTimeMillis() - start + durationHelper,
                         location.speed,
                         correctedAltitude,
                         LatLng(location.latitude, location.longitude)
@@ -335,15 +373,13 @@ class LocationUpdatesService : Service() {
         }
         mLocation = location
 
-        if (serviceIsRunningInForeground(this)) {
-            mNotificationManager!!.notify(
-                NOTIFICATION_ID,
-                getNotification()
-            )
-        }
+
     }
 
+    /** stops the handlerThread and the service */
     fun finishAndSaveRoute() {
+        handlerThread.quit()
+        stopSelf()
         removeLocationUpdates()
     }
 
@@ -407,7 +443,7 @@ class LocationUpdatesService : Service() {
 
         if (ChallengeRecorderActivity.createdChallenge) {
 
-            var currentTime = System.currentTimeMillis() - start + duration
+            var currentTime = System.currentTimeMillis() - start + durationHelper
 
             currentTime = currentTime.div(1000)
 
@@ -424,7 +460,7 @@ class LocationUpdatesService : Service() {
             while (counter < previousChallenge.size) {
                 if (distance <= previousChallenge[counter].distance) {
                     difference =
-                        (System.currentTimeMillis() - start + duration) - previousChallenge[counter].time
+                        (System.currentTimeMillis() - start + durationHelper) - previousChallenge[counter].time
                     return
                 }
                 counter++
@@ -509,7 +545,7 @@ class LocationUpdatesService : Service() {
         ) + getString(R.string.km) + ", " + getString(
             R.string.duration
         ) + ": " + DateUtils.formatElapsedTime(
-            (System.currentTimeMillis() - start + duration) / 1000
+            (System.currentTimeMillis() - start + durationHelper) / 1000
         )
 
     }
