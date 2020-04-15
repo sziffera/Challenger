@@ -15,7 +15,7 @@ class DataSyncWorker(private val appContext: Context, workerParams: WorkerParame
     override fun doWork(): Result {
 
 
-        val mRef = FirebaseManager.currentUserRef ?: return Result.retry()
+        val mRef = FirebaseManager.currentUsersChallenges ?: return Result.retry()
 
         var success = true
 
