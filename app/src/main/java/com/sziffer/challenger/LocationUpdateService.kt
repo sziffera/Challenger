@@ -36,7 +36,13 @@ class LocationUpdatesService : Service() {
     /** helps calculating the time difference */
     private var counter: Int = 0
     private var mLocation: Location? = null
+
+    /** sent to the recorder activity and helps calculating the difference */
     private var currentSpeed: Float = 0f
+
+    /** stores the route points as LatLng objects to draw the route
+     * without conversion in the recorder activity
+     */
     var route: ArrayList<LatLng> = ArrayList()
         private set
 
@@ -48,6 +54,7 @@ class LocationUpdatesService : Service() {
 
     /** measures the elapsed time, while the user's speed was zero */
     private var zeroSpeedPauseTime: Long = 0
+
     /** stores the route */
     var myRoute: ArrayList<MyLocation> = ArrayList()
         private set
@@ -217,7 +224,7 @@ class LocationUpdatesService : Service() {
                                     "The distance is" + getStringFromNumber(
                                         1,
                                         distance / 1000
-                                    ) + "km", TextToSpeech.QUEUE_FLUSH, null
+                                    ) + "kilometres", TextToSpeech.QUEUE_FLUSH, null
                                 )
 
                                 if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge) {
@@ -378,7 +385,7 @@ class LocationUpdatesService : Service() {
 
     /** stops the handlerThread and the service */
     fun finishAndSaveRoute() {
-        handlerThread.quit()
+        handlerThread.quitSafely()
         stopSelf()
         removeLocationUpdates()
     }
@@ -397,16 +404,16 @@ class LocationUpdatesService : Service() {
             smallestDisplacement = 0F
             maxWaitTime = 0
         }
-        mLocationRequest!!.interval = UPDATE_INTERVAL_IN_MILLISECONDS
-        mLocationRequest!!.fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
-        mLocationRequest!!.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+
     }
-    //endregion
+    //endregion location handling
 
     inner class LocalBinder : Binder() {
         val service: LocationUpdatesService
             get() = this@LocationUpdatesService
     }
+
+    //region helper methods
 
     /** handles the new altitude and updates the corrected altitude variable. */
     //TODO(does not work)
@@ -473,7 +480,7 @@ class LocationUpdatesService : Service() {
      * This method will be replaced to avoid using deprecated functions
      */
     private fun serviceIsRunningInForeground(context: Context): Boolean {
-        //TODO(DEPRECATED)
+        //TODO(DEPRECATED, find another solution)
         val manager = context.getSystemService(
             Context.ACTIVITY_SERVICE
         ) as ActivityManager
@@ -487,7 +494,12 @@ class LocationUpdatesService : Service() {
         return false
 
     }
+    //endregion helper methods
 
+
+    //region notification
+
+    /** creates the notification with current data */
     private fun getNotification(): Notification? {
 
         val intent = Intent(this, LocationUpdatesService::class.java)
@@ -535,9 +547,7 @@ class LocationUpdatesService : Service() {
         return builder.build()
     }
 
-    /**
-     * creates text for the notification with time and duration
-     */
+    /** Notification helper: creates text for the notification with time and duration */
     private fun getNotificationText(): String {
         return getString(R.string.distance) + ": " + getStringFromNumber(
             1,
@@ -549,6 +559,7 @@ class LocationUpdatesService : Service() {
         )
 
     }
+    //endregion notification
 
     companion object {
 
