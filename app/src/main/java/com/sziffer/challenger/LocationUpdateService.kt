@@ -28,7 +28,7 @@ class LocationUpdatesService : Service() {
     private var mFusedLocationClient: FusedLocationProviderClient? = null
     private var mLocationCallback: LocationCallback? = null
     private var mServiceHandler: Handler? = null
-    private lateinit var handlerThread: HandlerThread
+    private lateinit var builder: NotificationCompat.Builder
 
     /** the difference in case of challenge in ms */
     private var difference: Long = 0
@@ -117,7 +117,7 @@ class LocationUpdatesService : Service() {
         createLocationRequest()
         getLastLocation()
 
-        handlerThread = HandlerThread(TAG)
+        val handlerThread = HandlerThread(TAG)
         handlerThread.start()
         mServiceHandler = Handler(handlerThread.looper)
 
@@ -128,11 +128,13 @@ class LocationUpdatesService : Service() {
             val mChannel = NotificationChannel(
                 CHANNEL_ID,
                 name,
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             )
             mChannel.lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+            mChannel.setShowBadge(true)
             mNotificationManager!!.createNotificationChannel(mChannel)
         }
+        initNotificationBuilder()
 
         //startForeground(NOTIFICATION_ID,getNotification())
     }
@@ -157,6 +159,7 @@ class LocationUpdatesService : Service() {
         Log.i(TAG, "Ondestroy")
         setRequestingLocationUpdates(this, false)
         mServiceHandler!!.removeCallbacksAndMessages(null)
+        serviceIsRunningInForeground = false
         textToSpeech.stop()
         textToSpeech.shutdown()
     }
@@ -170,6 +173,7 @@ class LocationUpdatesService : Service() {
     override fun onBind(intent: Intent): IBinder? {
 
         Log.i(TAG, "in onBind()")
+        serviceIsRunningInForeground = false
         stopForeground(true)
         mChangingConfiguration = false
         return mBinder
@@ -177,6 +181,7 @@ class LocationUpdatesService : Service() {
 
     override fun onRebind(intent: Intent) {
         Log.i(TAG, "in onRebind()")
+        serviceIsRunningInForeground = false
         stopForeground(true)
         mChangingConfiguration = false
         super.onRebind(intent)
@@ -186,12 +191,12 @@ class LocationUpdatesService : Service() {
         Log.i(TAG, "Last client unbound from service")
 
         if (!mChangingConfiguration && requestingLocationUpdates(this)) {
-                startForeground(NOTIFICATION_ID, getNotification())
+            serviceIsRunningInForeground = true
+            startForeground(NOTIFICATION_ID, updateAndGetNotification())
         }
         return true
     }
     //endregion
-
 
 
     //region location handling
@@ -233,25 +238,7 @@ class LocationUpdatesService : Service() {
 
                             }
                             threadCounter++
-                            val intent = Intent(ACTION_BROADCAST)
-                            intent.putExtra(DISTANCE, distance)
-                            intent.putExtra(EXTRA_LOCATION, mLocation)
-                            intent.putExtra(
-                                DURATION,
-                                System.currentTimeMillis() - start + durationHelper
-                            )
-
-                            if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge)
-                                intent.putExtra(DIFFERENCE, difference)
-                            LocalBroadcastManager.getInstance(applicationContext)
-                                .sendBroadcast(intent)
-
-                            if (serviceIsRunningInForeground(this@LocationUpdatesService)) {
-                                mNotificationManager!!.notify(
-                                    NOTIFICATION_ID,
-                                    getNotification()
-                                )
-                            }
+                            updateUI()
                         }
 
                         sleep(1000)
@@ -270,7 +257,7 @@ class LocationUpdatesService : Service() {
         try {
             mFusedLocationClient!!.requestLocationUpdates(
                 mLocationRequest,
-                mLocationCallback, handlerThread.looper
+                mLocationCallback, Looper.myLooper()
             )
             Log.i(TAG, "location request done")
         } catch (unlikely: SecurityException) {
@@ -341,7 +328,7 @@ class LocationUpdatesService : Service() {
                     //if auto pause is set
                     if (ChallengeRecorderActivity.autoPause) {
                         // for auto pause, sets the bool
-                        if (location.speed < 2) {
+                        if (location.speed < MINIMUM_SPEED) {
                             Log.i(TAG, "zeroSpeed is: $zeroSpeed")
                             //if the user has just stopped
                             if (!zeroSpeed) {
@@ -359,6 +346,7 @@ class LocationUpdatesService : Service() {
                     }
 
                 }
+
                 distance += tempDistance
                 currentSpeed = location.speed
                 route.add(LatLng(location.latitude, location.longitude))
@@ -379,13 +367,10 @@ class LocationUpdatesService : Service() {
             }
         }
         mLocation = location
-
-
     }
 
     /** stops the handlerThread and the service */
     fun finishAndSaveRoute() {
-        handlerThread.quitSafely()
         stopSelf()
         removeLocationUpdates()
     }
@@ -396,15 +381,11 @@ class LocationUpdatesService : Service() {
     }
 
     private fun createLocationRequest() {
-        mLocationRequest = LocationRequest()
-        with(mLocationRequest!!) {
+        mLocationRequest = LocationRequest().apply {
             interval = UPDATE_INTERVAL_IN_MILLISECONDS
             fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            smallestDisplacement = 0F
-            maxWaitTime = 0
         }
-
     }
     //endregion location handling
 
@@ -476,74 +457,77 @@ class LocationUpdatesService : Service() {
     }
 
     /**
-     * determines whether a service is running in the foreground or not
-     * This method will be replaced to avoid using deprecated functions
-     */
-    private fun serviceIsRunningInForeground(context: Context): Boolean {
-        //TODO(DEPRECATED, find another solution)
-        val manager = context.getSystemService(
-            Context.ACTIVITY_SERVICE
-        ) as ActivityManager
-        for (service in manager.getRunningServices(Int.MAX_VALUE)) {
-            if (javaClass.name == service.service.className) {
-                if (service.foreground) {
-                    return true
-                }
-            }
-        }
-        return false
+     * sends broadcast to the recorder activity and updates the notification when
+     * running as a foreground service
+     * */
+    private fun updateUI() {
+        val intent = Intent(ACTION_BROADCAST)
+        intent.putExtra(DISTANCE, distance)
+        intent.putExtra(EXTRA_LOCATION, mLocation)
+        intent.putExtra(
+            DURATION,
+            System.currentTimeMillis() - start + durationHelper
+        )
 
+        if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge)
+            intent.putExtra(DIFFERENCE, difference)
+        LocalBroadcastManager.getInstance(applicationContext)
+            .sendBroadcast(intent)
+
+        if (serviceIsRunningInForeground) {
+            mNotificationManager!!.notify(
+                NOTIFICATION_ID,
+                updateAndGetNotification()
+            )
+        }
     }
+
     //endregion helper methods
 
 
     //region notification
 
-    /** creates the notification with current data */
-    private fun getNotification(): Notification? {
-
-        val intent = Intent(this, LocationUpdatesService::class.java)
-        intent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, true)
-
-        val servicePendingIntent = PendingIntent.getService(
-            this, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
+    private fun initNotificationBuilder() {
         val activityPendingIntent = PendingIntent.getActivity(
             this, 0,
             Intent(this, ChallengeRecorderActivity::class.java), 0
         )
-
-        val builder =
-            NotificationCompat.Builder(this, CHANNEL_ID)
-                .addAction(
-                    R.drawable.ic_play_circle_outline_24px, getString(R.string.launch_activity),
-                    activityPendingIntent
+        builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .addAction(
+                R.drawable.ic_play_circle_outline_24px, getString(R.string.launch_activity),
+                activityPendingIntent
+            )
+            .setLargeIcon(
+                BitmapFactory.decodeResource(
+                    this.resources,
+                    R.mipmap.ic_launcher_round
                 )
-                .setLargeIcon(
-                    BitmapFactory.decodeResource(
-                        this.resources,
-                        R.mipmap.ic_launcher_round
-                    )
-                )
-                .setContentText(getNotificationText())
-                .setContentTitle(getString(R.string.challenge_recording))
-                .setOngoing(true)
-                .setSmallIcon(R.mipmap.ic_launcher_round)
-                .setContentIntent(activityPendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setTicker(getNotificationText())
-                .setOnlyAlertOnce(true)
-                .setWhen(System.currentTimeMillis())
-                .setAutoCancel(true)
-                .setCategory(NotificationCompat.CATEGORY_SERVICE)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            )
+            .setContentText(getNotificationText())
+            .setContentTitle(getString(R.string.challenge_recording))
+            .setOngoing(true)
+            .setSmallIcon(R.mipmap.ic_launcher_round)
+            .setContentIntent(activityPendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setTicker(getNotificationText())
+            .setOnlyAlertOnce(true)
+            .setWhen(System.currentTimeMillis())
+            .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             builder.setChannelId(CHANNEL_ID)
             builder.setOngoing(true)
         }
+    }
+
+    /** creates the notification with current data */
+    private fun updateAndGetNotification(): Notification? {
+        builder.setContentText(getNotificationText())
+                .setOngoing(true)
+                .setTicker(getNotificationText())
+                .setWhen(System.currentTimeMillis())
         return builder.build()
     }
 
@@ -557,7 +541,6 @@ class LocationUpdatesService : Service() {
         ) + ": " + DateUtils.formatElapsedTime(
             (System.currentTimeMillis() - start + durationHelper) / 1000
         )
-
     }
     //endregion notification
 
@@ -580,11 +563,13 @@ class LocationUpdatesService : Service() {
             PACKAGE_NAME +
                     ".started_from_notification"
 
-        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 3000
-        private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS: Long = 3000
+        private var serviceIsRunningInForeground: Boolean = false
 
-        //UPDATE_INTERVAL_IN_MILLISECONDS / 2
-        private const val MAX_WAIT: Long = 5000
+        /** minimum speed in m/s (approximately 2km/h) */
+        private const val MINIMUM_SPEED: Double = 0.555555
+        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 2000
+        private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
+            UPDATE_INTERVAL_IN_MILLISECONDS / 2
         const val NOTIFICATION_ID = 12345678
         var previousChallenge: ArrayList<MyLocation> = ArrayList()
 

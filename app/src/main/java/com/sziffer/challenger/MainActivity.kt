@@ -24,8 +24,13 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter
 import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.google.android.gms.maps.MapView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity() {
@@ -63,6 +68,35 @@ class MainActivity : AppCompatActivity() {
             } catch (ignored: Exception) {
             }
         }).start()
+
+        testerButton.setOnClickListener {
+
+
+            var keys: ArrayList<String?> = ArrayList()
+            FirebaseManager.currentUsersChallenges?.addValueEventListener(object :
+                ValueEventListener {
+                override fun onCancelled(p0: DatabaseError) {
+                    Log.e(this@MainActivity::class.java.simpleName, p0.details)
+                }
+
+                override fun onDataChange(p0: DataSnapshot) {
+                    Log.i("VALUES FB", "p0: $p0")
+                    Log.i("HEHE", "childercount is: ${p0.childrenCount}")
+                    for (d in p0.children) {
+                        Log.i("VALS", d.key.toString())
+                        keys.add(d.key.toString())
+
+                    }
+                    Log.i("VALUES FB", "keys: $keys")
+                }
+
+            })
+
+
+            val id = UUID.randomUUID()
+            Log.i("ID", id.toString())
+
+        }
 
         sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
 
