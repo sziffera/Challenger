@@ -11,6 +11,7 @@ class ChallengeDbHelper(context: Context) :
     override fun onCreate(db: SQLiteDatabase) {
         val createTable = "CREATE TABLE IF NOT EXISTS $DATABASE_NAME (" +
                 "$KEY_ID INTEGER PRIMARY KEY," +
+                "$KEY_FIREBASE_ID TEXT," +
                 "$KEY_NAME TEXT," +
                 "$KEY_TYPE TEXT," +
                 "$KEY_DISTANCE TEXT," +
@@ -32,6 +33,7 @@ class ChallengeDbHelper(context: Context) :
         with(contentValues) {
             put(KEY_NAME, challenge.name)
             put(KEY_TYPE, challenge.type)
+            put(KEY_FIREBASE_ID, challenge.firebaseId)
             put(KEY_DISTANCE, challenge.dst)
             put(KEY_DURATION, challenge.dur)
             put(KEY_AVG_SPEED, challenge.avg)
@@ -52,6 +54,7 @@ class ChallengeDbHelper(context: Context) :
                 val challenge = with(cursor) {
                     Challenge(
                         getInt(getColumnIndex(KEY_ID)).toString(),
+                        getString(getColumnIndex(KEY_FIREBASE_ID)),
                         getString(getColumnIndex(KEY_NAME)),
                         getString(getColumnIndex(KEY_TYPE)),
                         getDouble(getColumnIndex(KEY_DISTANCE)),
@@ -85,6 +88,7 @@ class ChallengeDbHelper(context: Context) :
             DATABASE_NAME,
             arrayOf(
                 KEY_ID,
+                KEY_FIREBASE_ID,
                 KEY_TYPE,
                 KEY_NAME,
                 KEY_DURATION,
@@ -106,6 +110,7 @@ class ChallengeDbHelper(context: Context) :
             return with(cursor) {
                 Challenge(
                     getInt(getColumnIndex(KEY_ID)).toString(),
+                    getString(getColumnIndex(KEY_FIREBASE_ID)),
                     getString(getColumnIndex(KEY_NAME)),
                     getString(getColumnIndex(KEY_TYPE)),
                     getDouble(getColumnIndex(KEY_DISTANCE)),
@@ -127,6 +132,7 @@ class ChallengeDbHelper(context: Context) :
         val contentValues: ContentValues = ContentValues()
         with(contentValues) {
             put(KEY_NAME, challenge.name)
+            put(KEY_FIREBASE_ID, challenge.firebaseId)
             put(KEY_DISTANCE, challenge.dst)
             put(KEY_DURATION, challenge.dur)
             put(KEY_AVG_SPEED, challenge.avg)
@@ -135,6 +141,53 @@ class ChallengeDbHelper(context: Context) :
         }
 
         return db.update(DATABASE_NAME, contentValues, "$KEY_ID = ?", arrayOf(id.toString()))
+    }
+
+    fun getChallengeByFirebaseId(firebaseId: String): Challenge? {
+
+        val db: SQLiteDatabase = this.writableDatabase
+        val cursor = db.query(
+            DATABASE_NAME,
+            arrayOf(
+                KEY_ID,
+                KEY_FIREBASE_ID,
+                KEY_TYPE,
+                KEY_NAME,
+                KEY_DURATION,
+                KEY_DISTANCE,
+                KEY_MAX_SPEED,
+                KEY_AVG_SPEED,
+                KEY_STRING_ROUTE
+            ),
+            "$KEY_FIREBASE_ID=?",
+            arrayOf(
+                firebaseId
+            ),
+            null,
+            null,
+            null,
+            null
+        )
+        if (cursor.moveToFirst()) {
+            return with(cursor) {
+                Challenge(
+                    getInt(getColumnIndex(KEY_ID)).toString(),
+                    getString(getColumnIndex(KEY_FIREBASE_ID)),
+                    getString(getColumnIndex(KEY_NAME)),
+                    getString(getColumnIndex(KEY_TYPE)),
+                    getDouble(getColumnIndex(KEY_DISTANCE)),
+                    getDouble(getColumnIndex(KEY_MAX_SPEED)),
+                    getDouble(getColumnIndex(KEY_AVG_SPEED)),
+                    getLong(getColumnIndex(KEY_DURATION)),
+                    getString(getColumnIndex(KEY_STRING_ROUTE))
+                )
+            }
+        }
+
+        cursor.close()
+
+        return null
+
     }
 
     fun deleteChallenge(id: String): Boolean {
@@ -152,8 +205,8 @@ class ChallengeDbHelper(context: Context) :
 
     companion object {
         private const val TAG = "ChallengeDbHelper"
-        const val DATABASE_VERSION = 3
-        const val DATABASE_NAME = "challenges"
+        const val DATABASE_VERSION = 1
+        const val DATABASE_NAME = "MyChallenges"
         const val KEY_ID = "challengeId"
         const val KEY_NAME = "challengeName"
         const val KEY_AVG_SPEED = "avgSpeed"
@@ -163,6 +216,7 @@ class ChallengeDbHelper(context: Context) :
         const val KEY_STRING_ROUTE = "stringRoute"
         const val KEY_ELEVATION_GAIN = "elevationGain"
         const val KEY_ELEVATION_LOSS = "elevationLoss"
+        const val KEY_FIREBASE_ID = "firebaseId"
         const val KEY_TYPE = "type"
     }
 }

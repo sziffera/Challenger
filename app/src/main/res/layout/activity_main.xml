@@ -96,11 +96,11 @@
         app:srcCompat="@drawable/ic_account_circle_24px" />
 
     <Button
-        android:id="@+id/testerButton"
+        android:id="@+id/testButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="11dp"
-        android:layout_marginEnd="45dp"
+        android:layout_marginEnd="37dp"
         android:text="Button"
         app:layout_constraintEnd_toStartOf="@+id/showMoreButton"
         app:layout_constraintTop_toBottomOf="@+id/recyclerView" />

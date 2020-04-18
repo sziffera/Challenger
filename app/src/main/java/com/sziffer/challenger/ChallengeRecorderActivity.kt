@@ -38,6 +38,7 @@ import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.LocationUpdatesService.LocalBinder
 import com.sziffer.challenger.R.*
 import kotlinx.android.synthetic.main.activity_challenge_recorder.*
+import java.util.*
 import kotlin.math.absoluteValue
 
 
@@ -362,6 +363,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                         ChallengeDetailsActivity.CHALLENGE_OBJECT,
                         Challenge(
                             "",
+                            UUID.randomUUID().toString(),
                             "",
                             activityType.toString(),
                             distance,

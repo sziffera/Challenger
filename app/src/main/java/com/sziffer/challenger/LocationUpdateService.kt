@@ -60,7 +60,7 @@ class LocationUpdatesService : Service() {
         private set
 
     /** stores the last 4 altitude */
-    private var altitudes: ArrayList<Double> = ArrayList(4)
+    private var altitudes: ArrayList<Double> = ArrayList(ALTITUDES_SIZE)
 
     /** the corrected altitude value from the last for altitude */
     private var correctedAltitude = 0.0
@@ -135,8 +135,6 @@ class LocationUpdatesService : Service() {
             mNotificationManager!!.createNotificationChannel(mChannel)
         }
         initNotificationBuilder()
-
-        //startForeground(NOTIFICATION_ID,getNotification())
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
@@ -151,7 +149,6 @@ class LocationUpdatesService : Service() {
             removeLocationUpdates()
             stopSelf()
         }
-        //startForeground(NOTIFICATION_ID,getNotification())
         return START_NOT_STICKY
     }
 
@@ -312,6 +309,12 @@ class LocationUpdatesService : Service() {
      * with speed and time.
      * Refreshes the mLocation variable as well
      * Sends notification when the service is running in foreground
+     * If auto pause is set:
+     *      the timer is paused while the new locations' speed is below
+     *      the given MINIMUM_SPEED limit. In this case, the zeroSpeed bool
+     *      is set to true, which helps to determine when to start the timer again
+     *      If the zeroSpeed is true, but the new location's speed is above the limit
+     *      the timer starts again and zeroSpeed is set to false.
      */
     private fun onNewLocation(location: Location) {
 
@@ -344,25 +347,26 @@ class LocationUpdatesService : Service() {
                             zeroSpeed = false
                         }
                     }
-
                 }
 
-                distance += tempDistance
-                currentSpeed = location.speed
-                route.add(LatLng(location.latitude, location.longitude))
+                if (!zeroSpeed) {
+                    distance += tempDistance
+                    currentSpeed = location.speed
+                    route.add(LatLng(location.latitude, location.longitude))
 
-                if (location.hasAltitude())
-                    handleNewAltitude(location.altitude)
+                    if (location.hasAltitude())
+                        handleNewAltitude(location.altitude)
 
-                myRoute.add(
-                    MyLocation(
-                        distance,
-                        System.currentTimeMillis() - start + durationHelper,
-                        location.speed,
-                        correctedAltitude,
-                        LatLng(location.latitude, location.longitude)
+                    myRoute.add(
+                        MyLocation(
+                            distance,
+                            System.currentTimeMillis() - start + durationHelper,
+                            location.speed,
+                            correctedAltitude,
+                            LatLng(location.latitude, location.longitude)
+                        )
                     )
-                )
+                }
 
             }
         }
@@ -397,9 +401,9 @@ class LocationUpdatesService : Service() {
     //region helper methods
 
     /** handles the new altitude and updates the corrected altitude variable. */
-    //TODO(does not work)
+    //TODO(works, but too many points -> too high values)
     private fun handleNewAltitude(altitude: Double) {
-        if (altitudes.size == 4) {
+        if (altitudes.size == ALTITUDES_SIZE) {
             altitudes.removeAt(0)
             altitudes.add(altitude)
         } else {
@@ -564,6 +568,7 @@ class LocationUpdatesService : Service() {
                     ".started_from_notification"
 
         private var serviceIsRunningInForeground: Boolean = false
+        private const val ALTITUDES_SIZE = 10
 
         /** minimum speed in m/s (approximately 2km/h) */
         private const val MINIMUM_SPEED: Double = 0.555555

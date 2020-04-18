@@ -214,7 +214,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
             challenge.name = previousChallenge!!.name
             dbHelper.updateChallenge(previousChallenge!!.id.toInt(), challenge)
-            updateSharedPrefForSync(applicationContext, previousChallenge!!.id, KEY_UPLOAD)
+            updateSharedPrefForSync(applicationContext, previousChallenge!!.firebaseId, KEY_UPLOAD)
 
 
             Toast.makeText(this, "Challenge updated successfully!", Toast.LENGTH_SHORT).show()
@@ -234,7 +234,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         val id = dbHelper.addChallenge(challenge).also {
             Log.i(TAG, "the id of the inserted item is: $it")
         }
-        updateSharedPrefForSync(applicationContext, id.toString(), KEY_UPLOAD)
+        updateSharedPrefForSync(applicationContext, challenge.firebaseId, KEY_UPLOAD)
 
         Toast.makeText(this, "Challenge saved successfully", Toast.LENGTH_SHORT).show()
         startMainActivity()

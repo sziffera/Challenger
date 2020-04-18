@@ -29,6 +29,23 @@ private fun startWorkManager(context: Context) {
     WorkManager.getInstance(context).enqueue(workRequest)
 }
 
+fun startDataDownloaderWorkManager(context: Context) {
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.UNMETERED)
+        .setRequiresBatteryNotLow(true)
+        .build()
+
+    val workRequest = OneTimeWorkRequestBuilder<DataDownloaderWorker>()
+        .setConstraints(constraints)
+        .setBackoffCriteria(
+            BackoffPolicy.LINEAR,
+            OneTimeWorkRequest.MIN_BACKOFF_MILLIS,
+            TimeUnit.MILLISECONDS
+        )
+        .build()
+    WorkManager.getInstance(context).enqueue(workRequest)
+}
+
 fun updateSharedPrefForSync(context: Context, id: String, whatToDo: String) {
 
     //the user is not authorised

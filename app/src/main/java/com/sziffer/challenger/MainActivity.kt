@@ -28,9 +28,8 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
+import com.sziffer.challenger.sync.startDataDownloaderWorkManager
 import kotlinx.android.synthetic.main.activity_main.*
-import java.util.*
-import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity() {
@@ -58,6 +57,8 @@ class MainActivity : AppCompatActivity() {
 
         mAuth = FirebaseAuth.getInstance()
 
+        startDataDownloaderWorkManager(applicationContext)
+
         Thread(Runnable {
             try {
                 val mv =
@@ -69,33 +70,29 @@ class MainActivity : AppCompatActivity() {
             }
         }).start()
 
-        testerButton.setOnClickListener {
-
-
-            var keys: ArrayList<String?> = ArrayList()
-            FirebaseManager.currentUsersChallenges?.addValueEventListener(object :
+        testButton.setOnClickListener {
+            val dbHelper = ChallengeDbHelper(this)
+            FirebaseManager.currentUsersChallenges?.addListenerForSingleValueEvent(object :
                 ValueEventListener {
                 override fun onCancelled(p0: DatabaseError) {
-                    Log.e(this@MainActivity::class.java.simpleName, p0.details)
+                    //Log.e(this@DataDownloaderWorker::class.java.simpleName, p0.details)
                 }
 
                 override fun onDataChange(p0: DataSnapshot) {
-                    Log.i("VALUES FB", "p0: $p0")
-                    Log.i("HEHE", "childercount is: ${p0.childrenCount}")
-                    for (d in p0.children) {
-                        Log.i("VALS", d.key.toString())
-                        keys.add(d.key.toString())
 
+                    for (data in p0.children) {
+                        val key = data.key.toString()
+                        if (dbHelper.getChallengeByFirebaseId(key) == null) {
+                            val challenge: Challenge? = data.getValue(Challenge::class.java)
+                            if (challenge?.firebaseId?.isEmpty()!!) {
+                                Log.i("iD", "EMPTY")
+                                challenge.firebaseId = challenge.id
+                            }
+                            Log.i("CHALLENGE IS", "The challenge is: $challenge")
+                        }
                     }
-                    Log.i("VALUES FB", "keys: $keys")
                 }
-
             })
-
-
-            val id = UUID.randomUUID()
-            Log.i("ID", id.toString())
-
         }
 
         sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)

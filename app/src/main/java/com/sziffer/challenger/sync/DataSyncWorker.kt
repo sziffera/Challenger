@@ -34,7 +34,7 @@ class DataSyncWorker(private val appContext: Context, workerParams: WorkerParame
                         success = false
                     }
                 } else {
-                    val challenge = dbHelper.getChallenge(item.key.toInt())
+                    val challenge = dbHelper.getChallengeByFirebaseId(item.key)
                     if (challenge != null) {
                         mRef.child(item.key).setValue(challenge).addOnFailureListener {
                             success = false

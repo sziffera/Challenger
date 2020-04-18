@@ -69,7 +69,7 @@ class AllChallengeActivity : AppCompatActivity() {
 
                 challenges.removeAt(pos)
                 recyclerView.adapter?.notifyItemRemoved(pos)
-                updateSharedPrefForSync(applicationContext, challenge.id, KEY_DELETE)
+                updateSharedPrefForSync(applicationContext, challenge.firebaseId, KEY_DELETE)
                 dbHelper.deleteChallenge(challenge.id)
             }
 

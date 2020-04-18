@@ -17,14 +17,13 @@
     <string name="start">Start</string>
     <string name="location_updated">location updated</string>
     <string name="remove_location_updates">Stop</string>
-    <string name="launch_activity">Launch activity</string>
+    <string name="launch_activity" translatable="false">Launch activity</string>
     <string name="title_activity_maps">Map</string>
     <string name="pause">Pause</string>
-    <string name="_0_0_km_h">0.0 km/h</string>
-    <string name="_0_0_km">0.0 km</string>
+    <string name="_0_0_km_h" translatable="false">0.0 km/h</string>
+    <string name="_0_0_km" translatable="false">0.0 km</string>
     <string name="save">save</string>
-    <string name="add_a_name">Add a name</string>
-    <string name="_00_00">00:00</string>
+    <string name="_00_00" translatable="false">00:00</string>
     <string name="running">running</string>
     <string name="name">Name</string>
     <string name="distance">distance</string>
@@ -32,31 +31,31 @@
     <string name="duration">duration</string>
     <string name="max_speed">max Speed</string>
     <string name="show_more">show more</string>
-    <string name="km">km</string>
-    <string name="km_h">km/h</string>
+    <string name="km" translatable="false">km</string>
+    <string name="km_h" translatable="false">km/h</string>
     <string name="challenge_recording">Challenge Recording</string>
-    <string name="_1_minute">+1 minute</string>
+    <string name="_1_minute" translatable="false">+1 minute</string>
     <string name="finish">Finish</string>
     <string name="update">Update</string>
     <string name="update_challenge">Update challenge</string>
     <string name="challenge_this_activity">Challenge this activity</string>
     <string name="hi_user">Hi user!</string>
-    <string name="_0">0</string>
+    <string name="_0" translatable="false">0</string>
     <string name="total_km">Total km</string>
-    <string name="profile_icon">profile icon</string>
+    <string name="profile_icon" translatable="false">profile icon</string>
     <string name="cycling">cycling</string>
     <string name="choose_an_activity">choose an activity:</string>
-    <string name="activity_type">activity type</string>
+    <string name="activity_type" translatable="false">activity type</string>
     <string name="details">details</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="forgot_password_2">Forgot password</string>
     <string name="reset_password">Reset password</string>
     <string name="sign_out">Sign-out</string>
-    <string name="settings_icon">settings icon</string>
+    <string name="settings_icon" translatable="false">settings icon</string>
     <string name="update_your_profile">Update your profile</string>
     <string name="update_profile">Update profile</string>
     <string name="avg_pace">avg pace</string>
-    <string name="_0_00_min_km">0:00 min/km</string>
+    <string name="_0_00_min_km" translatable="false">0:00 min/km</string>
     <string name="elevation_gained">elevation gained</string>
     <string name="elevetion_lost">elevetion lost</string>
     <string name="show_charts">show charts</string>
@@ -64,12 +63,13 @@
         <item>cycling</item>
         <item>running</item>
     </string-array>
-    <string name="title_activity_chart_details">ChartDetailsActivity</string>
+    <string name="title_activity_chart_details" translatable="false">ChartDetailsActivity</string>
     <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_dashboard" translatable="false">Dashboard</string>
+    <string name="title_notifications" translatable="false">Notifications</string>
     <string name="map">Map</string>
     <string name="table">Table</string>
     <string name="chart">Chart</string>
     <string name="auto_pause">Auto pause</string>
+    <string name="add_a_name">Add a name</string>
 </resources>
