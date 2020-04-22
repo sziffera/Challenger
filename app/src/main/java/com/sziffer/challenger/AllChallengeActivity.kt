@@ -29,6 +29,7 @@ class AllChallengeActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.allChallengeRecyclerView)
         dbHelper = ChallengeDbHelper(this)
         challenges = dbHelper.getAllChallenges()
+        challenges.reverse()
 
         profileButton.setOnClickListener {
             startActivity(Intent(this, UserProfileActivity::class.java))

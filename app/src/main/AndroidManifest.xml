@@ -26,10 +26,8 @@
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MenuDemoActivity"></activity>
-        <activity
-            android:name=".ChartDetailsActivity"
-            android:label="@string/title_activity_chart_details"></activity>
+        <activity android:name=".MenuDemoActivity" />
+
         <activity android:name=".ChartsActivity" />
         <activity android:name=".UserSettingsActivity" />
         <activity android:name=".ForgotPasswordActivity" />

@@ -221,7 +221,7 @@ class LocationUpdatesService : Service() {
                         //always false if auto pause is off
                         if (!zeroSpeed) {
 
-                            if (threadCounter % 10 == 0 && threadCounter > 0) {
+                            if (threadCounter % 60 == 0 && threadCounter > 0) {
                                 textToSpeech.speak(
                                     "The distance is" + getStringFromNumber(
                                         1,

@@ -10,11 +10,12 @@
 
     <TextView
         android:id="@+id/chooseChallenge"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="64dp"
-        android:layout_marginEnd="12dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="74dp"
+        android:layout_marginEnd="32dp"
+        android:gravity="center"
         android:text="@string/choose_a_challenge"
         android:textAllCaps="true"
         android:textColor="@android:color/white"
@@ -28,11 +29,12 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="12dp"
         android:layout_marginBottom="5dp"
+        android:visibility="visible"
         android:background="@color/colorLightOpacity"
-        android:padding="15dp"
+        android:padding="5dp"
         app:layout_constraintBottom_toTopOf="@+id/showMoreButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,6 +47,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/show_more"
+
         android:background="@android:color/transparent"
         app:layout_constraintBottom_toTopOf="@id/createChallengeButton"
         app:layout_constraintEnd_toEndOf="parent"
@@ -95,14 +98,50 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_account_circle_24px" />
 
+    <ImageView
+        android:id="@+id/emptyImageView"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:visibility="gone"
+        android:layout_marginBottom="50dp"
+        app:layout_constraintBottom_toTopOf="@+id/showMoreButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/bikerwithmountain" />
+
+    <TextView
+        android:id="@+id/takeATourTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="45dp"
+        android:layout_marginTop="45dp"
+        android:gravity="center"
+        android:visibility="gone"
+        android:textAllCaps="true"
+        android:textSize="25sp"
+        android:layout_marginEnd="32dp"
+        android:text="@string/or_take_a_tour_inside_the_app_at_first"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/emptyImageView" />
+
     <Button
-        android:id="@+id/testButton"
+        android:id="@+id/takeATourButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="11dp"
-        android:layout_marginEnd="37dp"
-        android:text="Button"
-        app:layout_constraintEnd_toStartOf="@+id/showMoreButton"
-        app:layout_constraintTop_toBottomOf="@+id/recyclerView" />
+        android:layout_marginTop="8dp"
+        android:background="@drawable/round_edittext"
+        android:paddingHorizontal="10dp"
+        android:text="@string/take_a_tour"
+        android:backgroundTint="#DCDCDC"
+        android:textColor="@color/colorAccent"
+        android:textSize="17sp"
+
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/takeATourTextView" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

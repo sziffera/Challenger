@@ -9,6 +9,7 @@ import kotlinx.android.parcel.Parcelize
 data class Challenge(
     val id: String = "",
     var firebaseId: String = "",
+    val date: String = "",
     var name: String = "",
     var type: String = "",
     var dst: Double = 0.0,

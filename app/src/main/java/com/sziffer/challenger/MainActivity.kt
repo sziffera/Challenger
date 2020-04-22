@@ -8,45 +8,27 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.text.format.DateUtils
-import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.firebase.ui.database.FirebaseRecyclerAdapter
-import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.google.android.gms.maps.MapView
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
 import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var mAuth: FirebaseAuth
-    private lateinit var userRef: DatabaseReference
-    private lateinit var challengeReference: DatabaseReference
-
     private lateinit var sharedPreferences: SharedPreferences
-    private  var uid: String? = null
-
+    private var dbHelper: ChallengeDbHelper? = null
     private lateinit var newChallengeButton: Button
     private lateinit var showMoreChallengeButton: Button
     private lateinit var recordActivityButton: Button
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: FirebaseRecyclerAdapter<Challenge, UserViewHolder>
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,8 +36,6 @@ class MainActivity : AppCompatActivity() {
 
         if (!checkPermissions())
             permissionRequest()
-
-        mAuth = FirebaseAuth.getInstance()
 
         startDataDownloaderWorkManager(applicationContext)
 
@@ -69,31 +49,6 @@ class MainActivity : AppCompatActivity() {
             } catch (ignored: Exception) {
             }
         }).start()
-
-        testButton.setOnClickListener {
-            val dbHelper = ChallengeDbHelper(this)
-            FirebaseManager.currentUsersChallenges?.addListenerForSingleValueEvent(object :
-                ValueEventListener {
-                override fun onCancelled(p0: DatabaseError) {
-                    //Log.e(this@DataDownloaderWorker::class.java.simpleName, p0.details)
-                }
-
-                override fun onDataChange(p0: DataSnapshot) {
-
-                    for (data in p0.children) {
-                        val key = data.key.toString()
-                        if (dbHelper.getChallengeByFirebaseId(key) == null) {
-                            val challenge: Challenge? = data.getValue(Challenge::class.java)
-                            if (challenge?.firebaseId?.isEmpty()!!) {
-                                Log.i("iD", "EMPTY")
-                                challenge.firebaseId = challenge.id
-                            }
-                            Log.i("CHALLENGE IS", "The challenge is: $challenge")
-                        }
-                    }
-                }
-            })
-        }
 
         sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
 
@@ -113,6 +68,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        takeATourButton.setOnClickListener {
+            Toast.makeText(this, "This feature is coming soon!", Toast.LENGTH_LONG).show()
+        }
+
         createChallengeButton.setOnClickListener {
             startActivity(Intent(this, CreateChallengeActivity::class.java))
         }
@@ -125,84 +84,44 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-
-        Log.i("ID", sharedPreferences.getString(FINAL_USER_ID,"").toString())
     }
 
     override fun onStart() {
         super.onStart()
-        setUpRecyclerView()
+        setUpView()
 
     }
 
-    private fun setUpRecyclerView() {
+    private fun setUpView() {
+        dbHelper = ChallengeDbHelper(this)
+        val list = dbHelper?.getAllChallenges()
+        list!!.reverse()
+        list.clear()
+        if (list.isEmpty()) {
+            chooseChallenge.text = getText(R.string.it_s_empty_here_let_s_do_some_sports)
+            recyclerView.visibility = View.INVISIBLE
+            takeATourTextView.visibility = View.VISIBLE
+            emptyImageView.visibility = View.VISIBLE
+            takeATourButton.visibility = View.VISIBLE
+            showMoreChallengeButton.visibility = View.INVISIBLE
+        }
 
-        //TODO(make available offline)
-
-        if (FirebaseManager.publicChallenges == null) return
-
-        val options: FirebaseRecyclerOptions<Challenge> =
-            FirebaseRecyclerOptions.Builder<Challenge>()
-                .setQuery(FirebaseManager.publicChallenges!!, Challenge::class.java)
-                .build()
-
-        adapter =
-            object :
-                FirebaseRecyclerAdapter<Challenge,UserViewHolder>(options) {
-                override fun onBindViewHolder(
-                    holder: UserViewHolder,
-                    position: Int,
-                    model: Challenge
-                ) {
-                    holder.distance.text =
-                        getString(R.string.distance) + ": " + getStringFromNumber(
-                            1,
-                            model.dst
-                        ) + " km"
-                    holder.duration.text =
-                        getString(R.string.duration) + ": " + DateUtils.formatElapsedTime(model.dur)
-
-                    val image = if (model.type == "cycling") {
-                        R.drawable.cycling
-                    } else
-                        R.drawable.running
-
-                    holder.type.setImageResource(image)
-                    holder.name.text = model.name
-                    holder.avg.text = getString(R.string.avgspeed) + ": " + getStringFromNumber(
-                        1,
-                        model.avg
-                    ) + " km/h"
-
-                }
-
-                override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
-                    val context = parent.context
-                    val inflater = LayoutInflater.from(context)
-                    val v: View =
-                        inflater.inflate(R.layout.challange_item, parent, false)
-                    return UserViewHolder(v)
-                }
+        with(recyclerView) {
+            adapter = ChallengeRecyclerViewAdapter(list, this@MainActivity)
+            addItemDecoration(
+                DividerItemDecoration(
+                    recyclerView.context,
+                    DividerItemDecoration.VERTICAL
+                )
+            )
             }
 
-        recyclerView.adapter = adapter
-        adapter.startListening()
     }
 
     override fun onStop() {
+        dbHelper?.close()
+        dbHelper = null
         super.onStop()
-        adapter.stopListening()
-    }
-
-    inner class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-        val distance: TextView = itemView.findViewById(R.id.challengeDistanceText)
-        val duration: TextView = itemView.findViewById(R.id.challengeDurationText)
-        val type: ImageView = itemView.findViewById(R.id.challengeTypeImageView)
-        val name: TextView = itemView.findViewById(R.id.challengeNameTextView)
-        val avg: TextView = itemView.findViewById(R.id.avgSpeedText)
-
-
     }
 
     private fun permissionRequest() {
@@ -294,10 +213,6 @@ class MainActivity : AppCompatActivity() {
         const val UID_SHARED_PREF = "sharedPrefUid"
         //get unregistered user id
         const val NOT_REGISTERED = "registered"
-        //get users list from firebase
-        private const val USERS_DATA = "users"
-        //get public challenges from firebase
-        private const val CHALLENGES_DATA = "challenges"
     }
 
 }

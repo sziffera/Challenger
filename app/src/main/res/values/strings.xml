@@ -72,4 +72,8 @@
     <string name="chart">Chart</string>
     <string name="auto_pause">Auto pause</string>
     <string name="add_a_name">Add a name</string>
+    <string name="it_s_empty_here_let_s_do_some_sports">It\'s empty here, let\'s do some sports!</string>
+    <string name="no_date_added">No date added</string>
+    <string name="or_take_a_tour_inside_the_app_at_first">Or take a tour inside the app at first</string>
+    <string name="take_a_tour">Take a tour</string>
 </resources>

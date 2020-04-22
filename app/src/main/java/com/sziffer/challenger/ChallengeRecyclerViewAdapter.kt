@@ -31,6 +31,7 @@ class ChallengeRecyclerViewAdapter(
         val duration: TextView = itemView.findViewById(R.id.challengeDurationText)
         val avgSpeed: TextView = itemView.findViewById(R.id.avgSpeedText)
         val name: TextView = itemView.findViewById(R.id.challengeNameTextView)
+        val date: TextView = itemView.findViewById(R.id.dateTextView)
         override fun onClick(v: View) {
             item.startAnimation(AlphaAnimation(1f, 0.8f))
             recyclerViewOnClickListener.itemClicked(itemView, this.layoutPosition)
@@ -66,7 +67,7 @@ class ChallengeRecyclerViewAdapter(
         val challenge = challenges[position]
         with(holder) {
             name.text = challenge.name
-            val image = if (challenge.type == "cycling") {
+            val image = if (challenge.type == mContext.getString(R.string.cycling)) {
                 R.drawable.cycling
             } else
                 R.drawable.running
@@ -84,7 +85,7 @@ class ChallengeRecyclerViewAdapter(
                     1,
                     challenge.avg
                 ) + " km/h"
-
+            date.text = challenge.date
 
         }
     }

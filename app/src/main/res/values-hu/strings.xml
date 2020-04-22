@@ -8,7 +8,7 @@
     <string name="welcome_to_challenger">Üdvözlünk a Challengerben</string>
     <string name="sign_in_or_create_an_account">Jelentkezz be vagy regisztrálj</string>
     <string name="create_an_account">Regisztrálj</string>
-    <string name="stop">Stop</string>
+    <string name="stop">Leállítás</string>
     <string name="skip">Kihagyás</string>
     <string name="username">felhasználónév</string>
     <string name="record_activity">Sportolás felvétel</string>
@@ -26,7 +26,7 @@
     <string name="name">Név</string>
     <string name="distance">Távolság</string>
     <string name="avgspeed">Átlagsebesség</string>
-    <string name="duration">Távolság</string>
+    <string name="duration">Időtartam</string>
     <string name="max_speed">Max sebesség</string>
     <string name="show_more">Mutass többet</string>
     <string name="challenge_recording">Kihívás rögzítés</string>

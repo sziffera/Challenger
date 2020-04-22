@@ -38,6 +38,9 @@ import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.LocationUpdatesService.LocalBinder
 import com.sziffer.challenger.R.*
 import kotlinx.android.synthetic.main.activity_challenge_recorder.*
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.math.absoluteValue
 
@@ -353,6 +356,18 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         } else {
 
             if (gpsService != null) {
+                val currentDate: String
+                currentDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val current = LocalDateTime.now()
+                    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
+                    current.format(formatter)
+
+                } else {
+                    val date = Date();
+                    val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
+                    formatter.format(date)
+
+                }
                 val gson = Gson()
                 val myLocationArrayString = gson.toJson(gpsService?.myRoute)
                 val duration: Long = gpsService!!.durationHelper.div(1000)
@@ -364,6 +379,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                         Challenge(
                             "",
                             UUID.randomUUID().toString(),
+                            currentDate,
                             "",
                             activityType.toString(),
                             distance,
