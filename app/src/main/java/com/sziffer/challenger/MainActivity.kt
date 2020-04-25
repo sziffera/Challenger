@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
@@ -17,6 +18,9 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.maps.MapView
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -51,6 +55,24 @@ class MainActivity : AppCompatActivity() {
         }).start()
 
         sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
+
+        if (FirebaseManager.isUserValid) {
+
+            FirebaseManager.currentUserRef?.child("username")?.addValueEventListener(object :
+                ValueEventListener {
+                override fun onCancelled(p0: DatabaseError) {
+                }
+
+                override fun onDataChange(p0: DataSnapshot) {
+                    Log.i("FIREBASE", p0.toString())
+                    val name = p0.getValue(String::class.java) as String
+                    heyUserTextView.text = "Hey, " + name + "!"
+                }
+            })
+
+
+        } else
+            heyUserTextView.visibility = View.GONE
 
         recordActivityButton = findViewById(R.id.recordActivityButton)
         showMoreChallengeButton = findViewById(R.id.showMoreButton)
@@ -96,7 +118,7 @@ class MainActivity : AppCompatActivity() {
         dbHelper = ChallengeDbHelper(this)
         val list = dbHelper?.getAllChallenges()
         list!!.reverse()
-        list.clear()
+
         if (list.isEmpty()) {
             chooseChallenge.text = getText(R.string.it_s_empty_here_let_s_do_some_sports)
             recyclerView.visibility = View.INVISIBLE

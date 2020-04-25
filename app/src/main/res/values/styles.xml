@@ -47,4 +47,22 @@
         <item name="android:textColorPrimary">@android:color/white</item>
     </style>
 
+    <!-- Theme for the voice coach chooser dialog -->
+    <style name="VoiceCoachDialog" parent="Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="buttonBarNeutralButtonStyle">@style/NeutralButtonStyle</item>
+        <item name="android:windowTitleStyle">@style/DialogTitle</item>
+        <item name="android:windowBackground">@color/colorMinus</item>
+        <item name="android:colorAccent">#FFFFFF</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+    </style>
+
+    <style name="VoiceCoachDialogTitle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="textAllCaps">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
+
 </resources>

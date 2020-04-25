@@ -138,6 +138,18 @@
         android:textColor="@android:color/white" />
 
     <Button
+        android:id="@+id/voiceCoachSetUpButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:drawableStart="@drawable/ic_settings_voice_24dp"
+        android:background="@android:color/transparent"
+        android:textSize="14sp"
+        android:textColor="@color/colorMinus"
+        android:paddingHorizontal="10dp"
+        android:text="@string/set_up_voice_coach" />
+
+    <Button
         android:id="@+id/firstStartButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

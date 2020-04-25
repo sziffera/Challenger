@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.text.format.DateUtils
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -66,6 +67,12 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.i(TAG, "$UPDATE is $it")
         }
 
+        discardButton.setOnClickListener {
+            showDiscardAlertDialog()
+            discardChallenge()
+            startMainActivity()
+        }
+
         //can be null
         previousChallenge = intent.getParcelableExtra(PREVIOUS_CHALLENGE) as Challenge?
 
@@ -83,7 +90,9 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         when {
+            //the user chose a Challenge to do it better, and wants to start recording
             isItAChallenge -> {
+                discardButton.visibility = View.GONE
                 saveStartButton.text = getString(R.string.challenge_this_activity)
                 saveStartButton.setOnClickListener {
                     startChallenge()
@@ -92,6 +101,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 challengeNameEditText.setText(challenge.name.toUpperCase())
 
             }
+            //the user finished recording a challenged activity, update data with new values
             update -> {
                 saveStartButton.text = getString(R.string.update_challenge)
                 challengeNameEditText.inputType = InputType.TYPE_NULL
@@ -101,6 +111,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     updateChallenge()
                 }
             }
+            //this is just a normal recorded challenge
             else -> {
                 saveStartButton.setOnClickListener {
                     saveChallenge()
@@ -117,13 +128,14 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Log.i(TAG, "onMapReady ${System.currentTimeMillis() - start}ms")
         mMap = p0
-
+        //TODO(cleaning and optimizing the code)
         val builder = LatLngBounds.builder()
         val fetchData = System.currentTimeMillis()
         var all = 0.0
         var temp = 1
         val alts: ArrayList<Double> = ArrayList()
         var tmpDst = 0f
+        Log.i(TAG, "the last distance is: ${route!![route!!.size - 1].distance}km")
         if (route != null) {
             for (item in route!!) {
 
@@ -210,12 +222,16 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun updateChallenge() {
 
+        //we have a saved new challenge, and the previous one
         if (previousChallenge != null) {
 
             challenge.name = previousChallenge!!.name
+            challenge.firebaseId = previousChallenge!!.firebaseId
             dbHelper.updateChallenge(previousChallenge!!.id.toInt(), challenge)
             updateSharedPrefForSync(applicationContext, previousChallenge!!.firebaseId, KEY_UPLOAD)
-
+            dbHelper.deleteChallenge(challenge.id).also {
+                Log.i(TAG, "the delete bool in update is: $it")
+            }
 
             Toast.makeText(this, "Challenge updated successfully!", Toast.LENGTH_SHORT).show()
         } else {
@@ -231,9 +247,14 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             return
         }
         challenge.name = challengeNameEditText.text.toString()
+
+        dbHelper.updateChallenge(challenge.id.toInt(), challenge)
+        /*
         val id = dbHelper.addChallenge(challenge).also {
             Log.i(TAG, "the id of the inserted item is: $it")
         }
+         */
+
         updateSharedPrefForSync(applicationContext, challenge.firebaseId, KEY_UPLOAD)
 
         Toast.makeText(this, "Challenge saved successfully", Toast.LENGTH_SHORT).show()
@@ -270,6 +291,16 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             maxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
             val avgPace = dur.div(dst)
             avgPaceTextView.text = DateUtils.formatElapsedTime(avgPace.toLong()) + " min/km"
+        }
+    }
+
+    private fun showDiscardAlertDialog() {
+        //TODO(not implemented)
+    }
+
+    private fun discardChallenge() {
+        val ok = dbHelper.deleteChallenge(challenge.id).also {
+            Log.i(TAG, "delete success is: $it")
         }
     }
 

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.location.Location
+import android.media.AudioManager
 import android.os.*
 import android.speech.tts.TextToSpeech
 import android.text.format.DateUtils
@@ -17,6 +18,7 @@ import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.absoluteValue
 
 
 class LocationUpdatesService : Service() {
@@ -29,6 +31,7 @@ class LocationUpdatesService : Service() {
     private var mLocationCallback: LocationCallback? = null
     private var mServiceHandler: Handler? = null
     private lateinit var builder: NotificationCompat.Builder
+    private lateinit var audioManager: AudioManager
 
     /** the difference in case of challenge in ms */
     private var difference: Long = 0
@@ -75,12 +78,18 @@ class LocationUpdatesService : Service() {
     var distance: Float = 0.0f
         private set
 
+    /** helper variable for voice coach */
+    private var distanceForVoiceCoach: Float = 0f
+
     /** in ms */
     var durationHelper: Long = 0
         private set
 
     /** helps calculating the duration */
     private var start: Long = 0
+
+    /** helper for voice coach and update difference method */
+    private var threadCounter = 0
 
     override fun onCreate() {
 
@@ -95,6 +104,11 @@ class LocationUpdatesService : Service() {
                 }
             }
         })
+
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+
+        distanceForVoiceCoach = ChallengeRecorderActivity.numberForVoiceCoach.toFloat()
 
         val sharedPreferences =
             getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)
@@ -198,7 +212,6 @@ class LocationUpdatesService : Service() {
 
     //region location handling
 
-
     /**
      * Requesting location updates from the FusedLocationProviderClient.
      * Starts a new thread as well to send broadcast to the RecorderActivity in every sec.
@@ -206,47 +219,9 @@ class LocationUpdatesService : Service() {
      */
     fun requestLocationUpdates() {
 
-
         start = System.currentTimeMillis()
         timerIsRunning = true
-        var threadCounter = 0
-
-        object : Thread() {
-            override fun run() {
-                while (timerIsRunning) {
-                    try {
-
-                        //TODO(deprecated)
-                        //TODO(refresh and speak based on settings)
-                        //always false if auto pause is off
-                        if (!zeroSpeed) {
-
-                            if (threadCounter % 60 == 0 && threadCounter > 0) {
-                                textToSpeech.speak(
-                                    "The distance is" + getStringFromNumber(
-                                        1,
-                                        distance / 1000
-                                    ) + "kilometres", TextToSpeech.QUEUE_FLUSH, null
-                                )
-
-                                if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge) {
-                                    updateDifference()
-                                }
-
-                            }
-                            threadCounter++
-                            updateUI()
-                        }
-
-                        sleep(1000)
-                    } catch (e: InterruptedException) {
-                        Log.i(TAG, "thread interrupted")
-                    }
-                }
-                Log.i(TAG, "thread stopped")
-            }
-        }.start()
-
+        initAndStartUpdaterThread()
 
         Log.i(TAG, "Requesting location updates")
         setRequestingLocationUpdates(this, true)
@@ -318,12 +293,22 @@ class LocationUpdatesService : Service() {
      */
     private fun onNewLocation(location: Location) {
 
-        Log.i(TAG, "new location got")
-        if (mLocation != null) {
-            val tempDistance = location.distanceTo(mLocation)
 
-            //cycling faster than 90km/h is unlikely
-            if (tempDistance < 25) {
+        if (mLocation != null) {
+
+            val tempDistance = location.distanceTo(mLocation).also {
+                Log.i(TAG, "temp distance is: $it")
+            }
+
+
+
+            if (tempDistance <= 0) {
+                //this location is unnecessary
+                return
+            }
+
+            //this filters location jumping
+            if (tempDistance < 100) {
                 if (location.hasSpeed()) {
                     if (maxSpeed < location.speed)
                         maxSpeed = location.speed
@@ -332,15 +317,15 @@ class LocationUpdatesService : Service() {
                     if (ChallengeRecorderActivity.autoPause) {
                         // for auto pause, sets the bool
                         if (location.speed < MINIMUM_SPEED) {
-                            Log.i(TAG, "zeroSpeed is: $zeroSpeed")
+
                             //if the user has just stopped
                             if (!zeroSpeed) {
                                 zeroSpeedPauseTime = System.currentTimeMillis()
                             }
                             zeroSpeed = true
                         } else {
-                            Log.i(TAG, "zeroSpeed is in else: $zeroSpeed")
-                            //the user's speed was zero
+
+                            //the user's speed was zero, removing the elapsed time
                             if (zeroSpeed) {
                                 durationHelper -= System.currentTimeMillis() - zeroSpeedPauseTime
                             }
@@ -349,6 +334,7 @@ class LocationUpdatesService : Service() {
                     }
                 }
 
+                //adding new values if zeroSpeed is false (this is false by default)
                 if (!zeroSpeed) {
                     distance += tempDistance
                     currentSpeed = location.speed
@@ -373,16 +359,12 @@ class LocationUpdatesService : Service() {
         mLocation = location
     }
 
-    /** stops the handlerThread and the service */
+    /** stops the service */
     fun finishAndSaveRoute() {
         stopSelf()
         removeLocationUpdates()
     }
 
-    private fun filterLocation(location: Location?): Boolean {
-        //TODO(not implemented)
-        return true
-    }
 
     private fun createLocationRequest() {
         mLocationRequest = LocationRequest().apply {
@@ -393,30 +375,151 @@ class LocationUpdatesService : Service() {
     }
     //endregion location handling
 
-    inner class LocalBinder : Binder() {
-        val service: LocationUpdatesService
-            get() = this@LocationUpdatesService
+    private fun initAndStartUpdaterThread() {
+        object : Thread() {
+
+            override fun run() {
+                while (timerIsRunning) {
+                    try {
+
+                        //TODO(request audio focus)
+                        //always false if auto pause is off
+                        if (!zeroSpeed) {
+
+                            if (ChallengeRecorderActivity.isVoiceCoachEnabled
+                                && threadCounter > 0
+                            ) {
+
+
+                                if (ChallengeRecorderActivity.voiceCoachIsBasedOnDistance) {
+                                    //we reached the desired distance for voice coach
+                                    if (distanceForVoiceCoach <= distance) {
+
+                                        distanceForVoiceCoach += ChallengeRecorderActivity
+                                            .numberForVoiceCoach.toFloat()
+                                        startVoiceCoach()
+
+                                    }
+                                }
+
+                                if (ChallengeRecorderActivity.voiceCoachIsBasedOnDuration) {
+                                    if (threadCounter %
+                                        ChallengeRecorderActivity.numberForVoiceCoach == 0
+                                    ) {
+                                        startVoiceCoach()
+                                    }
+                                }
+
+                            }
+                            //updating difference in case of challenge in every 30 sec
+                            if (threadCounter % 30 == 0 && threadCounter > 0) {
+                                if (ChallengeRecorderActivity.challenge ||
+                                    ChallengeRecorderActivity.createdChallenge
+                                ) {
+                                    updateDifference()
+                                }
+                            }
+                            threadCounter++
+                            updateUI()
+                        }
+
+                        sleep(1000)
+                    } catch (e: InterruptedException) {
+                        Log.i(TAG, "thread interrupted")
+                    }
+                }
+                Log.i(TAG, "thread stopped")
+            }
+        }.start()
     }
 
     //region helper methods
 
-    /** handles the new altitude and updates the corrected altitude variable. */
-    //TODO(works, but too many points -> too high values)
+    private fun startVoiceCoach() {
+        val km: String = if (getStringFromNumber(1, distance.div(1000)).toDouble() == 1.0) {
+            "kilometer"
+        } else
+            "kilometres"
+
+        val milliseconds = System.currentTimeMillis() - start + durationHelper
+        var seconds = (milliseconds / 1000).toInt() % 60
+        var minutes = (milliseconds / (1000 * 60) % 60).toInt()
+        val hours = (milliseconds / (1000 * 60 * 60) % 24).toInt()
+
+        val hour: String =
+            if (hours == 1)
+                "hour"
+            else
+                "hours"
+        var min: String =
+            if (minutes == 1) {
+                "minute"
+            } else
+                "minutes"
+
+
+        var speak: String = "The distance is: " +
+                "${getStringFromNumber(1, distance.div(1000))} $km. The duration is:"
+
+        speak += if (hours == 0) {
+            " $minutes $min."
+        } else
+            " $hours $hour and $minutes $min."
+
+        updateDifference()
+
+        val diffIsMinus: String =
+            if (difference < 0)
+                "minus"
+            else
+                ""
+
+        val diffTmp = difference.absoluteValue
+        seconds = (diffTmp / 1000).toInt() % 60
+        minutes = (diffTmp / (1000 * 60) % 60).toInt()
+
+        min =
+            if (minutes % 1 == 0) {
+                "minute"
+            } else
+                "minutes"
+        val sec: String =
+            if (seconds == 1)
+                "second"
+            else
+                "seconds"
+
+
+
+        if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge) {
+            speak += "The difference is: $diffIsMinus"
+            speak += if (minutes == 0)
+                " $seconds $sec "
+            else
+                " $minutes $min and $seconds $sec "
+        }
+
+        textToSpeech.speak(speak, TextToSpeech.QUEUE_FLUSH, null, null)
+    }
+
+    /**
+     * handles the new altitude and updates the corrected altitude variable
+     * using moving average. In this way, unreal jumping is corrected.
+     */
+    //TODO(works, but too many points -> too high elevations)
     private fun handleNewAltitude(altitude: Double) {
+
         if (altitudes.size == ALTITUDES_SIZE) {
             altitudes.removeAt(0)
             altitudes.add(altitude)
         } else {
             altitudes.add(altitude)
         }
-
         var sum = 0.0
         for (item in altitudes) {
             sum += item
         }
-
         correctedAltitude = sum.div(altitudes.size)
-
     }
 
     /**
@@ -436,15 +539,10 @@ class LocationUpdatesService : Service() {
         if (ChallengeRecorderActivity.createdChallenge) {
 
             var currentTime = System.currentTimeMillis() - start + durationHelper
-
             currentTime = currentTime.div(1000)
-
             val desiredDistance = ChallengeRecorderActivity.avgSpeed.times(currentTime)
-
             val distanceDifference = (distance - desiredDistance)
-
             val avg = distance.div(currentTime)
-
             difference = distanceDifference.div(currentSpeed / 1000).toLong()
 
         } else {
@@ -501,12 +599,6 @@ class LocationUpdatesService : Service() {
                 R.drawable.ic_play_circle_outline_24px, getString(R.string.launch_activity),
                 activityPendingIntent
             )
-            .setLargeIcon(
-                BitmapFactory.decodeResource(
-                    this.resources,
-                    R.mipmap.ic_launcher_round
-                )
-            )
             .setContentText(getNotificationText())
             .setContentTitle(getString(R.string.challenge_recording))
             .setOngoing(true)
@@ -524,14 +616,18 @@ class LocationUpdatesService : Service() {
             builder.setChannelId(CHANNEL_ID)
             builder.setOngoing(true)
         }
+        if (ChallengeRecorderActivity.activityType == "running") {
+            builder.setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.color_running))
+        } else
+            builder.setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.color_cycling))
     }
 
     /** creates the notification with current data */
     private fun updateAndGetNotification(): Notification? {
         builder.setContentText(getNotificationText())
-                .setOngoing(true)
-                .setTicker(getNotificationText())
-                .setWhen(System.currentTimeMillis())
+            .setOngoing(true)
+            .setTicker(getNotificationText())
+            .setWhen(System.currentTimeMillis())
         return builder.build()
     }
 
@@ -548,6 +644,12 @@ class LocationUpdatesService : Service() {
     }
     //endregion notification
 
+
+    inner class LocalBinder : Binder() {
+        val service: LocationUpdatesService
+            get() = this@LocationUpdatesService
+    }
+
     companion object {
 
         private const val PACKAGE_NAME =
@@ -555,7 +657,6 @@ class LocationUpdatesService : Service() {
         private val TAG = LocationUpdatesService::class.java.simpleName
 
         private const val CHANNEL_ID = "channel_01"
-        const val CHALLENGE_BROADCAST = "$PACKAGE_NAME.challengeBroadcast"
         const val ACTION_BROADCAST =
             "$PACKAGE_NAME.broadcast"
         const val DIFFERENCE = "difference"
@@ -568,11 +669,11 @@ class LocationUpdatesService : Service() {
                     ".started_from_notification"
 
         private var serviceIsRunningInForeground: Boolean = false
-        private const val ALTITUDES_SIZE = 10
+        private const val ALTITUDES_SIZE = 4
 
         /** minimum speed in m/s (approximately 2km/h) */
         private const val MINIMUM_SPEED: Double = 0.555555
-        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 2000
+        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 3000
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
         const val NOTIFICATION_ID = 12345678

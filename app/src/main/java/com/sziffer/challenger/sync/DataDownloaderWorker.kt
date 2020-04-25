@@ -14,11 +14,16 @@ import com.sziffer.challenger.FirebaseManager
 class DataDownloaderWorker(private val appContext: Context, workerParams: WorkerParameters) :
     Worker(appContext, workerParams) {
 
+    //TODO(use childeventvaluelistener)
+
     override fun doWork(): Result {
 
         val dbHelper = ChallengeDbHelper(appContext)
         var success = true
-        FirebaseManager.currentUsersChallenges?.addListenerForSingleValueEvent(object :
+
+        //TODO(use childEventValueListener)
+
+        FirebaseManager.currentUsersChallenges?.addValueEventListener(object :
             ValueEventListener {
             override fun onCancelled(p0: DatabaseError) {
                 success = false

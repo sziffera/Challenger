@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:background="@drawable/round_edittext"
+    android:layout_margin="12dp"
+    android:backgroundTint="@color/colorMinus"
+    android:orientation="vertical"
+    android:padding="5dp"
+    android:gravity="center"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/voice_coach_details"
+        android:background="@drawable/round_edittext"
+        android:backgroundTint="@color/colorLightOpacity"
+        android:paddingVertical="10dp"
+        android:paddingHorizontal="15dp"
+        android:textAllCaps="true"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="5dp"
+        android:gravity="center"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/title" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_margin="12dp"
+        android:layout_height="wrap_content"
+        android:text="Voice Coach"
+        android:background="@drawable/round_edittext"
+        android:backgroundTint="@color/colorLightOpacity"
+        android:textColor="#fff"
+        android:textAllCaps="true"
+        android:padding="5dp"
+        android:drawableStart="@drawable/ic_settings_voice_24dp"
+        android:drawableTint="@android:color/white"
+        android:textSize="25sp"
+        android:gravity="center"
+        android:layout_centerHorizontal="true" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:padding="10dp"
+        android:layout_marginHorizontal="12dp"
+        android:background="@drawable/round_edittext"
+        android:backgroundTint="@color/colorLightOpacity"
+        android:layout_height="300dp"
+        android:layout_below="@+id/description"
+        android:layout_gravity="center_horizontal" />
+
+
+</RelativeLayout>

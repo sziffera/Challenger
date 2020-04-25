@@ -76,4 +76,21 @@
     <string name="no_date_added">No date added</string>
     <string name="or_take_a_tour_inside_the_app_at_first">Or take a tour inside the app at first</string>
     <string name="take_a_tour">Take a tour</string>
+    <string name="discard">Discard</string>
+    <string name="choose_an_item">Choose an item</string>
+    <string name="set_up_voice_coach">set up voice coach</string>
+    <string name="voice_coach_details">You can choose here when the voice coache is telling you your activity details</string>
+    <string name="turn_off">Turn off</string>
+    <string name="minute">Minute</string>
+    <string-array name="voice_coach_items">
+        <item>1 km</item>
+        <item>3 km</item>
+        <item>5 km</item>
+        <item>10 km</item>
+        <item>1 minute</item>
+        <item>3 minutes</item>
+        <item>5 minutes</item>
+        <item>10 minutes</item>
+        <item>20 minutes</item>
+    </string-array>
 </resources>

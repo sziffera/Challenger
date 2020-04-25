@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 
 class ChallengeDbHelper(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
@@ -42,6 +43,7 @@ class ChallengeDbHelper(context: Context) :
             put(KEY_MAX_SPEED, challenge.mS)
             put(KEY_STRING_ROUTE, challenge.routeAsString)
         }
+        Log.i(TAG, "Challenge wiht id ${challenge.id} was added")
         return db.insert(DATABASE_NAME, null, contentValues)
     }
 
@@ -138,14 +140,14 @@ class ChallengeDbHelper(context: Context) :
         with(contentValues) {
             put(KEY_NAME, challenge.name)
             put(KEY_FIREBASE_ID, challenge.firebaseId)
-            put(KEY_DATE, challenge.firebaseId)
+            put(KEY_DATE, challenge.date)
             put(KEY_DISTANCE, challenge.dst)
             put(KEY_DURATION, challenge.dur)
             put(KEY_AVG_SPEED, challenge.avg)
             put(KEY_MAX_SPEED, challenge.mS)
             put(KEY_STRING_ROUTE, challenge.routeAsString)
         }
-
+        Log.i(TAG, "challenge with id: $id was updated")
         return db.update(DATABASE_NAME, contentValues, "$KEY_ID = ?", arrayOf(id.toString()))
     }
 

@@ -1,6 +1,7 @@
 package com.sziffer.challenger.sync
 
 import android.content.Context
+import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
@@ -34,7 +35,9 @@ class DataSyncWorker(private val appContext: Context, workerParams: WorkerParame
                         success = false
                     }
                 } else {
-                    val challenge = dbHelper.getChallengeByFirebaseId(item.key)
+                    val challenge = dbHelper.getChallengeByFirebaseId(item.key).also {
+                        Log.i(this::class.java.simpleName, "the uploading challenge is: $it")
+                    }
                     if (challenge != null) {
                         mRef.child(item.key).setValue(challenge).addOnFailureListener {
                             success = false

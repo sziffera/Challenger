@@ -303,6 +303,17 @@
 
 
     <Button
+        android:id="@+id/discardButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/round_edittext"
+        android:layout_marginHorizontal="12dp"
+        android:text="@string/discard"
+        android:layout_marginTop="8dp"
+        android:textSize="17sp"
+        android:textColor="@color/colorPrimary" />
+
+    <Button
         android:id="@+id/saveChallengeInDetailsButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
