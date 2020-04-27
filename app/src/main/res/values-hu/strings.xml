@@ -54,4 +54,14 @@
     <string name="table">Táblázat</string>
     <string name="chart">Diagram</string>
     <string name="auto_pause">Automatikus szünet</string>
+    <string name="discard">Elvetés</string>
+    <string name="minute">perc</string>
+    <string name="turn_off">Kikapcsol</string>
+    <string name="it_s_empty_here_let_s_do_some_sports">Nagy az üresség itt, menj és sportolj valamit!</string>
+    <string name="no_date_added">Nincs dátum</string>
+    <string name="or_take_a_tour_inside_the_app_at_first">Vagy tegyél egy túrát az alkalmazáson belül először</string>
+    <string name="take_a_tour">Bemutató indítása</string>
+    <string name="choose_an_item">Válassz egyet</string>
+    <string name="voice_coach_details">Itt be tudod állítani milyen gyakran mondja az alkalmazás a részleteket (angol hanggal)</string>
+    <string name="set_up_voice_coach">Hangbeállítások</string>
 </resources>

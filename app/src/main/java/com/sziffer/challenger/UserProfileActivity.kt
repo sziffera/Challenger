@@ -49,7 +49,7 @@ class UserProfileActivity : AppCompatActivity() {
         var running = 0.0
         for (item in list) {
 
-            if (item.type == "running") {
+            if (item.type == getString(R.string.running)) {
                 running += item.dst
             } else {
                 cycling += item.dst

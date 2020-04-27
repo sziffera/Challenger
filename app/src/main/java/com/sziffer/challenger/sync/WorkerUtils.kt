@@ -11,6 +11,7 @@ const val KEY_SYNC = "keySync"
 const val KEY_SYNC_DATA = "$KEY_SYNC.data"
 const val KEY_UPLOAD = "upload"
 const val KEY_DELETE = "delete"
+private const val DATA_DOWNLOADER_TAG = "com.sziffer.challenger.DataDownloader"
 
 private fun startWorkManager(context: Context) {
     val constraints = Constraints.Builder()
@@ -36,6 +37,7 @@ fun startDataDownloaderWorkManager(context: Context) {
         .build()
 
     val workRequest = OneTimeWorkRequestBuilder<DataDownloaderWorker>()
+        .addTag(DATA_DOWNLOADER_TAG)
         .setConstraints(constraints)
         .setBackoffCriteria(
             BackoffPolicy.LINEAR,
@@ -43,6 +45,7 @@ fun startDataDownloaderWorkManager(context: Context) {
             TimeUnit.MILLISECONDS
         )
         .build()
+    WorkManager.getInstance(context).cancelAllWorkByTag(DATA_DOWNLOADER_TAG)
     WorkManager.getInstance(context).enqueue(workRequest)
 }
 

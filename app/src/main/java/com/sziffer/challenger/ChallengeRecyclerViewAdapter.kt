@@ -50,7 +50,7 @@ class ChallengeRecyclerViewAdapter(
         return ViewHolder(itemView, object : RecyclerViewOnClickListener {
             override fun itemClicked(v: View, pos: Int) {
                 val intent = Intent(context, ChallengeDetailsActivity::class.java)
-                intent.putExtra(ChallengeDetailsActivity.CHALLENGE_OBJECT, challenges[pos])
+                intent.putExtra(ChallengeDetailsActivity.CHALLENGE_ID, challenges[pos].id.toLong())
                 intent.putExtra(ChallengeDetailsActivity.IS_IT_A_CHALLENGE, true)
                 context.startActivity(intent)
             }

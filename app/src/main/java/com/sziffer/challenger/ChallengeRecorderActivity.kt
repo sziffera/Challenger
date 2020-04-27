@@ -62,6 +62,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     private lateinit var buttonSharedPreferences: SharedPreferences
     private lateinit var voiceCoachCustomDialog: CustomListDialog
     private var mBound = false
+    private lateinit var dbHelper: ChallengeDbHelper
 
     private val activityDataReceiver: ActivityDataReceiver = ActivityDataReceiver()
 
@@ -86,6 +87,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         super.onCreate(savedInstanceState)
         setContentView(layout.activity_challenge_recorder)
 
+        dbHelper = ChallengeDbHelper(this)
 
         //TODO(not finished)
         Log.i(
@@ -128,7 +130,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 activityChooserChipGroup.visibility = View.GONE
                 chooseAnActivity.visibility = View.GONE
 
-                recordedChallenge = intent.getParcelableExtra(RECORDED_CHALLENGE)
+                val recordedChallengeId = intent.getIntExtra(RECORDED_CHALLENGE_ID, -1)
+                recordedChallenge = dbHelper.getChallenge(recordedChallengeId)
+
                 val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
                 val route =
                     Gson().fromJson<ArrayList<MyLocation>>(
@@ -346,8 +350,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
                 val myIntent = Intent(this, ChallengeDetailsActivity::class.java)
                     .putExtra(
-                        ChallengeDetailsActivity.CHALLENGE_OBJECT,
-                        dbHelper.getChallenge(challengeId.toInt()).also {
+                        ChallengeDetailsActivity.CHALLENGE_ID,
+                        challengeId.also {
                             Log.i(TAG, "the sent challenge is: $it")
                         }
                     )
@@ -357,7 +361,10 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     with(myIntent) {
                         putExtra(ChallengeDetailsActivity.UPDATE, true)
                         //putExtra(ChallengeDetailsActivity.CHALLENGE_ID, challengeId)
-                        putExtra(ChallengeDetailsActivity.PREVIOUS_CHALLENGE, recordedChallenge)
+                        putExtra(
+                            ChallengeDetailsActivity.PREVIOUS_CHALLENGE_ID,
+                            recordedChallenge!!.id.toLong()
+                        )
                     }
 
                 }
@@ -743,7 +750,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         private const val REQUEST = 200
         private const val REQUEST_CODE_BACKGROUND = 1545
         const val CHALLENGE = "challenge"
-        const val RECORDED_CHALLENGE = "recorded"
+        const val RECORDED_CHALLENGE_ID = "recorded"
         const val CREATED_CHALLENGE_INTENT = "createdChallenge"
         var createdChallenge: Boolean = false
             private set

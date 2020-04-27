@@ -7,6 +7,7 @@
          location permissions for the 'MyLocation' functionality.
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -58,13 +59,13 @@
         <service
             android:name=".LocationUpdatesService"
             android:enabled="true"
-            android:exported="true"
             android:foregroundServiceType="location" />
 
         <activity
             android:name=".ChallengeRecorderActivity"
             android:label="@string/title_activity_challenge_recorder"
             android:launchMode="singleTop" />
+
         <activity android:name=".ChallengeDetailsActivity" />
         <activity android:name=".CreateChallengeActivity" />
         <activity android:name=".AllChallengeActivity" />

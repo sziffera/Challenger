@@ -52,9 +52,12 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_challenge_details)
 
+        dbHelper = ChallengeDbHelper(this)
+
         start = System.currentTimeMillis()
 
-        challenge = intent.getParcelableExtra(CHALLENGE_OBJECT) as Challenge
+        val id = intent.getLongExtra(CHALLENGE_ID, 0)
+        challenge = dbHelper.getChallenge(id.toInt())!!
         Log.i("CHALLENGE DETAILS",challenge.toString())
 
         challengeNameEditText = findViewById(R.id.challengeDetailsNameEditText)
@@ -74,7 +77,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         //can be null
-        previousChallenge = intent.getParcelableExtra(PREVIOUS_CHALLENGE) as Challenge?
+        val previousChallengeId = intent.getLongExtra(PREVIOUS_CHALLENGE_ID, -1)
+        previousChallenge = dbHelper.getChallenge(previousChallengeId.toInt())
 
         showChartsButton.setOnClickListener {
             if (route == null) {
@@ -212,7 +216,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val intent = Intent(this, ChallengeRecorderActivity::class.java)
         intent.putExtra(ChallengeRecorderActivity.CHALLENGE, true)
-        intent.putExtra(ChallengeRecorderActivity.RECORDED_CHALLENGE, challenge)
+        intent.putExtra(ChallengeRecorderActivity.RECORDED_CHALLENGE_ID, challenge.id.toInt())
         ChallengeManager.isChallenge = true
         ChallengeManager.previousChallenge = challenge
         ChallengeManager.isUpdate = true
@@ -269,7 +273,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun initVariables() {
 
-        dbHelper = ChallengeDbHelper(this)
+
 
         avgSpeedTextView = findViewById(R.id.challengeDetailsAvgSpeedTextView)
         distanceTextView = findViewById(R.id.challengeDetailsDistanceTextView)
@@ -307,9 +311,9 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     companion object {
         private val TAG = this::class.java.simpleName
         private const val CHALLENGE_DETAILS = "challengeDetails"
-        const val CHALLENGE_OBJECT = "$CHALLENGE_DETAILS.object"
+        const val CHALLENGE_ID = "$CHALLENGE_DETAILS.id"
         const val IS_IT_A_CHALLENGE = "$CHALLENGE_DETAILS.isChallenge"
         const val UPDATE = "$CHALLENGE_DETAILS.update"
-        const val PREVIOUS_CHALLENGE = "$CHALLENGE_DETAILS.previousChallenge"
+        const val PREVIOUS_CHALLENGE_ID = "$CHALLENGE_DETAILS.previousChallengeId"
     }
 }

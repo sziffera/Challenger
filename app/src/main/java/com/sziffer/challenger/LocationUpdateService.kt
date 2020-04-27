@@ -7,9 +7,12 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.location.Location
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.*
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.text.format.DateUtils
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -21,7 +24,7 @@ import kotlin.collections.ArrayList
 import kotlin.math.absoluteValue
 
 
-class LocationUpdatesService : Service() {
+class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListener {
 
     private val mBinder: IBinder = LocalBinder()
     private var mChangingConfiguration = false
@@ -32,6 +35,11 @@ class LocationUpdatesService : Service() {
     private var mServiceHandler: Handler? = null
     private lateinit var builder: NotificationCompat.Builder
     private lateinit var audioManager: AudioManager
+    private lateinit var audioAttributes: AudioAttributes
+    private lateinit var audioFocusRequest: AudioFocusRequest
+
+    /** helps to restore the TTS in case of focus loss */
+    private var played = true
 
     /** the difference in case of challenge in ms */
     private var difference: Long = 0
@@ -91,22 +99,11 @@ class LocationUpdatesService : Service() {
     /** helper for voice coach and update difference method */
     private var threadCounter = 0
 
+    //region service lifecycle
     override fun onCreate() {
 
 
-        textToSpeech = TextToSpeech(this, TextToSpeech.OnInitListener {
-            if (it == TextToSpeech.SUCCESS) {
-                val result: Int = textToSpeech.setLanguage(Locale.US)
-                if (result == TextToSpeech.LANG_MISSING_DATA ||
-                    result == TextToSpeech.LANG_NOT_SUPPORTED
-                ) {
-                    Log.v(TAG, "Language is not available.")
-                }
-            }
-        })
-
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
+        initTextToSpeech()
 
         distanceForVoiceCoach = ChallengeRecorderActivity.numberForVoiceCoach.toFloat()
 
@@ -174,6 +171,7 @@ class LocationUpdatesService : Service() {
         textToSpeech.stop()
         textToSpeech.shutdown()
     }
+    //endregion service lifecycle
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -375,74 +373,82 @@ class LocationUpdatesService : Service() {
     }
     //endregion location handling
 
-    private fun initAndStartUpdaterThread() {
-        object : Thread() {
 
-            override fun run() {
-                while (timerIsRunning) {
-                    try {
+    //region voice coach
 
-                        //TODO(request audio focus)
-                        //always false if auto pause is off
-                        if (!zeroSpeed) {
+    private fun initTextToSpeech() {
 
-                            if (ChallengeRecorderActivity.isVoiceCoachEnabled
-                                && threadCounter > 0
-                            ) {
-
-
-                                if (ChallengeRecorderActivity.voiceCoachIsBasedOnDistance) {
-                                    //we reached the desired distance for voice coach
-                                    if (distanceForVoiceCoach <= distance) {
-
-                                        distanceForVoiceCoach += ChallengeRecorderActivity
-                                            .numberForVoiceCoach.toFloat()
-                                        startVoiceCoach()
-
-                                    }
-                                }
-
-                                if (ChallengeRecorderActivity.voiceCoachIsBasedOnDuration) {
-                                    if (threadCounter %
-                                        ChallengeRecorderActivity.numberForVoiceCoach == 0
-                                    ) {
-                                        startVoiceCoach()
-                                    }
-                                }
-
-                            }
-                            //updating difference in case of challenge in every 30 sec
-                            if (threadCounter % 30 == 0 && threadCounter > 0) {
-                                if (ChallengeRecorderActivity.challenge ||
-                                    ChallengeRecorderActivity.createdChallenge
-                                ) {
-                                    updateDifference()
-                                }
-                            }
-                            threadCounter++
-                            updateUI()
+        textToSpeech = TextToSpeech(this, TextToSpeech.OnInitListener {
+            if (it == TextToSpeech.SUCCESS) {
+                textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onDone(utteranceId: String?) {
+                        //TODO(ilyenkor lehet deprecatedet használni?)
+                        if (utteranceId == TTS_ID) {
+                            played = true
+                            Log.i(TAG, "TTS finished")
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                audioManager.abandonAudioFocusRequest(audioFocusRequest)
+                            } else
+                                audioManager.abandonAudioFocus(this@LocationUpdatesService)
                         }
-
-                        sleep(1000)
-                    } catch (e: InterruptedException) {
-                        Log.i(TAG, "thread interrupted")
                     }
+
+                    override fun onError(utteranceId: String?) {
+                        if (utteranceId == TTS_ID) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                audioManager.abandonAudioFocusRequest(audioFocusRequest)
+                            } else
+                                audioManager.abandonAudioFocus(this@LocationUpdatesService)
+                        }
+                    }
+
+                    override fun onStart(utteranceId: String?) {
+                        Log.i(TAG, "TTS started")
+                    }
+
+                })
+                val result: Int = textToSpeech.setLanguage(Locale.US)
+                if (result == TextToSpeech.LANG_MISSING_DATA ||
+                    result == TextToSpeech.LANG_NOT_SUPPORTED
+                ) {
+                    Log.v(TAG, "Language is not available.")
                 }
-                Log.i(TAG, "thread stopped")
             }
-        }.start()
+        })
+
+
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+            .build()
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest =
+                AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                    .setAudioAttributes(audioAttributes)
+                    .setAcceptsDelayedFocusGain(true)
+                    .setOnAudioFocusChangeListener(this)
+                    .build()
+        }
     }
 
-    //region helper methods
 
+    /**
+     * Initializing text for voice coach. This method converts the duration to hh:mm:ss
+     * and determines when to use plural or singular.
+     * Requests audio focus as well
+     */
     private fun startVoiceCoach() {
+
         val km: String = if (getStringFromNumber(1, distance.div(1000)).toDouble() == 1.0) {
             "kilometer"
         } else
             "kilometres"
 
         val milliseconds = System.currentTimeMillis() - start + durationHelper
-        var seconds = (milliseconds / 1000).toInt() % 60
+        val seconds: Int
         var minutes = (milliseconds / (1000 * 60) % 60).toInt()
         val hours = (milliseconds / (1000 * 60 * 60) % 24).toInt()
 
@@ -466,32 +472,31 @@ class LocationUpdatesService : Service() {
         } else
             " $hours $hour and $minutes $min."
 
-        updateDifference()
 
-        val diffIsMinus: String =
-            if (difference < 0)
-                "minus"
-            else
-                ""
-
-        val diffTmp = difference.absoluteValue
-        seconds = (diffTmp / 1000).toInt() % 60
-        minutes = (diffTmp / (1000 * 60) % 60).toInt()
-
-        min =
-            if (minutes % 1 == 0) {
-                "minute"
-            } else
-                "minutes"
-        val sec: String =
-            if (seconds == 1)
-                "second"
-            else
-                "seconds"
-
-
-
+        //adding difference to voice coach in case of challenge
         if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge) {
+            updateDifference()
+
+            val diffIsMinus: String =
+                if (difference < 0)
+                    "minus"
+                else
+                    ""
+
+            val diffTmp = difference.absoluteValue
+            seconds = (diffTmp / 1000).toInt() % 60
+            minutes = (diffTmp / (1000 * 60) % 60).toInt()
+
+            min =
+                if (minutes % 1 == 0) {
+                    "minute"
+                } else
+                    "minutes"
+            val sec: String =
+                if (seconds == 1)
+                    "second"
+                else
+                    "seconds"
             speak += "The difference is: $diffIsMinus"
             speak += if (minutes == 0)
                 " $seconds $sec "
@@ -499,8 +504,121 @@ class LocationUpdatesService : Service() {
                 " $minutes $min and $seconds $sec "
         }
 
-        textToSpeech.speak(speak, TextToSpeech.QUEUE_FLUSH, null, null)
+        val focusRequest: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioManager.requestAudioFocus(audioFocusRequest)
+        } else {
+            audioManager.requestAudioFocus(
+                this,
+                AudioManager.STREAM_NOTIFICATION,
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+            )
+        }
+
+        val map = HashMap<String, String>()
+        map[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = TTS_ID
+
+        when (focusRequest) {
+            AudioManager.AUDIOFOCUS_REQUEST_FAILED -> return
+            AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> {
+                textToSpeech.speak(speak, TextToSpeech.QUEUE_FLUSH, null, TTS_ID)
+            }
+        }
+
+
     }
+
+
+    override fun onAudioFocusChange(focusChange: Int) {
+
+        when (focusChange) {
+
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                if (!played) {
+                    startVoiceCoach()
+                }
+            }
+
+            AudioManager.AUDIOFOCUS_LOSS,
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+
+                if (textToSpeech.isSpeaking) {
+                    played = false
+                    textToSpeech.stop()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        audioManager.abandonAudioFocusRequest(audioFocusRequest)
+                    } else
+                        audioManager.abandonAudioFocus(this)
+                }
+
+            }
+        }
+
+
+    }
+    //endregion voice coach
+
+    //region helper methods
+
+    /**
+     * Starts a thread that updates the ui by sending broadcast and determines
+     * when to start Voice Coach based on the user's settings. The thread is started
+     * with location update request and running
+     * while timerIsRunning is true, which is set to false in case of pause.
+     */
+    private fun initAndStartUpdaterThread() {
+        object : Thread() {
+
+            override fun run() {
+                while (timerIsRunning) {
+                    try {
+
+                        if (!zeroSpeed) {
+
+                            if (ChallengeRecorderActivity.isVoiceCoachEnabled
+                                && threadCounter > 0
+                            ) {
+
+                                if (ChallengeRecorderActivity.voiceCoachIsBasedOnDistance) {
+                                    //we reached the desired distance for voice coach
+                                    if (distanceForVoiceCoach <= distance) {
+
+                                        distanceForVoiceCoach += ChallengeRecorderActivity
+                                            .numberForVoiceCoach.toFloat()
+                                        startVoiceCoach()
+                                    }
+                                }
+
+                                if (ChallengeRecorderActivity.voiceCoachIsBasedOnDuration) {
+                                    if (threadCounter %
+                                        ChallengeRecorderActivity.numberForVoiceCoach == 0
+                                    ) {
+                                        startVoiceCoach()
+                                    }
+                                }
+                            }
+                            //updating difference in case of challenge in every 30 sec
+                            if (threadCounter % 30 == 0 && threadCounter > 0) {
+                                if (ChallengeRecorderActivity.challenge ||
+                                    ChallengeRecorderActivity.createdChallenge
+                                ) {
+                                    updateDifference()
+                                }
+                            }
+                            threadCounter++
+                            updateUI()
+                        }
+
+                        sleep(1000)
+                    } catch (e: InterruptedException) {
+                        Log.i(TAG, "thread interrupted")
+                    }
+                }
+                Log.i(TAG, "thread stopped")
+            }
+        }.start()
+    }
+
 
     /**
      * handles the new altitude and updates the corrected altitude variable
@@ -589,6 +707,7 @@ class LocationUpdatesService : Service() {
 
     //region notification
 
+    /** initializing the notification and adding channel from Android O  */
     private fun initNotificationBuilder() {
         val activityPendingIntent = PendingIntent.getActivity(
             this, 0,
@@ -668,6 +787,7 @@ class LocationUpdatesService : Service() {
             PACKAGE_NAME +
                     ".started_from_notification"
 
+        /** helps when to show and remove notification */
         private var serviceIsRunningInForeground: Boolean = false
         private const val ALTITUDES_SIZE = 4
 
@@ -678,6 +798,9 @@ class LocationUpdatesService : Service() {
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
         const val NOTIFICATION_ID = 12345678
         var previousChallenge: ArrayList<MyLocation> = ArrayList()
+        private const val TTS_ID = "VoiceCoach"
 
     }
+
+
 }
