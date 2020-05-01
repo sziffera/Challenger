@@ -82,7 +82,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     //region activity lifecycle
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(layout.activity_challenge_recorder)
@@ -95,10 +94,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     "${ChallengeManager.isChallenge} - should be false"
         )
 
-
         initChips()
         initVoiceCoach()
-
 
         autoPauseCheckBox.setOnClickListener {
             val checkBox = it as CheckBox
@@ -160,7 +157,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         mapFragment.getMapAsync(this)
     }
 
-
     override fun onStop() {
         if (mBound) {
             unbindService(serviceConnection)
@@ -185,23 +181,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         finishButton = findViewById(id.stopRecording)
         firstStartButton = findViewById(R.id.firstStartButton)
 
-
-
-        if (!alreadyStarted) {
-            startStopButton.visibility = View.GONE
-            finishButton.visibility = View.GONE
-            firstStartButton.visibility = View.VISIBLE
-        } else {
-            firstStartButton.visibility = View.GONE
-            autoPauseCheckBox.visibility = View.GONE
-            chooseAnActivity.visibility = View.GONE
-            activityChooserChipGroup.visibility = View.GONE
-            if (autoPause) {
-                startStopButton.visibility = View.GONE
-            } else
-                startStopButton.visibility = View.VISIBLE
-            finishButton.visibility = View.VISIBLE
-        }
+        updateView(alreadyStarted)
 
         firstStartButton.setOnClickListener {
             firstStartButtonOnClick()
@@ -289,9 +269,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
 
     //region recording actions
-
     private fun finishChallenge() {
-
 
         gpsService?.finishAndSaveRoute()
         autoPause = false
@@ -312,6 +290,13 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         } else {
 
             if (gpsService != null) {
+
+                //--------DEBUG DATA-------
+                val key = UUID.randomUUID()
+                val debugData = Gson().toJson(gpsService?.debugList)
+                FirebaseManager.currentUserRef!!.child("debug")
+                    .child(key.toString()).setValue(debugData)
+
                 val currentDate: String
                 currentDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val current = LocalDateTime.now()
@@ -322,8 +307,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     val date = Date();
                     val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
                     formatter.format(date)
-
                 }
+
                 val gson = Gson()
                 val myLocationArrayString = gson.toJson(gpsService?.myRoute)
                 val duration: Long = gpsService!!.durationHelper.div(1000)
@@ -347,7 +332,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     Log.i(TAG, "the id for the new challenge is: $it")
                 }
 
-
                 val myIntent = Intent(this, ChallengeDetailsActivity::class.java)
                     .putExtra(
                         ChallengeDetailsActivity.CHALLENGE_ID,
@@ -356,22 +340,18 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                         }
                     )
 
-
                 if (challenge) {
                     with(myIntent) {
                         putExtra(ChallengeDetailsActivity.UPDATE, true)
-                        //putExtra(ChallengeDetailsActivity.CHALLENGE_ID, challengeId)
                         putExtra(
                             ChallengeDetailsActivity.PREVIOUS_CHALLENGE_ID,
                             recordedChallenge!!.id.toLong()
                         )
                     }
-
                 }
                 dbHelper.close()
                 startActivity(myIntent)
             }
-
             finish()
         }
         activityType = null
@@ -434,12 +414,10 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             apply()
         }
     }
-
     //endregion recording actions
 
 
     //region init
-
     private fun initVoiceCoach() {
         val res = resources.getStringArray(R.array.voice_coach_items)
         val array: ArrayList<String> = ArrayList()
@@ -537,6 +515,31 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
     //region helper methods
 
+    override fun onBackPressed() {
+        if (buttonSharedPreferences.getBoolean("started", false)) {
+            this.moveTaskToBack(true)
+        } else
+            super.onBackPressed()
+    }
+
+    private fun updateView(alreadyStarted: Boolean) {
+        if (!alreadyStarted) {
+            startStopButton.visibility = View.GONE
+            finishButton.visibility = View.GONE
+            firstStartButton.visibility = View.VISIBLE
+        } else {
+            firstStartButton.visibility = View.GONE
+            autoPauseCheckBox.visibility = View.GONE
+            chooseAnActivity.visibility = View.GONE
+            activityChooserChipGroup.visibility = View.GONE
+            if (autoPause) {
+                startStopButton.visibility = View.GONE
+            } else
+                startStopButton.visibility = View.VISIBLE
+            finishButton.visibility = View.VISIBLE
+        }
+    }
+
     private fun setButtonState(requestingLocationUpdates: Boolean) {
 
         if (requestingLocationUpdates) {
@@ -557,8 +560,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         }
     }
 
-    override fun clickOnVoiceCoachItem(data: String) {
 
+    /** calculates and stores the number for the voice coach */
+    override fun clickOnVoiceCoachItem(data: String) {
 
         when {
             data.contains("km") -> {
@@ -583,7 +587,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         voiceCoachCustomDialog.dismiss()
     }
 
-
     /** restores the affected values when leaving activity */
     private fun clean() {
         with(buttonSharedPreferences.edit()) {
@@ -598,7 +601,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     //endregion helper methods
 
     //region permission requests
-    //TODO(use just one permission request function)
+    //TODO(use just one permission request function, strange error on pixel after first request)
     private fun permissionRequest() {
         val locationApproved = ActivityCompat
             .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==

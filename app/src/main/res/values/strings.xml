@@ -93,4 +93,14 @@
         <item>20 minutes</item>
     </string-array>
     <string name="set_up_voice_coach">Set up voice coach</string>
+    <string name="hey">Hey</string>
+    <string name="add_your_weight">Add your weight</string>
+    <string name="add_your_height">Add your height</string>
+    <string name="weight">Weight</string>
+    <string name="height">Height</string>
+    <string name="your_bmi">Your BMI index is:</string>
+    <string name="normal">Normal</string>
+    <string name="underweight">underweight</string>
+    <string name="overweight">Overweight</string>
+    <string name="obese">Obese</string>
 </resources>

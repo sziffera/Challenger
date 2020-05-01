@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.android.parcel.Parcelize
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.absoluteValue
@@ -98,6 +99,9 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
     /** helper for voice coach and update difference method */
     private var threadCounter = 0
+
+    var debugList: ArrayList<Debug> = ArrayList()
+        private set
 
     //region service lifecycle
     override fun onCreate() {
@@ -353,23 +357,32 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                 }
 
             }
+            debugList.add(
+                Debug(
+                    tempDistance,
+                    distance,
+                    location
+                )
+            )
+            mLocation = location
         }
-        mLocation = location
+
+
     }
 
     /** stops the service */
     fun finishAndSaveRoute() {
+
         stopSelf()
         removeLocationUpdates()
     }
 
 
     private fun createLocationRequest() {
-        mLocationRequest = LocationRequest().apply {
-            interval = UPDATE_INTERVAL_IN_MILLISECONDS
-            fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
+        mLocationRequest = LocationRequest()
+        mLocationRequest!!.interval = UPDATE_INTERVAL_IN_MILLISECONDS
+        mLocationRequest!!.fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
+        mLocationRequest!!.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
     }
     //endregion location handling
 
@@ -768,6 +781,13 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         val service: LocationUpdatesService
             get() = this@LocationUpdatesService
     }
+
+    @Parcelize
+    data class Debug(
+        val tempDst: Float = 0f,
+        val allDst: Float = 0f,
+        val location: Location
+    ) : Parcelable
 
     companion object {
 

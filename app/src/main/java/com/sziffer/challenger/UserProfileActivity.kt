@@ -1,49 +1,32 @@
 package com.sziffer.challenger
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.activity_user_profile.*
 
 class UserProfileActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: ChallengeDbHelper
-    private lateinit var mAuth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_profile)
 
-        mAuth = FirebaseAuth.getInstance()
-        val id = mAuth.currentUser?.uid
-        val ref = FirebaseDatabase.getInstance().getReference("users").child(id!!)
-        var name: String = ""
-        ref.child("username").addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onCancelled(p0: DatabaseError) {
-                Log.e("USER", p0.toString())
-            }
-
-            override fun onDataChange(p0: DataSnapshot) {
-                name = p0.value as String
-                welcomeUserTextView.text = "HI ${p0.value.toString()}!"
-                Log.i("USER", p0.value.toString())
-            }
-
-        })
-
-
+        initUi()
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onStart() {
         super.onStart()
         dbHelper = ChallengeDbHelper(this)
         val list = dbHelper.getAllChallenges()
+        dbHelper.close()
         var totalKm = 0.0
         var cycling = 0.0
         var running = 0.0
@@ -54,10 +37,8 @@ class UserProfileActivity : AppCompatActivity() {
             } else {
                 cycling += item.dst
             }
-
             totalKm += item.dst
         }
-
 
         val percentage = cycling.div(totalKm).times(100)
         statsProgressBar.progress = percentage.toInt().also {
@@ -73,8 +54,43 @@ class UserProfileActivity : AppCompatActivity() {
         }
     }
 
-    override fun onPause() {
-        dbHelper.close()
-        super.onPause()
+    @SuppressLint("SetTextI18n")
+    private fun initUi() {
+        if (FirebaseManager.isUserValid) {
+            FirebaseManager.currentUserRef!!.child("username")
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError) {
+                        Log.e("USER", p0.toString())
+                    }
+
+                    override fun onDataChange(p0: DataSnapshot) {
+                        welcomeUserTextView.text =
+                            "${getString(R.string.hey)}, ${p0.value.toString()}!"
+                        Log.i("USER", p0.value.toString())
+                    }
+                })
+        } else {
+            welcomeUserTextView.text = getString(R.string.hey) + "!"
+        }
+
+        if (FirebaseManager.isUserValid) {
+            signInSignOutButton.setOnClickListener {
+                FirebaseManager.mAuth.signOut()
+                startLoginScreen()
+            }
+        } else {
+            signInSignOutButton.text = getString(R.string.create_an_account)
+            signInSignOutButton.setOnClickListener {
+                startLoginScreen()
+            }
+
+        }
+    }
+
+    private fun startLoginScreen() {
+        startActivity(
+            Intent(this, LoginActivity::class.java)
+        )
+        finish()
     }
 }

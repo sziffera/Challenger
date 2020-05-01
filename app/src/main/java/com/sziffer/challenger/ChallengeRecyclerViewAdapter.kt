@@ -1,6 +1,7 @@
 package com.sziffer.challenger
 
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.text.format.DateUtils
@@ -62,6 +63,7 @@ class ChallengeRecyclerViewAdapter(
         return challenges.size
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
         val challenge = challenges[position]

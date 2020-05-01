@@ -1,5 +1,6 @@
 package com.sziffer.challenger
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
@@ -11,11 +12,11 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
@@ -23,7 +24,7 @@ import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import kotlinx.android.synthetic.main.activity_challenge_details.*
-import kotlin.math.absoluteValue
+import java.util.*
 
 
 class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -39,8 +40,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var challenge: Challenge
     private var previousChallenge: Challenge? = null
     private lateinit var saveStartButton: Button
+    private lateinit var builder: LatLngBounds.Builder
     private var route: ArrayList<MyLocation>? = null
-    private var latLngRoute: ArrayList<LatLng> = ArrayList()
     private var update: Boolean = false
     private var isItAChallenge: Boolean = false
     private var elevationGain: Double = 0.0
@@ -54,11 +55,15 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         dbHelper = ChallengeDbHelper(this)
 
+        // just for calculating performance
         start = System.currentTimeMillis()
 
+        //id for the challenge from the intent
         val id = intent.getLongExtra(CHALLENGE_ID, 0)
         challenge = dbHelper.getChallenge(id.toInt())!!
-        Log.i("CHALLENGE DETAILS",challenge.toString())
+        builder = LatLngBounds.builder()
+
+        Log.i("CHALLENGE DETAILS", challenge.toString())
 
         challengeNameEditText = findViewById(R.id.challengeDetailsNameEditText)
         saveStartButton = findViewById(R.id.saveChallengeInDetailsButton)
@@ -82,6 +87,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         showChartsButton.setOnClickListener {
             if (route == null) {
+                //the Gson() conversion has not finished yet.
                 Toast.makeText(this, "Please wait a few seconds", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
@@ -92,7 +98,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         }
 
-
         when {
             //the user chose a Challenge to do it better, and wants to start recording
             isItAChallenge -> {
@@ -102,14 +107,14 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     startChallenge()
                 }
                 challengeNameEditText.inputType = InputType.TYPE_NULL
-                challengeNameEditText.setText(challenge.name.toUpperCase())
+                challengeNameEditText.setText(challenge.name.toUpperCase(Locale.ROOT))
 
             }
             //the user finished recording a challenged activity, update data with new values
             update -> {
                 saveStartButton.text = getString(R.string.update_challenge)
                 challengeNameEditText.inputType = InputType.TYPE_NULL
-                challengeNameEditText.setText(previousChallenge?.name?.toUpperCase())
+                challengeNameEditText.setText(previousChallenge?.name?.toUpperCase(Locale.ROOT))
 
                 saveStartButton.setOnClickListener {
                     updateChallenge()
@@ -132,84 +137,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Log.i(TAG, "onMapReady ${System.currentTimeMillis() - start}ms")
         mMap = p0
-        //TODO(cleaning and optimizing the code)
-        val builder = LatLngBounds.builder()
-        val fetchData = System.currentTimeMillis()
-        var all = 0.0
-        var temp = 1
-        val alts: ArrayList<Double> = ArrayList()
-        var tmpDst = 0f
-        Log.i(TAG, "the last distance is: ${route!![route!!.size - 1].distance}km")
-        if (route != null) {
-            for (item in route!!) {
-
-                tmpDst += item.distance
-                if (tmpDst >= 100f) {
-                    alts.add(item.altitude)
-                    tmpDst = 0f
-                }
-
-
-                builder.include(item.latLng)
-                latLngRoute.add(item.latLng)
-            }
-
-            for (item in alts) {
-                if (temp < alts.size) {
-                    all += item
-                    val tempElevation = alts[temp]
-                    val diff = tempElevation - item
-                    Log.i(TAG, "the altitude difference is: $diff")
-                    if (diff < 0) {
-                        elevationLoss += diff.absoluteValue
-                    } else {
-                        elevationGain += diff
-                    }
-                    temp++
-                }
-            }
-
-            Log.i(TAG, "the altitude list is $alts")
-            Log.i(TAG, "all is $all")
-
-            elevationGainedTextView.text = getStringFromNumber(0, elevationGain) + " m"
-            elevationLostTextView.text = getStringFromNumber(0, elevationLoss) + " m"
-
-            Log.i(TAG, "Elevation data. Gained: $elevationGain, loss: $elevationLoss")
-            /*
-            for (i in 0..route!!.size - 2) {
-                builder.include(route!![i].latLng)
-                val speed = (route!![i].speed + route!![i+1].speed).times(1.8)
-                if (speed >= avgSpeed) {
-
-                    val line: Polyline = mMap.addPolyline(
-                        PolylineOptions()
-                            .add(route!![i].latLng, route!![i+1].latLng)
-                            .color(Color.GREEN)
-                    )
-
-
-                } else {
-                    val line: Polyline = mMap.addPolyline(
-                        PolylineOptions()
-                            .add(route!![i].latLng, route!![i+1].latLng)
-                            .color(Color.RED)
-                    )
-
-                }
-            }*/
-        }
-        Log.i(TAG, "fetch data: ${System.currentTimeMillis() - fetchData}ms")
-
-        mMap.setOnMapLoadedCallback {
-            Log.i(TAG, "onMapLoadedCallback ${System.currentTimeMillis() - start}ms")
-
-            mMap.addPolyline(PolylineOptions().addAll(latLngRoute))
-            //val bound = zoomToRoute(latLngRoute)
-            val padding = 50
-            val cu = CameraUpdateFactory.newLatLngBounds(builder.build(), padding)
-            mMap.animateCamera(cu)
-        }
+        runProcessThread()
     }
 
     private fun startChallenge() {
@@ -224,8 +152,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         startActivity(intent)
     }
 
-    private fun updateChallenge() {
 
+    private fun updateChallenge() {
         //we have a saved new challenge, and the previous one
         if (previousChallenge != null) {
 
@@ -253,11 +181,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         challenge.name = challengeNameEditText.text.toString()
 
         dbHelper.updateChallenge(challenge.id.toInt(), challenge)
-        /*
-        val id = dbHelper.addChallenge(challenge).also {
-            Log.i(TAG, "the id of the inserted item is: $it")
-        }
-         */
 
         updateSharedPrefForSync(applicationContext, challenge.firebaseId, KEY_UPLOAD)
 
@@ -271,9 +194,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         finish()
     }
 
+    @SuppressLint("SetTextI18n")
     private fun initVariables() {
-
-
 
         avgSpeedTextView = findViewById(R.id.challengeDetailsAvgSpeedTextView)
         distanceTextView = findViewById(R.id.challengeDetailsDistanceTextView)
@@ -282,11 +204,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         challengeTypeTextView = findViewById(R.id.challengeDetailsTypeTextView)
         maxSpeedTextView = findViewById(R.id.challengeDetailsMaxSpeedTextView)
 
-        with(challenge){
-            val time = System.currentTimeMillis()
-            val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
-            route = Gson().fromJson<ArrayList<MyLocation>>(routeAsString, typeJson)
-            Log.i(TAG, "GSON time is ${System.currentTimeMillis() - time}ms")
+        with(challenge) {
+
             durationTextView.text = DateUtils.formatElapsedTime(dur)
             avgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
             distanceTextView.text = getStringFromNumber(1, dst) + " km"
@@ -302,10 +221,47 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         //TODO(not implemented)
     }
 
+    /** removes the temp. stored challenge from DB when the user presses discard button */
     private fun discardChallenge() {
-        val ok = dbHelper.deleteChallenge(challenge.id).also {
+        dbHelper.deleteChallenge(challenge.id).also {
             Log.i(TAG, "delete success is: $it")
         }
+    }
+
+    /**
+     * Starts a thread that converts the string data to MyLocation array and
+     * calculates the LatLngBound for zooming on Map
+     * and calculates the elevation data
+     **/
+    private fun runProcessThread() {
+        object : Thread() {
+            override fun run() {
+                val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+                route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
+                val polylineOptions = PolylineOptions()
+                for (i in route!!) {
+                    //TODO(calculate elevation)
+                    builder.include(i.latLng)
+                    polylineOptions.add(i.latLng)
+                }
+                runOnUiThread {
+                    mMap.addPolyline(
+                        polylineOptions.color(
+                            ContextCompat.getColor(
+                                this@ChallengeDetailsActivity,
+                                R.color.colorAccent
+                            )
+                        )
+                    )
+                    val padding = 50
+                    val cu = CameraUpdateFactory.newLatLngBounds(builder.build(), padding)
+                    mMap.animateCamera(cu)
+                    elevationGainedTextView.text = getStringFromNumber(0, elevationGain) + " m"
+                    elevationLostTextView.text = getStringFromNumber(0, elevationLoss) + " m"
+                }
+
+            }
+        }.start()
     }
 
     companion object {

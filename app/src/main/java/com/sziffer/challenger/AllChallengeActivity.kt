@@ -24,8 +24,6 @@ class AllChallengeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_all_challenge)
 
-
-
         recyclerView = findViewById(R.id.allChallengeRecyclerView)
         dbHelper = ChallengeDbHelper(this)
         challenges = dbHelper.getAllChallenges()
