@@ -31,8 +31,8 @@
         <activity android:name=".MenuDemoActivity" />
 
         <activity android:name=".ChartsActivity" />
-        <activity android:name=".UserSettingsActivity" />
-        <activity android:name=".ForgotPasswordActivity" />
+        <activity android:name=".user.UserSettingsActivity" />
+        <activity android:name=".user.ForgotPasswordActivity" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -69,8 +69,8 @@
         <activity android:name=".ChallengeDetailsActivity" />
         <activity android:name=".CreateChallengeActivity" />
         <activity android:name=".AllChallengeActivity" />
-        <activity android:name=".UserProfileActivity" />
-        <activity android:name=".LoginActivity" />
+        <activity android:name=".user.UserProfileActivity" />
+        <activity android:name=".user.LoginActivity" />
         <activity
             android:name=".SplashScreenActivity"
             android:theme="@style/AppTheme.Launcher">
@@ -80,10 +80,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".RegisterActivity" />
+        <activity android:name=".user.RegisterActivity" />
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop" />
     </application>
+
 
 </manifest>

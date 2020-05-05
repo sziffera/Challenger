@@ -103,4 +103,6 @@
     <string name="underweight">underweight</string>
     <string name="overweight">Overweight</string>
     <string name="obese">Obese</string>
+    <string name="hi">Hi!</string>
+    <string name="no_internet_connection">No internet connection</string>
 </resources>

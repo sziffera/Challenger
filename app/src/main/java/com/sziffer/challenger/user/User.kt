@@ -1,4 +1,4 @@
-package com.sziffer.challenger
+package com.sziffer.challenger.user
 
 import com.google.firebase.database.IgnoreExtraProperties
 

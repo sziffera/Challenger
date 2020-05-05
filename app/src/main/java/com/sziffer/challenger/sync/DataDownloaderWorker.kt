@@ -9,17 +9,22 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.Challenge
 import com.sziffer.challenger.ChallengeDbHelper
-import com.sziffer.challenger.FirebaseManager
+import com.sziffer.challenger.user.FirebaseManager
+import java.util.concurrent.CountDownLatch
 
-class DataDownloaderWorker(private val appContext: Context, workerParams: WorkerParameters) :
+class DataDownloaderWorker(
+    private val appContext: Context,
+    workerParams: WorkerParameters
+) :
     Worker(appContext, workerParams) {
 
-    //TODO(use childeventvaluelistener)
 
+    /** Downloads new challenges from Firebase and saves them to local DB */
     override fun doWork(): Result {
 
         val dbHelper = ChallengeDbHelper(appContext)
         var success = true
+        val countDownLatch = CountDownLatch(1)
 
         //TODO(use childEventValueListener)
 
@@ -44,9 +49,17 @@ class DataDownloaderWorker(private val appContext: Context, workerParams: Worker
                         dbHelper.addChallenge(challenge)
                     }
                 }
+                countDownLatch.countDown()
                 dbHelper.close()
             }
         })
+        if (success) {
+            try {
+                countDownLatch.await()
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
+            }
+        }
 
         return if (success) Result.success() else
             Result.retry()

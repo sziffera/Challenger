@@ -4,15 +4,16 @@ import android.content.Context
 import androidx.work.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.sziffer.challenger.FirebaseManager
+import com.sziffer.challenger.user.FirebaseManager
 import java.util.concurrent.TimeUnit
 
 const val KEY_SYNC = "keySync"
 const val KEY_SYNC_DATA = "$KEY_SYNC.data"
 const val KEY_UPLOAD = "upload"
 const val KEY_DELETE = "delete"
-private const val DATA_DOWNLOADER_TAG = "com.sziffer.challenger.DataDownloader"
+const val DATA_DOWNLOADER_TAG = "com.sziffer.challenger.DataDownloader"
 
+/** helper class for creating  */
 private fun startWorkManager(context: Context) {
     val constraints = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.UNMETERED)
@@ -49,6 +50,7 @@ fun startDataDownloaderWorkManager(context: Context) {
     WorkManager.getInstance(context).enqueue(workRequest)
 }
 
+/** this method updates the queue for uploading and starts the WorkManager */
 fun updateSharedPrefForSync(context: Context, id: String, whatToDo: String) {
 
     //the user is not authorised

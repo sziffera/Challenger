@@ -37,6 +37,7 @@ import com.sziffer.challenger.LocationUpdatesService.LocalBinder
 import com.sziffer.challenger.R.*
 import com.sziffer.challenger.dialogs.CustomListDialog
 import com.sziffer.challenger.dialogs.DataAdapter
+import com.sziffer.challenger.user.FirebaseManager
 import kotlinx.android.synthetic.main.activity_challenge_recorder.*
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime

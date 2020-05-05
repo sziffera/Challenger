@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.sziffer.challenger.sync.KEY_DELETE
 import com.sziffer.challenger.sync.updateSharedPrefForSync
+import com.sziffer.challenger.user.UserProfileActivity
 import kotlinx.android.synthetic.main.activity_all_challenge.*
 
 

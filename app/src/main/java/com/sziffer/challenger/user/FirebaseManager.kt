@@ -1,4 +1,4 @@
-package com.sziffer.challenger
+package com.sziffer.challenger.user
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
@@ -13,7 +13,9 @@ object FirebaseManager {
     val currentUserRef: DatabaseReference?
         get() {
             return if (userId != null) {
-                mDatabase.getReference("users").child(userId)
+                mDatabase.getReference("users").child(
+                    userId
+                )
             } else
                 null
         }
@@ -25,6 +27,10 @@ object FirebaseManager {
             return userId != null
         }
 
+    /**
+     * maybe later, public challenges will be available for all users. They can share their
+     * recorded challenges to public as well.
+     * */
     val publicChallenges: DatabaseReference?
         get() {
             return if (userId != null) {

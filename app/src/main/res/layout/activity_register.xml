@@ -5,15 +5,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background"
-    tools:context=".RegisterActivity">
+    tools:context=".user.RegisterActivity">
+
+    <TextView
+        android:id="@+id/noInternetTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:paddingHorizontal="20dp"
+        android:textSize="15sp"
+        android:textAllCaps="true"
+        android:text="@string/no_internet_connection"
+        android:background="@drawable/round_edittext"
+        android:backgroundTint="@color/colorPlus"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.504"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="32dp"
         android:orientation="vertical"
         android:paddingLeft="12dp"
         android:paddingRight="12dp"
-        android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -23,12 +40,12 @@
             android:id="@+id/textView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:layout_marginBottom="20dp"
-            android:textSize="25sp"
+            android:gravity="center"
             android:text="@string/welcome_to_challenger"
             android:textAllCaps="true"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:textSize="25sp" />
 
         <TextView
             android:id="@+id/textView2"
@@ -41,50 +58,51 @@
             android:textSize="16sp" />
 
 
-
         <EditText
             android:id="@+id/registerUsernameEditText"
             android:layout_width="match_parent"
-            android:gravity="center"
-            android:textColor="@android:color/background_dark"
+            android:layout_height="wrap_content"
             android:layout_marginTop="25dp"
             android:layout_marginBottom="15dp"
-            android:layout_height="wrap_content"
-            android:drawableStart="@drawable/ic_account_circle_small"
             android:autofillHints="@string/username"
             android:background="@drawable/round_edittext"
+            android:drawableStart="@drawable/ic_account_circle_small"
             android:ems="10"
+            android:gravity="center"
             android:hint="@string/username"
             android:inputType="textPersonName"
-            android:padding="10dp" />
+            android:padding="10dp"
+            android:textColor="@android:color/background_dark" />
+
         <EditText
             android:id="@+id/registerEmailEditText"
-            android:layout_marginBottom="15dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColor="@android:color/background_dark"
-            android:background="@drawable/round_edittext"
+            android:layout_marginBottom="15dp"
             android:autofillHints="@string/email_address"
-            android:ems="10"
+            android:background="@drawable/round_edittext"
             android:drawableStart="@drawable/ic_email"
+            android:ems="10"
+            android:gravity="center"
             android:hint="@string/email_address"
             android:inputType="textEmailAddress"
-            android:padding="10dp" />
+            android:padding="10dp"
+            android:textColor="@android:color/background_dark" />
+
         <EditText
             android:id="@+id/registerPasswordEditText"
             android:layout_width="match_parent"
-            android:gravity="center"
-            android:drawableStart="@drawable/password_icon"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/background_dark"
+            android:layout_marginBottom="15dp"
             android:autofillHints="@string/password"
             android:background="@drawable/round_edittext"
+            android:drawableStart="@drawable/password_icon"
             android:ems="10"
+            android:gravity="center"
             android:hint="@string/password"
-            android:layout_marginBottom="15dp"
             android:inputType="textPassword"
-            android:padding="10dp" />
+            android:padding="10dp"
+            android:textColor="@android:color/background_dark" />
 
 
     </LinearLayout>

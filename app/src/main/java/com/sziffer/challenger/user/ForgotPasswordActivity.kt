@@ -1,4 +1,4 @@
-package com.sziffer.challenger
+package com.sziffer.challenger.user
 
 import android.app.ActivityOptions
 import android.content.Intent
@@ -6,9 +6,11 @@ import android.os.Bundle
 import android.view.animation.AnimationUtils
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.sziffer.challenger.R
+import com.sziffer.challenger.isEmailAddressValid
 import kotlinx.android.synthetic.main.activity_forgot_password.*
 
-class ForgotPasswordActivity : AppCompatActivity() {
+class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,5 +57,13 @@ class ForgotPasswordActivity : AppCompatActivity() {
                 }
 
             }
+    }
+
+    override fun connectedToInternet() {
+        //TODO("Not yet implemented")
+    }
+
+    override fun noInternetConnection() {
+        //TODO("Not yet implemented")
     }
 }

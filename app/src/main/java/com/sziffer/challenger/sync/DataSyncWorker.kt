@@ -7,14 +7,14 @@ import androidx.work.WorkerParameters
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.ChallengeDbHelper
-import com.sziffer.challenger.FirebaseManager
+import com.sziffer.challenger.user.FirebaseManager
 
 class DataSyncWorker(private val appContext: Context, workerParams: WorkerParameters) :
     Worker(appContext, workerParams) {
 
 
+    /** uploads the challenges from local DB to Firebase */
     override fun doWork(): Result {
-
 
         val mRef = FirebaseManager.currentUsersChallenges ?: return Result.retry()
 

@@ -1,11 +1,14 @@
-package com.sziffer.challenger
+package com.sziffer.challenger.user
 
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -20,10 +23,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.sziffer.challenger.MainActivity
+import com.sziffer.challenger.R
+import com.sziffer.challenger.isEmailAddressValid
 import kotlinx.android.synthetic.main.activity_login.*
 
 
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : AppCompatActivity(), NetworkStateListener {
 
 
     private lateinit var mAuth: FirebaseAuth
@@ -42,6 +48,10 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var registerRedirectButton: Button
     private lateinit var skipButton: Button
 
+    private lateinit var myNetworkCallback: MyNetworkCallback
+    private lateinit var connectivityManager: ConnectivityManager
+    private var connected = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
@@ -49,6 +59,12 @@ class LoginActivity : AppCompatActivity() {
         mAuth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance()
         mRef = database.getReference("users")
+
+        connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
+                as ConnectivityManager
+        myNetworkCallback = MyNetworkCallback(
+            this, connectivityManager
+        )
 
         sharedPreferences = getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)
 
@@ -78,28 +94,60 @@ class LoginActivity : AppCompatActivity() {
         }
 
         loginButton.setOnClickListener {
-            login(emailText.text.toString(),passwordText.text.toString())
+            login(emailText.text.toString(), passwordText.text.toString())
         }
         skipButton.setOnClickListener {
             startMainActivity()
         }
     }
 
-    private fun login(email:String, password:String) {
+    override fun onStart() {
 
-        if(email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(applicationContext,"Please fill the required fields",Toast.LENGTH_SHORT).show()
+        if (connectivityManager.allNetworks.isEmpty()) {
+            connected = false
+            noInternetTextView.visibility = View.VISIBLE
+        }
+
+        myNetworkCallback.registerCallback()
+        super.onStart()
+    }
+
+    override fun onStop() {
+        myNetworkCallback.unregisterCallback()
+        super.onStop()
+    }
+
+    private fun login(email: String, password: String) {
+
+        if (!connected) {
+            noInternetTextView.startAnimation(
+                AnimationUtils.loadAnimation(
+                    this,
+                    R.anim.shake
+                )
+            )
             return
         }
 
-        mAuth.signInWithEmailAndPassword(email,password).addOnCompleteListener {
+        if (password.isEmpty() || !email.isEmailAddressValid()) {
+            buttonShake()
+            Toast.makeText(
+                applicationContext,
+                "Please fill the required fields",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        loginButton.isEnabled = false
+        //TODO(add loading)
+        mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
             if (it.isSuccessful) {
-                Toast.makeText(applicationContext,"Successful login!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, "Successful login!", Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
-            }
-            else {
-
+            } else {
+                buttonShake()
+                loginButton.isEnabled = true
                 Toast.makeText(applicationContext, "Sign-in failed", Toast.LENGTH_SHORT).show()
 
             }
@@ -121,6 +169,21 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    private fun buttonShake() {
+        emailText.startAnimation(
+            AnimationUtils.loadAnimation(
+                this,
+                R.anim.shake
+            )
+        )
+        passwordText.startAnimation(
+            AnimationUtils.loadAnimation(
+                this,
+                R.anim.shake
+            )
+        )
+    }
+
 
     private fun configureGoogleSignIn() {
         mGoogleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -132,7 +195,10 @@ class LoginActivity : AppCompatActivity() {
 
     private fun signIn() {
         val signInIntent: Intent = mGoogleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
+        startActivityForResult(
+            signInIntent,
+            RC_SIGN_IN
+        )
     }
 
     private fun firebaseAuthWithGoogle(acct: GoogleSignInAccount) {
@@ -147,7 +213,7 @@ class LoginActivity : AppCompatActivity() {
                         if (task.isSuccessful) {
 
                             val userResult = task.result!!.user
-                            Log.i("LINKED",userResult?.email.toString())
+                            Log.i("LINKED", userResult?.email.toString())
 
                         } else {
 
@@ -156,9 +222,10 @@ class LoginActivity : AppCompatActivity() {
 
                     }
 
-                val user = User(email = mAuth.currentUser?.email.toString())
+                val user =
+                    User(email = mAuth.currentUser?.email.toString())
                 FirebaseManager.currentUserRef?.setValue(user)?.addOnSuccessListener {
-                    Log.i("REGISTER","userdata added to realtime database")
+                    Log.i("REGISTER", "userdata added to realtime database")
                 }
 
                 startActivity(Intent(applicationContext, MainActivity::class.java))
@@ -202,6 +269,14 @@ class LoginActivity : AppCompatActivity() {
 
     companion object {
         private const val RC_SIGN_IN: Int = 1
+    }
+
+    override fun noInternetConnection() {
+        noInternetTextView.visibility = View.VISIBLE
+    }
+
+    override fun connectedToInternet() {
+        noInternetTextView.visibility = View.GONE
     }
 
 }

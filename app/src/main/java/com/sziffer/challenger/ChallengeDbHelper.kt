@@ -78,15 +78,6 @@ class ChallengeDbHelper(context: Context) :
         return challenges
     }
 
-    fun getItemCount(): Int {
-        val query = "SELECT * FROM $DATABASE_NAME"
-        val db = readableDatabase
-        val cursor = db.rawQuery(query, null)
-        val count = cursor.count
-        cursor.close()
-        return count
-    }
-
     fun getChallenge(id: Int): Challenge? {
         val db: SQLiteDatabase = this.writableDatabase
         val cursor = db.query(
@@ -198,6 +189,11 @@ class ChallengeDbHelper(context: Context) :
 
         return null
 
+    }
+
+    fun deleteDatabase() {
+        val db: SQLiteDatabase = this.writableDatabase
+        db.execSQL("delete from $DATABASE_NAME")
     }
 
     fun deleteChallenge(id: String): Boolean {
