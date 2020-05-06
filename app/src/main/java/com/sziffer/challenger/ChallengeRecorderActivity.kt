@@ -5,9 +5,7 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
-import android.os.Build
-import android.os.Bundle
-import android.os.IBinder
+import android.os.*
 import android.provider.Settings
 import android.text.format.DateUtils
 import android.util.Log
@@ -15,7 +13,6 @@ import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.CheckBox
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -37,7 +34,6 @@ import com.sziffer.challenger.LocationUpdatesService.LocalBinder
 import com.sziffer.challenger.R.*
 import com.sziffer.challenger.dialogs.CustomListDialog
 import com.sziffer.challenger.dialogs.DataAdapter
-import com.sziffer.challenger.user.FirebaseManager
 import kotlinx.android.synthetic.main.activity_challenge_recorder.*
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
@@ -202,12 +198,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             setButtonState(requestingLocationUpdates(this))
         }
 
-
-
         finishButton.setOnClickListener {
             finishChallenge()
         }
-
 
         bindService(
             Intent(applicationContext, LocationUpdatesService::class.java),
@@ -291,12 +284,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         } else {
 
             if (gpsService != null) {
-
-                //--------DEBUG DATA-------
-                val key = UUID.randomUUID()
-                val debugData = Gson().toJson(gpsService?.debugList)
-                FirebaseManager.currentUserRef!!.child("debug")
-                    .child(key.toString()).setValue(debugData)
 
                 val currentDate: String
                 currentDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -382,38 +369,76 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             }
         }
 
-        gpsService?.requestLocationUpdates()
+        firstStartView.visibility = View.INVISIBLE
 
-        //TODO(Layout is ugly + clean code)
-        if (autoPause) {
-            startStopButton.visibility = View.GONE
-            val params = finishButton.layoutParams as LinearLayout.LayoutParams
-            params.setMargins(12, 20, 12, 20)
-            finishButton.layoutParams = params
-        } else
-            startStopButton.visibility = View.VISIBLE
+        /*
+        chooseAnActivity.visibility = View.INVISIBLE
+        voiceCoachSetUpButton.visibility = View.INVISIBLE
+        firstStartButton.visibility = View.INVISIBLE
+        activityChooserChipGroup.visibility = View.INVISIBLE
+        autoPauseCheckBox.visibility = View.INVISIBLE
 
-        if (activityType == "running")
-            activityTypeImageView.setImageResource(R.drawable.running)
-        activityTypeImageView.visibility = View.VISIBLE
-        chooseAnActivity.visibility = View.GONE
-        voiceCoachSetUpButton.visibility = View.GONE
-        durationTextView.visibility = View.VISIBLE
-        challengeDataLinearLayout.visibility = View.VISIBLE
-        firstStartButton.visibility = View.GONE
-        activityChooserChipGroup.visibility = View.GONE
+         */
 
-        finishButton.visibility = View.VISIBLE
-        autoPauseCheckBox.visibility = View.GONE
+        object : CountDownTimer(6000, 1000) {
+            override fun onFinish() {
+                Log.i(TAG, "CDT finished")
 
-        if (createdChallenge || challenge) {
-            differenceTextView.visibility = View.VISIBLE
-        }
+                firstStartView.visibility = View.GONE
 
-        with(buttonSharedPreferences.edit()) {
-            putBoolean("started", true)
-            apply()
-        }
+                /*
+                chooseAnActivity.visibility = View.GONE
+                voiceCoachSetUpButton.visibility = View.GONE
+                firstStartButton.visibility = View.GONE
+                activityChooserChipGroup.visibility = View.GONE
+                autoPauseCheckBox.visibility = View.GONE
+
+                 */
+
+                val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(
+                        VibrationEffect
+                            .createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
+                    )
+                } else {
+                    vibrator.vibrate(500)
+                }
+
+                if (autoPause) {
+                    startStopButton.visibility = View.GONE
+                } else
+                    startStopButton.visibility = View.VISIBLE
+
+                if (activityType == "running")
+                    activityTypeImageView.setImageResource(R.drawable.running)
+
+                recordingDataView.visibility = View.VISIBLE
+
+
+                activityTypeImageView.visibility = View.VISIBLE
+                durationTextView.visibility = View.VISIBLE
+                challengeDataLinearLayout.visibility = View.VISIBLE
+                finishButton.visibility = View.VISIBLE
+
+
+
+                if (createdChallenge || challenge) {
+                    differenceTextView.visibility = View.VISIBLE
+                }
+                gpsService?.requestLocationUpdates()
+                with(buttonSharedPreferences.edit()) {
+                    putBoolean("started", true)
+                    apply()
+                }
+            }
+
+            override fun onTick(millisUntilFinished: Long) {
+                Log.i(TAG, "CDT tick")
+            }
+        }.start()
+
+
     }
     //endregion recording actions
 
@@ -529,10 +554,14 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             finishButton.visibility = View.GONE
             firstStartButton.visibility = View.VISIBLE
         } else {
+            firstStartView.visibility = View.GONE
+            /*
             firstStartButton.visibility = View.GONE
             autoPauseCheckBox.visibility = View.GONE
             chooseAnActivity.visibility = View.GONE
             activityChooserChipGroup.visibility = View.GONE
+
+             */
             if (autoPause) {
                 startStopButton.visibility = View.GONE
             } else

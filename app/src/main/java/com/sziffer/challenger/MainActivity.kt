@@ -20,7 +20,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import com.google.android.gms.maps.MapView
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
@@ -47,25 +46,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //TODO(location permission error on Android10)
+
         if (!checkPermissions())
             permissionRequest()
 
-        //TODO(no UI change when download finished)
         startDataDownloaderWorkManager(applicationContext)
         observeWork()
 
         userManager = UserManager(applicationContext)
-
-        Thread(Runnable {
-            try {
-                val mv =
-                    MapView(applicationContext)
-                mv.onCreate(null)
-                mv.onPause()
-                mv.onDestroy()
-            } catch (ignored: Exception) {
-            }
-        }).start()
 
         sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
 
@@ -175,10 +164,7 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
-
-
         dbHelper?.close()
-
     }
 
     override fun onStop() {
@@ -228,7 +214,8 @@ class MainActivity : AppCompatActivity() {
                     this,
                     arrayOf(
                         Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
                     ),
                     REQUEST_CODE_BACKGROUND
                 )

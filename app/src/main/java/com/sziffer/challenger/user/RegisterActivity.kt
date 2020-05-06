@@ -45,8 +45,6 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
         passwordText = findViewById(R.id.registerPasswordEditText)
         registerButton = findViewById(R.id.registerButton)
 
-
-
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
         myNetworkCallback = MyNetworkCallback(this, connectivityManager)
@@ -56,7 +54,6 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
         }
 
     }
-
 
     override fun onStart() {
         if (connectivityManager.allNetworks.isEmpty()) {

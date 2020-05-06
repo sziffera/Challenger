@@ -3,6 +3,7 @@ package com.sziffer.challenger
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_create_challenge.*
 
@@ -20,24 +21,30 @@ class CreateChallengeActivity : AppCompatActivity() {
         timePicker.setIs24HourView(true)
         distanceNumberPicker.maxValue = 300
         distanceNumberPicker.minValue = 0
-        distanceNumberPicker.setOnValueChangedListener { picker, oldVal, newVal ->
+        distanceNumberPicker.setOnValueChangedListener { _, _, newVal ->
             distance = newVal
-            avgSpeed = distance.times(3600.0).div(seconds)
-            avgSpeedTextView.text = "AVG SPEED: " + getStringFromNumber(1, avgSpeed) + "KM/H"
+            calculateAndSetAvgSpeed()
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             timePicker.hour = 0
             timePicker.minute = 0
         }
-        timePicker.setOnTimeChangedListener { view, hourOfDay, minute ->
+        timePicker.setOnTimeChangedListener { _, hourOfDay, minute ->
             seconds = hourOfDay.times(3600) + minute.times(60)
-            avgSpeed = distance.times(3600.0).div(seconds)
-            avgSpeedTextView.text = "AVG SPEED: " + getStringFromNumber(1, avgSpeed) + "KM/H"
+            calculateAndSetAvgSpeed()
         }
 
         startCreatedChallenge.setOnClickListener {
-            //TODO(error handling)
+            if (avgSpeed.toInt() == 0) {
+                avgSpeedTextView.startAnimation(
+                    AnimationUtils.loadAnimation(
+                        this,
+                        R.anim.shake
+                    )
+                )
+                return@setOnClickListener
+            }
             val startRecordingIntent = Intent(this, ChallengeRecorderActivity::class.java)
             with(startRecordingIntent) {
                 putExtra(ChallengeRecorderActivity.CREATED_CHALLENGE_INTENT, true)
@@ -45,6 +52,13 @@ class CreateChallengeActivity : AppCompatActivity() {
                 putExtra(ChallengeRecorderActivity.DISTANCE, distance)
             }
             startActivity(startRecordingIntent)
+        }
+    }
+
+    private fun calculateAndSetAvgSpeed() {
+        if (distance != 0 && seconds != 0) {
+            avgSpeed = distance.times(3600.0).div(seconds)
+            avgSpeedTextView.text = "AVG SPEED: " + getStringFromNumber(1, avgSpeed) + "KM/H"
         }
     }
 }
