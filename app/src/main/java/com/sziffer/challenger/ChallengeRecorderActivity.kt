@@ -371,29 +371,11 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         firstStartView.visibility = View.INVISIBLE
 
-        /*
-        chooseAnActivity.visibility = View.INVISIBLE
-        voiceCoachSetUpButton.visibility = View.INVISIBLE
-        firstStartButton.visibility = View.INVISIBLE
-        activityChooserChipGroup.visibility = View.INVISIBLE
-        autoPauseCheckBox.visibility = View.INVISIBLE
-
-         */
-
         object : CountDownTimer(6000, 1000) {
             override fun onFinish() {
                 Log.i(TAG, "CDT finished")
 
                 firstStartView.visibility = View.GONE
-
-                /*
-                chooseAnActivity.visibility = View.GONE
-                voiceCoachSetUpButton.visibility = View.GONE
-                firstStartButton.visibility = View.GONE
-                activityChooserChipGroup.visibility = View.GONE
-                autoPauseCheckBox.visibility = View.GONE
-
-                 */
 
                 val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -555,13 +537,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             firstStartButton.visibility = View.VISIBLE
         } else {
             firstStartView.visibility = View.GONE
-            /*
-            firstStartButton.visibility = View.GONE
-            autoPauseCheckBox.visibility = View.GONE
-            chooseAnActivity.visibility = View.GONE
-            activityChooserChipGroup.visibility = View.GONE
 
-             */
             if (autoPause) {
                 startStopButton.visibility = View.GONE
             } else
@@ -631,7 +607,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     //endregion helper methods
 
     //region permission requests
-    //TODO(use just one permission request function, strange error on pixel after first request)
     private fun permissionRequest() {
         val locationApproved = ActivityCompat
             .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
@@ -642,33 +617,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 ) ==
                 PackageManager.PERMISSION_GRANTED
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (locationApproved) {
-                val hasBackgroundLocationPermission = ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-                if (hasBackgroundLocationPermission) {
-                    // handle location update
-                } else {
-                    ActivityCompat.requestPermissions(
-                        this,
-                        arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                        REQUEST_CODE_BACKGROUND
-                    )
-                }
-            } else {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                    ), REQUEST_CODE_BACKGROUND
-                )
-            }
-        } else {
-            // App doesn't have access to the device's location at all. Make full request
-            // for permission.
+
+        if (!locationApproved) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ActivityCompat.requestPermissions(
                     this,
@@ -690,7 +640,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 )
             }
         }
-
     }
 
     private fun checkPermissions(): Boolean {
@@ -728,8 +677,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             val duration: Long = intent.getLongExtra(LocationUpdatesService.DURATION, 0)
 
 
-            val avgSpeed = rawDistance.div(duration)
-
             mMap.addPolyline(
                 PolylineOptions()
                     .addAll(gpsService?.route)
@@ -739,25 +686,48 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
                 val difference = intent.getLongExtra(LocationUpdatesService.DIFFERENCE, 0).div(1000)
 
-                if (difference < 0) {
 
-                    differenceTextView.text =
-                        "-" + DateUtils.formatElapsedTime(difference.absoluteValue)
-                    differenceTextView.setTextColor(
-                        ContextCompat.getColor(
-                            this@ChallengeRecorderActivity,
-                            color.colorMinus
+                when (difference.toInt()) {
+                    0 -> {
+                        differenceTextView.text =
+                            DateUtils.formatElapsedTime(difference.absoluteValue)
+                        differenceTextView.setTextColor(
+                            ContextCompat.getColor(
+                                this@ChallengeRecorderActivity,
+                                android.R.color.white
+                            )
                         )
-                    )
-                } else {
-
-                    differenceTextView.text = "+" + DateUtils.formatElapsedTime(difference)
-                    differenceTextView.setTextColor(
-                        ContextCompat.getColor(
-                            this@ChallengeRecorderActivity,
-                            color.colorPlus
+                    }
+                    in 1..3600 -> {
+                        differenceTextView.text = "+" + DateUtils.formatElapsedTime(difference)
+                        differenceTextView.setTextColor(
+                            ContextCompat.getColor(
+                                this@ChallengeRecorderActivity,
+                                color.colorPlus
+                            )
                         )
-                    )
+                    }
+                    in -3600..0 -> {
+                        differenceTextView.text =
+                            "-" + DateUtils.formatElapsedTime(difference.absoluteValue)
+                        differenceTextView.setTextColor(
+                            ContextCompat.getColor(
+                                this@ChallengeRecorderActivity,
+                                color.colorMinus
+                            )
+                        )
+                    }
+                    //the difference is too big, maybe there's a location error.
+                    else -> {
+                        differenceTextView.text =
+                            getString(string.difference_error)
+                        differenceTextView.setTextColor(
+                            ContextCompat.getColor(
+                                this@ChallengeRecorderActivity,
+                                android.R.color.white
+                            )
+                        )
+                    }
                 }
             }
 
@@ -767,8 +737,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
             if (location != null) {
 
-                //latLngBoundsBuilder.include(LatLng(location.latitude,location.longitude))
-                //mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(latLngBoundsBuilder.build(),1000))
                 val latLng = LatLng(location.latitude, location.longitude)
                 mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
 
@@ -781,7 +749,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
     companion object {
         private const val REQUEST = 200
-        private const val REQUEST_CODE_BACKGROUND = 1545
         const val CHALLENGE = "challenge"
         const val RECORDED_CHALLENGE_ID = "recorded"
         const val CREATED_CHALLENGE_INTENT = "createdChallenge"

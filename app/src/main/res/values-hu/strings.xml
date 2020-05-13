@@ -46,7 +46,7 @@
     <string name="update_profile">Adatok frissítése</string>
     <string name="avg_pace">Átlagos ezrek</string>
     <string name="elevation_gained">Emelkedés</string>
-    <string name="elevetion_lost">Magasságvesztés</string>
+    <string name="elevation_lost">Magasságvesztés</string>
     <string name="show_charts">Grafikonok</string>
     <string name="challenge_this_activity">Túlszárnyalom!</string>
     <string name="title_home">Kezdőlap</string>
@@ -64,4 +64,17 @@
     <string name="choose_an_item">Válassz egyet</string>
     <string name="voice_coach_details">Itt be tudod állítani milyen gyakran mondja az alkalmazás a részleteket (angol hanggal)</string>
     <string name="set_up_voice_coach">Hangbeállítások</string>
+    <string name="hey">Üdv</string>
+    <string name="add_your_weight">Add meg a súlyod</string>
+    <string name="add_your_height">Add meg a magasságod</string>
+    <string name="weight">Súly</string>
+    <string name="height">Magasság</string>
+    <string name="your_bmi">A BMI indexed:</string>
+    <string name="normal">Normális</string>
+    <string name="underweight">Alultáplált</string>
+    <string name="overweight">Túlsúlyos</string>
+    <string name="obese">Kórosan elhízott</string>
+    <string name="hi">Üdv!</string>
+    <string name="no_internet_connection">Nincs internetkapcsolat</string>
+    <string name="average_speed">Átlagsebesség</string>
 </resources>

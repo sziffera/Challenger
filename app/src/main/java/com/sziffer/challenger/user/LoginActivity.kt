@@ -139,7 +139,12 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
             return
         }
         loginButton.isEnabled = false
-        //TODO(add loading)
+        loginButton.startAnimation(
+            AnimationUtils.loadAnimation(
+                this,
+                R.anim.fade_out
+            )
+        )
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
             if (it.isSuccessful) {
                 Toast.makeText(applicationContext, "Successful login!", Toast.LENGTH_SHORT).show()
@@ -148,6 +153,12 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
             } else {
                 buttonShake()
                 loginButton.isEnabled = true
+                loginButton.startAnimation(
+                    AnimationUtils.loadAnimation(
+                        this,
+                        R.anim.fade_in
+                    )
+                )
                 Toast.makeText(applicationContext, "Sign-in failed", Toast.LENGTH_SHORT).show()
 
             }

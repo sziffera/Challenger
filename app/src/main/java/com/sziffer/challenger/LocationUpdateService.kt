@@ -384,7 +384,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             if (it == TextToSpeech.SUCCESS) {
                 textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onDone(utteranceId: String?) {
-                        //TODO(ilyenkor lehet deprecatedet használni?)
                         if (utteranceId == TTS_ID) {
                             played = true
                             Log.i(TAG, "TTS finished")

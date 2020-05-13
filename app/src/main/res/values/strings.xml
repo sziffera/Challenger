@@ -57,7 +57,7 @@
     <string name="avg_pace">avg pace</string>
     <string name="_0_00_min_km" translatable="false">0:00 min/km</string>
     <string name="elevation_gained">elevation gained</string>
-    <string name="elevetion_lost">elevetion lost</string>
+    <string name="elevation_lost">elevation lost</string>
     <string name="show_charts">show charts</string>
     <string-array name="activity_types">
         <item>cycling</item>
@@ -78,7 +78,7 @@
     <string name="take_a_tour">Take a tour</string>
     <string name="discard">Discard</string>
     <string name="choose_an_item">Choose an item</string>
-    <string name="voice_coach_details">You can choose here when the voice coache is telling you your activity details</string>
+    <string name="voice_coach_details">You can choose here when the voice coach is telling you your activity details</string>
     <string name="turn_off">Turn off</string>
     <string name="minute">Minute</string>
     <string-array name="voice_coach_items">
@@ -105,4 +105,6 @@
     <string name="obese">Obese</string>
     <string name="hi">Hi!</string>
     <string name="no_internet_connection">No internet connection</string>
+    <string name="average_speed">Average speed</string>
+    <string name="difference_error">Can\'t calculate difference</string>
 </resources>

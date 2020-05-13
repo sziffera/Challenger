@@ -26,8 +26,6 @@ class DataDownloaderWorker(
         var success = true
         val countDownLatch = CountDownLatch(1)
 
-        //TODO(use childEventValueListener)
-
         FirebaseManager.currentUsersChallenges?.addValueEventListener(object :
             ValueEventListener {
             override fun onCancelled(p0: DatabaseError) {

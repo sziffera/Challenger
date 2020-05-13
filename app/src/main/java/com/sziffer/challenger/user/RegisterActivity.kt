@@ -103,7 +103,12 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
             return
         }
         registerButton.isEnabled = false
-        //TODO(add loading icon)
+        registerButton.startAnimation(
+            AnimationUtils.loadAnimation(
+                this,
+                R.anim.fade_out
+            )
+        )
 
         FirebaseManager.mAuth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
@@ -138,6 +143,12 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
                 } else { // If sign in failed
                     Toast.makeText(this, "Unsuccessful sign-up", Toast.LENGTH_SHORT).show()
                     registerButton.isEnabled = true
+                    registerButton.startAnimation(
+                        AnimationUtils.loadAnimation(
+                            this,
+                            R.anim.fade_in
+                        )
+                    )
                 }
 
             }

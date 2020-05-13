@@ -1,7 +1,10 @@
 package com.sziffer.challenger
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.text.format.DateUtils
@@ -12,6 +15,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -104,7 +108,10 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 discardButton.visibility = View.GONE
                 saveStartButton.text = getString(R.string.challenge_this_activity)
                 saveStartButton.setOnClickListener {
-                    startChallenge()
+                    if (checkPermissions())
+                        startChallenge()
+                    else
+                        permissionRequest()
                 }
                 challengeNameEditText.inputType = InputType.TYPE_NULL
                 challengeNameEditText.setText(challenge.name.toUpperCase(Locale.ROOT))
@@ -264,8 +271,70 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         }.start()
     }
 
+
+    private fun permissionRequest() {
+        val locationApproved = ActivityCompat
+            .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) ==
+                PackageManager.PERMISSION_GRANTED
+
+
+        if (!locationApproved) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ),
+                    REQUEST
+                )
+            } else {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ),
+                    REQUEST
+                )
+            }
+        }
+
+    }
+
+    private fun checkPermissions(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
+
+        } else {
+            return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        }
+    }
+
     companion object {
         private val TAG = this::class.java.simpleName
+        private const val REQUEST = 112
         private const val CHALLENGE_DETAILS = "challengeDetails"
         const val CHALLENGE_ID = "$CHALLENGE_DETAILS.id"
         const val IS_IT_A_CHALLENGE = "$CHALLENGE_DETAILS.isChallenge"

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_create_challenge.*
+import java.util.*
 
 class CreateChallengeActivity : AppCompatActivity() {
 
@@ -58,7 +59,8 @@ class CreateChallengeActivity : AppCompatActivity() {
     private fun calculateAndSetAvgSpeed() {
         if (distance != 0 && seconds != 0) {
             avgSpeed = distance.times(3600.0).div(seconds)
-            avgSpeedTextView.text = "AVG SPEED: " + getStringFromNumber(1, avgSpeed) + "KM/H"
+            avgSpeedTextView.text = "${getString(R.string.avgspeed).toUpperCase(Locale.ROOT)}:" +
+                    " ${getStringFromNumber(1, avgSpeed)}KM/H"
         }
     }
 }

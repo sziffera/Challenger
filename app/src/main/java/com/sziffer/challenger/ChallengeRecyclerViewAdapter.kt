@@ -91,4 +91,8 @@ class ChallengeRecyclerViewAdapter(
 
         }
     }
+
+    interface RecyclerViewOnClickListener {
+        fun itemClicked(v: View, pos: Int)
+    }
 }

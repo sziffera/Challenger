@@ -14,6 +14,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -32,7 +33,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import java.text.SimpleDateFormat
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), LifecycleObserver {
 
     private lateinit var sharedPreferences: SharedPreferences
     private var dbHelper: ChallengeDbHelper? = null
@@ -46,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        //TODO(location permission error on Android10)
+        Log.i("MAIN", "OnCreate")
 
         if (!checkPermissions())
             permissionRequest()
@@ -91,11 +92,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, UserProfileActivity::class.java))
         }
 
-        recordActivityButton.setOnClickListener {
-            intent = Intent(applicationContext, ChallengeRecorderActivity::class.java)
-            intent.putExtra(ChallengeRecorderActivity.CHALLENGE, false)
-            startActivity(intent)
-        }
+
 
         takeATourButton.setOnClickListener {
             Toast.makeText(this, "This feature is coming soon!", Toast.LENGTH_LONG).show()
@@ -105,6 +102,16 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, CreateChallengeActivity::class.java))
         }
 
+        recordActivityButton.setOnClickListener {
+            if (checkPermissions()) {
+                intent = Intent(applicationContext, ChallengeRecorderActivity::class.java)
+                intent.putExtra(ChallengeRecorderActivity.CHALLENGE, false)
+                startActivity(intent)
+            } else {
+                permissionRequest()
+            }
+        }
+
         showMoreChallengeButton.setOnClickListener {
 
             startActivity(
@@ -112,13 +119,20 @@ class MainActivity : AppCompatActivity() {
                 ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
             )
         }
-
     }
 
     override fun onStart() {
+        Log.i("MAIN", "OnStart")
         super.onStart()
         setUpView()
 
+    }
+
+    override fun onStop() {
+        Log.i("MAIN", "OnStop")
+        dbHelper?.close()
+        dbHelper = null
+        super.onStop()
     }
 
     private fun setUpView() {
@@ -167,12 +181,6 @@ class MainActivity : AppCompatActivity() {
         dbHelper?.close()
     }
 
-    override fun onStop() {
-        dbHelper?.close()
-        dbHelper = null
-        super.onStop()
-    }
-
     private fun observeWork() {
         WorkManager.getInstance(applicationContext)
             .getWorkInfosByTagLiveData(DATA_DOWNLOADER_TAG)
@@ -194,35 +202,8 @@ class MainActivity : AppCompatActivity() {
                 ) ==
                 PackageManager.PERMISSION_GRANTED
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (locationApproved) {
-                val hasBackgroundLocationPermission = ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-                if (hasBackgroundLocationPermission) {
-                    // handle location update
-                } else {
-                    ActivityCompat.requestPermissions(
-                        this,
-                        arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                        REQUEST_CODE_BACKGROUND
-                    )
-                }
-            } else {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ),
-                    REQUEST_CODE_BACKGROUND
-                )
-            }
-        } else {
-            // App doesn't have access to the device's location at all. Make full request
-            // for permission.
+
+        if (!locationApproved) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ActivityCompat.requestPermissions(
                     this,
@@ -273,7 +254,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val REQUEST = 200
-        private const val REQUEST_CODE_BACKGROUND = 1545
 
         //final uid which is used for authorization
         const val FINAL_USER_ID = "finalUid"

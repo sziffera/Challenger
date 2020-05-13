@@ -47,3 +47,7 @@ fun zoomAndRouteCreator(locations: ArrayList<MyLocation>): Pair<LatLngBounds, Ar
     }
     return Pair(builder.build(), latLng)
 }
+
+fun permissionRequest(requestCode: Int, context: Context) {
+
+}

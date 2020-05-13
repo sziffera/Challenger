@@ -276,7 +276,7 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="3dp"
                     android:gravity="fill"
-                    android:text="@string/elevetion_lost"
+                    android:text="@string/elevation_lost"
                     android:textAllCaps="true"
                     android:textSize="15sp"
                     app:layout_column="0"
