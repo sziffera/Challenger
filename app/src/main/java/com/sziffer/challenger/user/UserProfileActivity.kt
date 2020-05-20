@@ -75,18 +75,24 @@ class UserProfileActivity : AppCompatActivity() {
     @SuppressLint("SetTextI18n")
     private fun initUi() {
         if (FirebaseManager.isUserValid) {
-            FirebaseManager.currentUserRef!!.child("username")
-                .addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onCancelled(p0: DatabaseError) {
-                        Log.e("USER", p0.toString())
-                    }
 
-                    override fun onDataChange(p0: DataSnapshot) {
-                        welcomeUserTextView.text =
-                            "${getString(R.string.hey)}, ${p0.value.toString()}!"
-                        Log.i("USER", p0.value.toString())
-                    }
-                })
+            if (userManager.username != null) {
+                welcomeUserTextView.text = "${getString(R.string.hey)}, ${userManager.username}"
+            } else {
+                FirebaseManager.currentUserRef!!.child("username")
+                    .addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onCancelled(p0: DatabaseError) {
+                            Log.e("USER", p0.toString())
+                        }
+
+                        override fun onDataChange(p0: DataSnapshot) {
+                            welcomeUserTextView.text =
+                                "${getString(R.string.hey)}, ${p0.value.toString()}!"
+                            Log.i("USER", p0.value.toString())
+                            userManager.username = p0.value.toString()
+                        }
+                    })
+            }
         } else {
             welcomeUserTextView.text = getString(R.string.hey) + "!"
         }

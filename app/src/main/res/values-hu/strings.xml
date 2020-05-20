@@ -63,7 +63,7 @@
     <string name="take_a_tour">Bemutató indítása</string>
     <string name="choose_an_item">Válassz egyet</string>
     <string name="voice_coach_details">Itt be tudod állítani milyen gyakran mondja az alkalmazás a részleteket (angol hanggal)</string>
-    <string name="set_up_voice_coach">Hangbeállítások</string>
+    <string name="set_up_voice_coach">Voice Coach beallítása</string>
     <string name="hey">Üdv</string>
     <string name="add_your_weight">Add meg a súlyod</string>
     <string name="add_your_height">Add meg a magasságod</string>
@@ -77,4 +77,28 @@
     <string name="hi">Üdv!</string>
     <string name="no_internet_connection">Nincs internetkapcsolat</string>
     <string name="average_speed">Átlagsebesség</string>
+    <string name="difference_error">Valami hiba történt</string>
+    <string name="update_success">Sikeresen frissítettük profilod!</string>
+    <string name="are_you_sure_to_discard">"Biztosan törölni szeretnéd? "</string>
+    <string name="yes">Igen</string>
+    <string name="discard_challenge">Törlés</string>
+    <string name="no">Nem</string>
+    <string name="this_cannot_be_saved">Sajnos ezt az utat nem tudjuk elmenteni, de újra tudod kezdeni, ha szeretnéd</string>
+    <string name="already_finished">Már végeztél is?</string>
+    <string name="airplane_mode_text">Sajnos nem tudsz sportolást rögzíteni, ha a Repülési mód be van kapcsolva. Kérlek kapcsold ki.</string>
+    <string name="airplane_is_on">Repüléis Üzemmód bekapcsolva</string>
+    <string name="no_gps">Nincs GPS jel</string>
+    <string name="no_gps_text">Úgy tűnik, a GPS ki van kapcsolva. Kérlek kapcsold be.</string>
+    <string name="ok">Ok</string>
+    <string name="record_activity_showcase_text">Ennél a lehetőségnél sportolást tudsz rögzíteni. Választhatsz futás és kerékpározás között. Sportolás közben aktiválhatod a Challenger Voice Coach funkcióját, mely hangosan tájékoztat az aktuális részidődről és megtett távolságról.
+    Aktiválhatod az automatikus szüneteltetés funkciót is. Ekkor a sportolás rögzítése automatikusan szünetel, ha egy helyben állsz.
+    </string>
+    <string name="got_it">Értettem!</string>
+    <string name="let_s_do_it">"Kezdjük!</string>
+    <string name="create_challenge_showcase_text">
+        Tudjuk, hogy imádod a kihívásokat. Éppen ezért hoztuk létre ezt a funkciót! Itt létrehozhatsz különböző kihívásokat, melyeket aztán megpróbálhatsz teljesíteni.
+        Ki tudod választani a távolságot és az időt, majd a Challenger automatikusan meghatározza a szükséges tempót, amit tartanod kell.
+        Ezután nincs is más dolgod, csak kihozni magadból a maximumot! Ebben igyekszünk segíteni, ha aktiválod a Voice Coach funkciót az általad beállított
+        időközönként a Challenger hangosan tájékoztat a részideidről és a beállított tempótól való eltérésről.
+    </string>
 </resources>

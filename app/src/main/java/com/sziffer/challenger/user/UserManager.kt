@@ -1,6 +1,7 @@
 package com.sziffer.challenger.user
 
 import android.content.Context
+import android.util.Log
 
 class UserManager(
     private val context: Context
@@ -14,6 +15,7 @@ class UserManager(
             return sharedPreferences.getString(KEY_USERNAME, null)
         }
         set(value) {
+            Log.i("USERMANAGER", value.toString())
             with(sharedPreferences.edit()) {
                 putString(KEY_USERNAME, value)
                 apply()
@@ -25,6 +27,7 @@ class UserManager(
             return sharedPreferences.getString(KEY_USER_EMAIL, null)
         }
         set(value) {
+            Log.i("USERMANAGER", value.toString())
             with(sharedPreferences.edit()) {
                 putString(KEY_USER_EMAIL, value)
                 apply()

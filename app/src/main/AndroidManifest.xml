@@ -29,7 +29,6 @@
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MenuDemoActivity" />
 
         <activity android:name=".ChartsActivity" />
         <activity android:name=".user.UserSettingsActivity" />

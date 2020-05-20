@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Gradle: com.github.deano2390:MaterialShowcaseView:1.3.4@aar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/66bf2cd77a0784f524ec9d7a25290094/jetified-MaterialShowcaseView-1.3.4/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/66bf2cd77a0784f524ec9d7a25290094/jetified-MaterialShowcaseView-1.3.4/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.deano2390/MaterialShowcaseView/1.3.4/563fb34b0080071afda65b13ffb21112bfe003a2/MaterialShowcaseView-1.3.4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

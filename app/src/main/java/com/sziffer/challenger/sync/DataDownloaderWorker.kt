@@ -10,6 +10,7 @@ import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.Challenge
 import com.sziffer.challenger.ChallengeDbHelper
 import com.sziffer.challenger.user.FirebaseManager
+import com.sziffer.challenger.user.UserManager
 import java.util.concurrent.CountDownLatch
 
 class DataDownloaderWorker(
@@ -23,8 +24,68 @@ class DataDownloaderWorker(
     override fun doWork(): Result {
 
         val dbHelper = ChallengeDbHelper(appContext)
+        val userManager = UserManager(appContext)
         var success = true
         val countDownLatch = CountDownLatch(1)
+
+
+        FirebaseManager.currentUserRef?.child("username")
+            ?.addListenerForSingleValueEvent(
+                object : ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError) {
+                        //do nothing
+                    }
+
+                    override fun onDataChange(p0: DataSnapshot) {
+                        userManager.username = p0.value.toString()
+                    }
+                }
+            )
+
+        FirebaseManager.currentUserRef?.child("email")
+            ?.addListenerForSingleValueEvent(
+                object : ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError) {
+                        //do nothing
+                    }
+
+                    override fun onDataChange(p0: DataSnapshot) {
+                        userManager.email = p0.value.toString()
+                    }
+                }
+            )
+
+        FirebaseManager.currentUserRef?.child("weight")
+            ?.addListenerForSingleValueEvent(
+                object : ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError) {
+                        //do nothing
+                    }
+
+                    override fun onDataChange(p0: DataSnapshot) {
+                        val weight = p0.getValue(Int::class.java)
+                        if (weight != null) {
+                            userManager.weight = weight
+                        }
+                    }
+                }
+            )
+
+        FirebaseManager.currentUserRef?.child("height")
+            ?.addListenerForSingleValueEvent(
+                object : ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError) {
+                        //do nothing
+                    }
+
+                    override fun onDataChange(p0: DataSnapshot) {
+                        val height = p0.getValue(Int::class.java)
+                        if (height != null) {
+                            userManager.height = height
+                        }
+                    }
+                }
+            )
 
         FirebaseManager.currentUsersChallenges?.addValueEventListener(object :
             ValueEventListener {

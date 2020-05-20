@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LifecycleObserver
@@ -30,6 +29,9 @@ import com.sziffer.challenger.user.FirebaseManager
 import com.sziffer.challenger.user.UserManager
 import com.sziffer.challenger.user.UserProfileActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence
+import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView
+import uk.co.deanwild.materialshowcaseview.ShowcaseConfig
 import java.text.SimpleDateFormat
 
 
@@ -60,11 +62,13 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
 
         if (FirebaseManager.isUserValid) {
-
+            Log.i("MAIN", "the user is registered")
             if (userManager.username != null) {
+                Log.i("MAIN", "set from usermanager")
                 heyUserTextView.text = "Hey, " + userManager.username + "!"
             } else {
-                FirebaseManager.currentUserRef?.child("username")?.addValueEventListener(object :
+                FirebaseManager.currentUserRef
+                    ?.child("username")?.addListenerForSingleValueEvent(object :
                     ValueEventListener {
                     override fun onCancelled(p0: DatabaseError) {
                     }
@@ -73,12 +77,15 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
                         Log.i("FIREBASE", p0.toString())
                         val name = p0.getValue(String::class.java) as String
                         heyUserTextView.text = "Hey, " + name + "!"
+                        //also store the name for further usage
+                        userManager.username = name
                     }
                 })
             }
 
 
         } else {
+
             heyUserTextView.visibility = View.GONE
         }
 
@@ -95,7 +102,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
 
         takeATourButton.setOnClickListener {
-            Toast.makeText(this, "This feature is coming soon!", Toast.LENGTH_LONG).show()
+            appTour()
         }
 
         createChallengeButton.setOnClickListener {
@@ -104,7 +111,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
         recordActivityButton.setOnClickListener {
             if (checkPermissions()) {
-                intent = Intent(applicationContext, ChallengeRecorderActivity::class.java)
+                val intent = Intent(applicationContext, ChallengeRecorderActivity::class.java)
                 intent.putExtra(ChallengeRecorderActivity.CHALLENGE, false)
                 startActivity(intent)
             } else {
@@ -192,6 +199,34 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
             })
     }
 
+    private fun appTour() {
+        MaterialShowcaseView.resetSingleUse(this, SHOWCASE_ID)
+        val config = ShowcaseConfig()
+        config.delay = 500
+        val sequence = MaterialShowcaseSequence(this, SHOWCASE_ID)
+        sequence.setConfig(config)
+
+        sequence.addSequenceItem(
+            MaterialShowcaseView.Builder(this)
+                .setTarget(recordActivityButton)
+                .setDismissText(getString(R.string.got_it))
+                .setContentText(getString(R.string.record_activity_showcase_text))
+                .withRectangleShape(true)
+                .build()
+        )
+
+        sequence.addSequenceItem(
+            MaterialShowcaseView.Builder(this)
+                .setTarget(createChallengeButton)
+                .setDismissText(getString(R.string.let_s_do_it))
+                .setContentText(getString(R.string.create_challenge_showcase_text))
+                .withRectangleShape(true)
+                .build()
+        )
+
+        sequence.start()
+    }
+
     private fun permissionRequest() {
         val locationApproved = ActivityCompat
             .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
@@ -253,6 +288,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     }
 
     companion object {
+        private const val SHOWCASE_ID = "MainActivity"
         private const val REQUEST = 200
 
         //final uid which is used for authorization

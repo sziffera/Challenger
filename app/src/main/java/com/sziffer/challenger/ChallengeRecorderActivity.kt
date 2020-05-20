@@ -85,12 +85,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         dbHelper = ChallengeDbHelper(this)
 
-        //TODO(not finished)
-        Log.i(
-            TAG, "${ChallengeManager.isUpdate} is the update and isChallenge is" +
-                    "${ChallengeManager.isChallenge} - should be false"
-        )
-
         initChips()
         initVoiceCoach()
 
@@ -369,13 +363,14 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             }
         }
 
-        firstStartView.visibility = View.INVISIBLE
+        firstStartView.visibility = View.GONE
+        countDownTextView.visibility = View.VISIBLE
 
         object : CountDownTimer(6000, 1000) {
             override fun onFinish() {
                 Log.i(TAG, "CDT finished")
 
-                firstStartView.visibility = View.GONE
+                countDownTextView.visibility = View.GONE
 
                 val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -416,7 +411,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             }
 
             override fun onTick(millisUntilFinished: Long) {
-                Log.i(TAG, "CDT tick")
+                countDownTextView.text = millisUntilFinished.div(1000).toInt().toString()
             }
         }.start()
 
@@ -461,12 +456,12 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     //region Dialogs
     private fun buildAlertMessageNoGps() {
         val builder: AlertDialog.Builder = AlertDialog.Builder(this, R.style.AlertDialogCustom)
-        builder.setTitle("No GPS")
+        builder.setTitle(getString(R.string.no_gps))
             .setIcon(R.drawable.ic_gps_off_24px)
-            .setMessage("Your GPS seems to be disabled, please enable it")
+            .setMessage(getString(R.string.no_gps_text))
             .setCancelable(true)
             .setNeutralButton(
-                "Ok"
+                getString(R.string.ok)
             ) { _, _ -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
 
         val alert: AlertDialog = builder.create()
@@ -477,12 +472,12 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         val builder: AlertDialog.Builder = AlertDialog.Builder(this, R.style.AlertDialogCustom)
         builder
-            .setTitle("Airplane mode is turned on")
+            .setTitle(getString(R.string.airplane_is_on))
             .setIcon(R.drawable.ic_airplanemode_active_24px)
-            .setMessage("Unfortunately, you can't record an activity, if Airplane mode is turned on")
+            .setMessage(getString(R.string.airplane_mode_text))
             .setCancelable(true)
             .setNeutralButton(
-                "Turn off"
+                getString(R.string.turn_off)
             ) { _, _ ->
                 startActivity(Intent(Settings.ACTION_AIRPLANE_MODE_SETTINGS))
             }
@@ -496,12 +491,12 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         val builder: AlertDialog.Builder = AlertDialog.Builder(this, R.style.AlertDialogCustom)
 
         builder
-            .setTitle("Already finished?")
+            .setTitle(getString(R.string.already_finished))
             .setIcon(R.drawable.ic_notification_important_24px)
-            .setMessage("Unfortunately, this activity can't be saved, but you can start it again if you would like to")
+            .setMessage(getString(R.string.this_cannot_be_saved))
             .setCancelable(false)
             .setNeutralButton(
-                "Ok"
+                getString(R.string.ok)
             ) { dialog, _ ->
                 clean()
                 startActivity(

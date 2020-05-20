@@ -7,12 +7,15 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.R
 import com.sziffer.challenger.getStringFromNumber
+import com.sziffer.challenger.isEmailAddressValid
 import kotlinx.android.synthetic.main.activity_user_settings.*
 
 class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
@@ -22,6 +25,7 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
     private var weight = 0
     private var height = 0
 
+    private lateinit var userManager: UserManager
 
     private var connected: Boolean = true
     private var isDataDownloaded: Boolean = false
@@ -33,6 +37,7 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_settings)
+        userManager = UserManager(applicationContext)
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         myNetworkCallback = MyNetworkCallback(this, connectivityManager)
         getUserInfo()
@@ -40,7 +45,6 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
             updateUserData()
         }
     }
-
 
     override fun onStart() {
 
@@ -60,61 +64,98 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
 
     /** downloads user data from Firebase and sets the values of text views. */
     private fun getUserInfo() {
-        //TODO(get data from local storage, if not exists, download)
+
         if (FirebaseManager.isUserValid) {
 
-            FirebaseManager.currentUserRef?.child("username")?.addValueEventListener(object :
-                ValueEventListener {
-                override fun onCancelled(p0: DatabaseError) {
-                }
+            if (userManager.username != null) {
+                username = userManager.username
+                usernameEditText.setText(username)
+            } else {
 
-                override fun onDataChange(p0: DataSnapshot) {
-                    Log.i("FIREBASE", p0.toString())
-                    username = p0.getValue(String::class.java) as String
-                    usernameEditText.setText(username)
-                }
-            })
+                FirebaseManager.currentUserRef?.child("username")?.addValueEventListener(object :
+                    ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError) {
+                    }
 
-            FirebaseManager.currentUserRef?.child("email")?.addValueEventListener(object :
-                ValueEventListener {
-                override fun onCancelled(p0: DatabaseError) {
-                }
+                    override fun onDataChange(p0: DataSnapshot) {
+                        Log.i("FIREBASE", p0.toString())
+                        username = p0.getValue(String::class.java) as String
+                        usernameEditText.setText(username)
+                    }
+                })
+            }
+            if (userManager.email != null) {
+                emailEditText.setText(userManager.email)
+            } else {
+                FirebaseManager.currentUserRef?.child("email")?.addValueEventListener(object :
+                    ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError) {
+                    }
 
-                override fun onDataChange(p0: DataSnapshot) {
-                    Log.i("FIREBASE", p0.toString())
-                    email = p0.getValue(String::class.java) as String
-                    emailEditText.setText(email)
-                }
-            })
-            FirebaseManager.currentUserRef?.child("weight")?.addValueEventListener(object :
-                ValueEventListener {
-                override fun onCancelled(p0: DatabaseError) {
-                }
+                    override fun onDataChange(p0: DataSnapshot) {
+                        Log.i("FIREBASE", p0.toString())
+                        email = p0.getValue(String::class.java) as String
+                        emailEditText.setText(email)
+                    }
+                })
+            }
+            if (userManager.weight != 0) {
+                weight = userManager.weight
+                if (height != 0)
+                    calculateAndSetBmi()
+                weightEditText.hint = "${weight}kg"
+            } else {
+                FirebaseManager.currentUserRef?.child("weight")?.addValueEventListener(object :
+                    ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError) {
+                    }
 
-                override fun onDataChange(p0: DataSnapshot) {
-                    Log.i("FIREBASE", p0.toString())
-                    weight = p0.getValue(Int::class.java) as Int
-                    weightEditText.hint = "${weight}kg"
-                    //if height is already downloaded, calls calculate bmi method
-                    if (height != 0)
-                        calculateAndSetBmi()
-                }
-            })
-            FirebaseManager.currentUserRef?.child("height")?.addValueEventListener(object :
-                ValueEventListener {
-                override fun onCancelled(p0: DatabaseError) {
-                }
+                    override fun onDataChange(p0: DataSnapshot) {
+                        weight = try {
+                            Log.i("FIREBASE", p0.toString())
+                            p0.getValue(Int::class.java) as Int
 
-                override fun onDataChange(p0: DataSnapshot) {
-                    Log.i("FIREBASE", p0.toString())
-                    height = p0.getValue(Int::class.java) as Int
-                    //if weight is already downloaded, calls calculate bmi method
-                    if (weight != 0)
-                        calculateAndSetBmi()
-                    heightEditText.hint = "${height}cm"
-                }
-            })
+                        } catch (e: TypeCastException) {
+                            0
+                        } finally {
+                            userManager.weight = weight
+                            weightEditText.hint = "${weight}kg"
+                            //if height is already downloaded, calls calculate bmi method
+                            if (height != 0)
+                                calculateAndSetBmi()
+                        }
 
+                    }
+                })
+            }
+            if (userManager.height != 0) {
+                height = userManager.height
+                if (weight != 0)
+                    calculateAndSetBmi()
+                heightEditText.hint = "${height}cm"
+            } else {
+                FirebaseManager.currentUserRef?.child("height")?.addValueEventListener(object :
+                    ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError) {
+                    }
+
+                    override fun onDataChange(p0: DataSnapshot) {
+
+                        height = try {
+                            Log.i("FIREBASE", p0.toString())
+                            p0.getValue(Int::class.java) as Int
+                        } catch (e: TypeCastException) {
+                            0
+                        } finally {
+                            userManager.height = height
+                            heightEditText.hint = "${height}cm"
+                            if (weight != 0)
+                                calculateAndSetBmi()
+                        }
+
+                    }
+                })
+            }
         }
     }
 
@@ -140,7 +181,6 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
     /** updates user data based on input and uploads it to Firebase */
     private fun updateUserData() {
 
-
         if (!connected) {
             noInternetTextView.startAnimation(
                 AnimationUtils.loadAnimation(
@@ -150,6 +190,83 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
             )
             return
         }
+        if (!FirebaseManager.isUserValid) {
+            return
+        }
+        if (username != usernameEditText.text.toString() && usernameEditText.text.isNotEmpty()) {
+            userManager.username = usernameEditText.text.toString()
+            username = usernameEditText.text.toString()
+            FirebaseManager.mAuth.currentUser!!.updateProfile(
+                UserProfileChangeRequest.Builder()
+                    .setDisplayName(username).build()
+            ).addOnSuccessListener {
+                Log.i("REGISTER", "display name set successfully")
+            }
+            FirebaseManager.currentUserRef!!.child("username").setValue(
+                usernameEditText.text.toString()
+            )
+        }
+
+        if (email != emailEditText.text.toString()
+            && emailEditText.text.toString().isEmailAddressValid()
+        ) {
+
+            FirebaseManager.currentUserRef!!.child("username").setValue(
+                usernameEditText.text.toString()
+            )
+            userManager.email = usernameEditText.text.toString()
+            email = usernameEditText.text.toString()
+            FirebaseManager.mAuth.currentUser!!.updateEmail(
+                usernameEditText.text.toString()
+            ).addOnSuccessListener {
+                Log.i(TAG, "email update successful")
+            }
+
+        }
+        var calculateBmiAgain = false
+        if (weightEditText.text.toString().isNotEmpty()) {
+            try {
+                val updated = weightEditText.text.toString().toInt()
+                if (updated == weight) return
+                calculateBmiAgain = true
+                FirebaseManager.currentUserRef!!.child("weight")
+                    .setValue(updated)
+                userManager.weight = updated
+                weight = updated
+            } catch (e: NumberFormatException) {
+                weightEditText.startAnimation(
+                    AnimationUtils.loadAnimation(
+                        this,
+                        R.anim.shake
+                    )
+                )
+                return
+            }
+        }
+
+        if (height != heightEditText.text.toString().toInt()) {
+            try {
+                val updated = heightEditText.text.toString().toInt()
+                if (updated == height) return
+                calculateBmiAgain = true
+                FirebaseManager.currentUserRef!!.child("height")
+                    .setValue(updated)
+                userManager.height = updated
+                height = updated
+            } catch (e: NumberFormatException) {
+                heightEditText.startAnimation(
+                    AnimationUtils.loadAnimation(
+                        this,
+                        R.anim.shake
+                    )
+                )
+                return
+            }
+
+        }
+        if (calculateBmiAgain)
+            calculateAndSetBmi()
+        Toast.makeText(this, R.string.update_success, Toast.LENGTH_SHORT).show()
 
     }
 

@@ -107,4 +107,29 @@
     <string name="no_internet_connection">No internet connection</string>
     <string name="average_speed">Average speed</string>
     <string name="difference_error">Can\'t calculate difference</string>
+    <string name="update_success">Your profile was updated successfully!</string>
+    <string name="are_you_sure_to_discard">Are you sure that you want to discard this challenge? This cannot be undone.</string>
+    <string name="yes">Yes</string>
+    <string name="discard_challenge">Discard challenge</string>
+    <string name="no">No</string>
+    <string name="this_cannot_be_saved">Unfortunately, this activity can\'t be saved, but you can start it again if you would like to</string>
+    <string name="already_finished">Already finished?</string>
+    <string name="airplane_mode_text">Unfortunately, you can\'t record an activity, if Airplane mode is turned on</string>
+    <string name="airplane_is_on">Airplane mode is turned on</string>
+    <string name="no_gps">No GPS</string>
+    <string name="no_gps_text">Your GPS seems to be disabled, please enable it</string>
+    <string name="ok">Ok</string>
+    <string name="record_activity_showcase_text">Here, you can start recording a new activity.
+        You can choose between running and cycling as you wish. During recording, a Voice Coach can help
+        you to monitor your performance. You can choose Auto Pause as well. In this case, the
+        recording will pause automatically when your speed is zero.</string>
+    <string name="got_it">Got it!</string>
+    <string name="let_s_do_it">"Let\'s do it!</string>
+    <string name="create_challenge_showcase_text">
+        We know that you love challenging yourself! With this feature, you can do it! You can set the desired distance and duration,
+        Challenger will calculate your average speed automatically. After setting the fields, you can
+        start the challenge and Challenger will help you to keep the pace by updating the difference in
+        every 30 seconds. The Voice Coach can tell you if your pace is good enough, or you should hurry up a little bit.
+        Auto Pause is also available here, so you won\'t lose a single second!
+    </string>
 </resources>

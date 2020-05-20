@@ -12,7 +12,9 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.database.FirebaseDatabase
 import com.sziffer.challenger.MainActivity
 import com.sziffer.challenger.R
 import com.sziffer.challenger.isEmailAddressValid
@@ -132,7 +134,15 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
                     }
 
                     //creating a child for the user
-                    FirebaseManager.currentUserRef?.setValue(user)?.addOnSuccessListener {
+                    /* FirebaseManager.currentUserRef?.setValue(user)?.addOnSuccessListener {
+                         Log.i("REGISTER", "userdata added to realtime database")
+                     }
+
+                     */
+
+                    FirebaseDatabase.getInstance().getReference("users").child(
+                        FirebaseAuth.getInstance().currentUser?.uid!!
+                    ).setValue(user).addOnSuccessListener {
                         Log.i("REGISTER", "userdata added to realtime database")
                     }
 

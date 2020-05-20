@@ -10,6 +10,8 @@ object FirebaseManager {
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
 
     val mAuth = FirebaseAuth.getInstance()
+
+    /** returns with the reference of the current user */
     val currentUserRef: DatabaseReference?
         get() {
             return if (userId != null) {
@@ -22,9 +24,10 @@ object FirebaseManager {
 
     val currentUsersChallenges: DatabaseReference? = currentUserRef?.child("challenges")
 
+    /** returns whether the user is logged in or not */
     val isUserValid: Boolean
         get() {
-            return userId != null
+            return FirebaseAuth.getInstance().currentUser != null
         }
 
     /**

@@ -13,6 +13,7 @@ import com.sziffer.challenger.sync.KEY_DELETE
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import com.sziffer.challenger.user.UserProfileActivity
 import kotlinx.android.synthetic.main.activity_all_challenge.*
+import java.text.SimpleDateFormat
 
 
 class AllChallengeActivity : AppCompatActivity() {
@@ -28,6 +29,16 @@ class AllChallengeActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.allChallengeRecyclerView)
         dbHelper = ChallengeDbHelper(this)
         challenges = dbHelper.getAllChallenges()
+        challenges.sortWith(Comparator { o1, o2 ->
+            if (o1.date.isEmpty() || o2.date.isEmpty()) 0
+            else {
+                val format = SimpleDateFormat("dd-MM-yyyy. HH:mm")
+                val date1 = format.parse(o1.date)!!
+                val date2 = format.parse(o2.date)!!
+                date1
+                    .compareTo(date2)
+            }
+        })
         challenges.reverse()
 
         profileButton.setOnClickListener {

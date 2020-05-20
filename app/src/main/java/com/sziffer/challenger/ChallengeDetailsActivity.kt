@@ -14,6 +14,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -81,8 +82,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         discardButton.setOnClickListener {
             showDiscardAlertDialog()
-            discardChallenge()
-            startMainActivity()
         }
 
         //can be null
@@ -152,29 +151,33 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         val intent = Intent(this, ChallengeRecorderActivity::class.java)
         intent.putExtra(ChallengeRecorderActivity.CHALLENGE, true)
         intent.putExtra(ChallengeRecorderActivity.RECORDED_CHALLENGE_ID, challenge.id.toInt())
-        ChallengeManager.isChallenge = true
-        ChallengeManager.previousChallenge = challenge
-        ChallengeManager.isUpdate = true
         dbHelper.close()
         startActivity(intent)
     }
 
-
+    /**
+     * updating the previous challenge
+     * this is just a normal saving, but with the previous challenge's name.
+     * In this way, the previous challenge's data is not lost, later I the user
+     * can see the improvement. I think this is a better approach, than overriding data.
+     */
     private fun updateChallenge() {
         //we have a saved new challenge, and the previous one
         if (previousChallenge != null) {
 
             challenge.name = previousChallenge!!.name
-            challenge.firebaseId = previousChallenge!!.firebaseId
-            dbHelper.updateChallenge(previousChallenge!!.id.toInt(), challenge)
-            updateSharedPrefForSync(applicationContext, previousChallenge!!.firebaseId, KEY_UPLOAD)
-            dbHelper.deleteChallenge(challenge.id).also {
-                Log.i(TAG, "the delete bool in update is: $it")
-            }
+            //challenge.firebaseId = previousChallenge!!.firebaseId
+            dbHelper.updateChallenge(challenge.id.toInt(), challenge)
+            updateSharedPrefForSync(applicationContext, challenge.firebaseId, KEY_UPLOAD)
+            //dbHelper.updateChallenge(previousChallenge!!.id.toInt(), challenge)
+            //updateSharedPrefForSync(applicationContext, previousChallenge!!.firebaseId, KEY_UPLOAD)
 
-            Toast.makeText(this, "Challenge updated successfully!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this, "Challenge saved successfully!"
+                , Toast.LENGTH_SHORT
+            ).show()
         } else {
-            Toast.makeText(this, "Cant update challenge", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Can't update challenge", Toast.LENGTH_LONG).show()
         }
         startMainActivity()
     }
@@ -225,7 +228,22 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun showDiscardAlertDialog() {
-        //TODO(not implemented)
+        val builder: AlertDialog.Builder = AlertDialog.Builder(this, R.style.AlertDialogCustom)
+        builder
+            .setTitle(getString(R.string.discard_challenge))
+            .setMessage(getString(R.string.are_you_sure_to_discard))
+            .setCancelable(true)
+            .setPositiveButton(
+                getString(R.string.yes)
+            ) { _, _ ->
+                discardChallenge()
+            }
+            .setNegativeButton(
+                getString(R.string.no)
+            ) { dialog, _ -> dialog.dismiss() }
+
+        val alert: AlertDialog = builder.create()
+        alert.show()
     }
 
     /** removes the temp. stored challenge from DB when the user presses discard button */
@@ -233,6 +251,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         dbHelper.deleteChallenge(challenge.id).also {
             Log.i(TAG, "delete success is: $it")
         }
+        startMainActivity()
     }
 
     /**
