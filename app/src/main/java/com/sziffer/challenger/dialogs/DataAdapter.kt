@@ -9,7 +9,7 @@ import com.sziffer.challenger.R
 import kotlinx.android.synthetic.main.voice_coach_item.view.*
 
 class DataAdapter(
-    private val mDataset: ArrayList<String>,
+    private val mDataSet: ArrayList<String>,
     internal var recyclerViewItemClickListener: RecyclerViewItemClickListener
 ) : RecyclerView.Adapter<DataAdapter.ViewHolder>() {
 
@@ -23,11 +23,11 @@ class DataAdapter(
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, i: Int) {
-        viewHolder.mTextView.text = mDataset[i]
+        viewHolder.mTextView.text = mDataSet[i]
     }
 
     override fun getItemCount(): Int {
-        return mDataset.size
+        return mDataSet.size
     }
 
 
@@ -40,7 +40,7 @@ class DataAdapter(
         }
 
         override fun onClick(v: View) {
-            recyclerViewItemClickListener.clickOnVoiceCoachItem(mDataset[this.adapterPosition])
+            recyclerViewItemClickListener.clickOnVoiceCoachItem(mDataSet[this.adapterPosition])
         }
     }
 

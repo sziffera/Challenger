@@ -99,6 +99,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     /** helper for voice coach and update difference method */
     private var threadCounter = 0
 
+    /** helper variable for saving data just in every 3rd new location update */
+    private var saveLocationCounter = 0
 
     //region service lifecycle
     override fun onCreate() {
@@ -294,18 +296,19 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
         if (mLocation != null) {
 
+            //increasing counter
+            saveLocationCounter++
+
             val tempDistance = location.distanceTo(mLocation).also {
                 Log.i(TAG, "temp distance is: $it")
             }
-
-
 
             if (tempDistance <= 0) {
                 //this location is unnecessary
                 return
             }
 
-            //this filters location jumping
+            //filtering location jumping
             if (tempDistance < 100) {
                 if (location.hasSpeed()) {
                     if (maxSpeed < location.speed)
@@ -336,27 +339,27 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                 if (!zeroSpeed) {
                     distance += tempDistance
                     currentSpeed = location.speed
-                    route.add(LatLng(location.latitude, location.longitude))
-
                     if (location.hasAltitude())
                         handleNewAltitude(location.altitude)
 
-                    myRoute.add(
-                        MyLocation(
-                            distance,
-                            System.currentTimeMillis() - start + durationHelper,
-                            location.speed,
-                            correctedAltitude,
-                            LatLng(location.latitude, location.longitude)
+                    if (saveLocationCounter % 3 == 0) {
+                        route.add(LatLng(location.latitude, location.longitude))
+
+                        myRoute.add(
+                            MyLocation(
+                                distance,
+                                System.currentTimeMillis() - start + durationHelper,
+                                location.speed,
+                                correctedAltitude,
+                                LatLng(location.latitude, location.longitude)
+                            )
                         )
-                    )
+                    }
                 }
 
             }
             mLocation = location
         }
-
-
     }
 
     /** stops the service */
@@ -435,7 +438,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         }
     }
 
-
     /**
      * Initializing text for voice coach. This method converts the duration to hh:mm:ss
      * and determines when to use plural or singular.
@@ -443,91 +445,105 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
      */
     private fun startVoiceCoach() {
 
-        val km: String = if (getStringFromNumber(1, distance.div(1000)).toDouble() == 1.0) {
-            "kilometer"
-        } else
-            "kilometres"
-
-        val milliseconds = System.currentTimeMillis() - start + durationHelper
-        val seconds: Int
-        var minutes = (milliseconds / (1000 * 60) % 60).toInt()
-        val hours = (milliseconds / (1000 * 60 * 60) % 24).toInt()
-
-        val hour: String =
-            if (hours == 1)
-                "hour"
-            else
-                "hours"
-        var min: String =
-            if (minutes == 1) {
-                "minute"
+        //the user muted the voice coach, no need to continue
+        if (ChallengeRecorderActivity.muted)
+            return
+        try {
+            val km: String = if (getStringFromNumber(
+                    1, distance
+                        .div(1000)
+                ).toDouble() == 1.0
+            ) {
+                "kilometer"
             } else
-                "minutes"
+                "kilometres"
 
+            val milliseconds = System.currentTimeMillis() - start + durationHelper
+            val seconds: Int
+            var minutes = (milliseconds / (1000 * 60) % 60).toInt()
+            val hours = (milliseconds / (1000 * 60 * 60) % 24).toInt()
 
-        var speak: String = "The distance is: " +
-                "${getStringFromNumber(1, distance.div(1000))} $km. The duration is:"
-
-        speak += if (hours == 0) {
-            " $minutes $min."
-        } else
-            " $hours $hour and $minutes $min."
-
-
-        //adding difference to voice coach in case of challenge
-        if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge) {
-            updateDifference()
-
-            val diffIsMinus: String =
-                if (difference < 0)
-                    "minus"
+            val hour: String =
+                if (hours == 1)
+                    "hour"
                 else
-                    ""
-
-            val diffTmp = difference.absoluteValue
-            seconds = (diffTmp / 1000).toInt() % 60
-            minutes = (diffTmp / (1000 * 60) % 60).toInt()
-
-            min =
-                if (minutes % 1 == 0) {
+                    "hours"
+            var min: String =
+                if (minutes == 1) {
                     "minute"
                 } else
                     "minutes"
-            val sec: String =
-                if (seconds == 1)
-                    "second"
+
+
+            var speak: String = "The distance is: " +
+                    "${getStringFromNumber(
+                        1, distance
+                            .div(1000)
+                    )} $km. The duration is:"
+
+            speak += if (hours == 0) {
+                " $minutes $min."
+            } else
+                " $hours $hour and $minutes $min."
+
+
+            //adding difference to voice coach in case of challenge
+            if (ChallengeRecorderActivity.challenge ||
+                ChallengeRecorderActivity.createdChallenge
+            ) {
+
+                updateDifference()
+
+                val diffIsMinus: String =
+                    if (difference < 0)
+                        "minus"
+                    else
+                        ""
+
+                val diffTmp = difference.absoluteValue
+                seconds = (diffTmp / 1000).toInt() % 60
+                minutes = (diffTmp / (1000 * 60) % 60).toInt()
+
+                min =
+                    if (minutes % 1 == 0) {
+                        "minute"
+                    } else
+                        "minutes"
+                val sec: String =
+                    if (seconds == 1)
+                        "second"
+                    else
+                        "seconds"
+                speak += "The difference is: $diffIsMinus"
+                speak += if (minutes == 0)
+                    " $seconds $sec "
                 else
-                    "seconds"
-            speak += "The difference is: $diffIsMinus"
-            speak += if (minutes == 0)
-                " $seconds $sec "
-            else
-                " $minutes $min and $seconds $sec "
-        }
-
-        val focusRequest: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            audioManager.requestAudioFocus(audioFocusRequest)
-        } else {
-            audioManager.requestAudioFocus(
-                this,
-                AudioManager.STREAM_NOTIFICATION,
-                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
-            )
-        }
-
-        val map = HashMap<String, String>()
-        map[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = TTS_ID
-
-        when (focusRequest) {
-            AudioManager.AUDIOFOCUS_REQUEST_FAILED -> return
-            AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> {
-                textToSpeech.speak(speak, TextToSpeech.QUEUE_FLUSH, null, TTS_ID)
+                    " $minutes $min and $seconds $sec "
             }
+
+            val focusRequest: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                audioManager.requestAudioFocus(audioFocusRequest)
+            } else {
+                audioManager.requestAudioFocus(
+                    this,
+                    AudioManager.STREAM_NOTIFICATION,
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+                )
+            }
+
+            val map = HashMap<String, String>()
+            map[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = TTS_ID
+
+            when (focusRequest) {
+                AudioManager.AUDIOFOCUS_REQUEST_FAILED -> return
+                AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> {
+                    textToSpeech.speak(speak, TextToSpeech.QUEUE_FLUSH, null, TTS_ID)
+                }
+            }
+        } catch (e: NumberFormatException) {
+            e.printStackTrace()
         }
-
-
     }
-
 
     override fun onAudioFocusChange(focusChange: Int) {
 
@@ -554,8 +570,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
             }
         }
-
-
     }
     //endregion voice coach
 
@@ -576,6 +590,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
                         if (!zeroSpeed) {
 
+                            //start voice coach if it is enabled
                             if (ChallengeRecorderActivity.isVoiceCoachEnabled
                                 && threadCounter > 0
                             ) {
@@ -599,7 +614,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                                 }
                             }
                             //updating difference in case of challenge in every 30 sec
-                            if (threadCounter % 30 == 0 && threadCounter > 0) {
+                            if (threadCounter % 10 == 0 && threadCounter > 0) {
                                 if (ChallengeRecorderActivity.challenge ||
                                     ChallengeRecorderActivity.createdChallenge
                                 ) {
@@ -607,8 +622,9 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                                 }
                             }
                             threadCounter++
-                            updateUI()
                         }
+
+                        updateUI()
 
                         sleep(1000)
                     } catch (e: InterruptedException) {
@@ -625,7 +641,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
      * handles the new altitude and updates the corrected altitude variable
      * using moving average. In this way, unreal jumping is corrected.
      */
-    //TODO(works, but too many points -> too high elevations)
     private fun handleNewAltitude(altitude: Double) {
 
         if (altitudes.size == ALTITUDES_SIZE) {
@@ -792,7 +807,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
         /** minimum speed in m/s (approximately 2km/h) */
         private const val MINIMUM_SPEED: Double = 0.555555
-        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 3000
+        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 1000
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
         const val NOTIFICATION_ID = 12345678

@@ -228,11 +228,8 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
 
                         } else {
 
-
                         }
-
                     }
-
                 val user =
                     User(email = mAuth.currentUser?.email.toString())
                 FirebaseManager.currentUserRef?.setValue(user)?.addOnSuccessListener {
@@ -249,18 +246,7 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
     }
 
     private fun startMainActivity() {
-        /*
-        val key = mRef.push().key
-        mRef.child(key!!).setValue(User()).addOnCompleteListener {
-            if(it.isSuccessful) {
-                Log.i("LOGIN",it.toString())
-            }
-            else {
-                Log.i("LOGIN",it.exception.toString())
-            }
-        }
 
-         */
         with(sharedPreferences.edit()) {
 
             putString(MainActivity.NOT_REGISTERED, System.currentTimeMillis().toString())
@@ -283,11 +269,17 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
     }
 
     override fun noInternetConnection() {
-        noInternetTextView.visibility = View.VISIBLE
+        runOnUiThread {
+            noInternetTextView.visibility = View.VISIBLE
+        }
+
     }
 
     override fun connectedToInternet() {
-        noInternetTextView.visibility = View.GONE
+        runOnUiThread {
+            noInternetTextView.visibility = View.GONE
+        }
+
     }
 
 }

@@ -128,6 +128,31 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/preventScreenLockCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:buttonTint="#FFFFFF"
+                android:textColor="@android:color/white"
+                android:textAllCaps="true"
+                android:text="@string/prevent_screen_lock" />
+
+            <CheckBox
+                android:id="@+id/autoPauseCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAllCaps="true"
+                android:textColor="@android:color/white"
+                android:buttonTint="#FFFFFF"
+                android:text="@string/auto_pause" />
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -135,33 +160,33 @@
         android:id="@+id/bmiTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="115dp"
+        android:layout_marginTop="10dp"
         android:gravity="center"
         android:text="20"
         android:textAllCaps="true"
         android:textSize="55sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/linearLayout" />
+        app:layout_constraintTop_toBottomOf="@id/textView15" />
 
     <TextView
         android:id="@+id/bmiInfoTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="200dp"
+        android:layout_marginTop="10dp"
         android:gravity="center"
         android:text="@string/normal"
         android:textAllCaps="true"
         android:textSize="17sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/linearLayout" />
+        app:layout_constraintTop_toBottomOf="@id/bmiTextView" />
 
     <TextView
         android:id="@+id/textView15"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="96dp"
+        android:layout_marginTop="76dp"
         android:layout_marginEnd="0dp"
         android:textAllCaps="true"
         android:textSize="15sp"

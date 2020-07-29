@@ -32,7 +32,7 @@
 
             <EditText
                 android:id="@+id/challengeDetailsNameEditText"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginTop="20dp"
@@ -40,7 +40,7 @@
                 android:autofillHints=""
                 android:background="@color/fui_transparent"
                 android:ems="10"
-                android:gravity="start"
+                android:gravity="center"
                 android:hint="@string/add_a_name"
                 android:inputType="text"
                 android:padding="10dp"
@@ -48,17 +48,16 @@
                 android:textAllCaps="true"
                 android:textColor="@color/colorPlus"
                 android:textColorHint="@color/colorPlus"
-                android:textSize="25sp" />
+                android:textSize="20sp" />
 
-            <TextView
-                android:id="@+id/challengeDetailsTypeTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/running"
-                android:layout_marginBottom="15dp"
-                android:textAllCaps="true"
-                android:textSize="17sp" />
+            <ImageView
+                android:id="@+id/challengeTypeImageView"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_gravity="center"
+
+                android:layout_marginBottom="12dp"
+                app:srcCompat="@drawable/cycling" />
 
 
             <androidx.gridlayout.widget.GridLayout
@@ -302,26 +301,40 @@
     </ScrollView>
 
 
-    <Button
-        android:id="@+id/discardButton"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/round_edittext"
-        android:layout_marginHorizontal="12dp"
-        android:text="@string/discard"
-        android:layout_marginTop="8dp"
-        android:textSize="17sp"
-        android:textColor="@color/colorPrimary" />
-
-    <Button
-        android:id="@+id/saveChallengeInDetailsButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="12dp"
-        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
         android:layout_marginBottom="20dp"
-        android:background="@drawable/round_edittext"
-        android:text="@string/save"
-        android:textColor="@color/colorAccent"
-        android:textSize="17sp" />
+        android:layout_marginHorizontal="12dp">
+
+        <Button
+            android:id="@+id/discardButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:background="@drawable/round_edittext"
+            android:text="@string/discard"
+            android:textSize="17sp"
+            android:textColor="@color/colorPrimary" />
+
+        <Space
+            android:id="@+id/buttonDivSpace"
+            android:layout_width="10dp"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/saveChallengeInDetailsButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:background="@drawable/round_edittext"
+            android:text="@string/save"
+            android:textColor="@color/colorAccent"
+            android:textSize="17sp" />
+
+    </LinearLayout>
+
+
 </LinearLayout>

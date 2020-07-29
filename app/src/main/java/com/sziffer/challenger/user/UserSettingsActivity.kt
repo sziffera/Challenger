@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
+import android.widget.CheckBox
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.UserProfileChangeRequest
@@ -43,6 +44,16 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
         getUserInfo()
         updateProfileButton.setOnClickListener {
             updateUserData()
+        }
+        autoPauseCheckBox.isChecked = userManager.autoPause
+        preventScreenLockCheckBox.isChecked = userManager.preventScreenLock
+        autoPauseCheckBox.setOnClickListener {
+            val checkBox = it as CheckBox
+            userManager.autoPause = checkBox.isChecked
+        }
+        preventScreenLockCheckBox.setOnClickListener {
+            val checkBox = it as CheckBox
+            userManager.preventScreenLock = checkBox.isChecked
         }
     }
 

@@ -18,7 +18,13 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.VIBRATE" />
+
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -29,6 +35,7 @@
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
 
         <activity android:name=".ChartsActivity" />
         <activity android:name=".user.UserSettingsActivity" />

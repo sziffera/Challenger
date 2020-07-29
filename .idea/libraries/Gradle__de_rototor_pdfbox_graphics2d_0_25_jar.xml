@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Gradle: de.rototor.pdfbox:graphics2d:0.25@jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/de.rototor.pdfbox/graphics2d/0.25/6f4ee4f1be9803ced76a783de199316d1ad7deac/graphics2d-0.25.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/de.rototor.pdfbox/graphics2d/0.25/cc30adc6c9b871e62cfc31fd7fb160145b9a983/graphics2d-0.25-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/de.rototor.pdfbox/graphics2d/0.25/76f8bdb8eef1a891f45a685f9795b4d8b7814b5e/graphics2d-0.25-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

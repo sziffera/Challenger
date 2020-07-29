@@ -1,6 +1,7 @@
 package com.sziffer.challenger.sync
 
 import android.content.Context
+import android.util.Log
 import androidx.work.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -32,6 +33,7 @@ private fun startWorkManager(context: Context) {
 }
 
 fun startDataDownloaderWorkManager(context: Context) {
+    Log.i("MAIN", "WM started from MainActivity")
     val constraints = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.UNMETERED)
         .setRequiresBatteryNotLow(true)

@@ -56,8 +56,8 @@
     <string name="update_profile">Update profile</string>
     <string name="avg_pace">avg pace</string>
     <string name="_0_00_min_km" translatable="false">0:00 min/km</string>
-    <string name="elevation_gained">elevation gained</string>
-    <string name="elevation_lost">elevation lost</string>
+    <string name="elevation_gained">elev. gain</string>
+    <string name="elevation_lost">elev. loss</string>
     <string name="show_charts">show charts</string>
     <string-array name="activity_types">
         <item>cycling</item>
@@ -132,4 +132,14 @@
         every 30 seconds. The Voice Coach can tell you if your pace is good enough, or you should hurry up a little bit.
         Auto Pause is also available here, so you won\'t lose a single second!
     </string>
+    <string name="set_up_cadence_sensor">Set up cadence sensor</string>
+    <string name="ble_not_supported">Sorry, but your device doesn\'t support BLE technology</string>
+    <string name="item">item</string>
+    <string name="unknown_device">Unknown device</string>
+    <string name="speed">speed</string>
+    <string name="elevation">Elevation</string>
+    <string name="finish_challenge">Finish recording</string>
+    <string name="finish_recording_message">Do you want to finish recording?</string>
+    <string name="cancel">Cancel</string>
+    <string name="prevent_screen_lock">Prevent screen lock</string>
 </resources>

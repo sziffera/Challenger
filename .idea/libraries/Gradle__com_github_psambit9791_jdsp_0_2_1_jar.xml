@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Gradle: com.github.psambit9791:jdsp:0.2.1@jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.psambit9791/jdsp/0.2.1/2d7be7afa8e3c7f7bc4ac59101aa4f2f319a92c6/jdsp-0.2.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.psambit9791/jdsp/0.2.1/772a269b8f25e740a487518172e3d851074344de/jdsp-0.2.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.psambit9791/jdsp/0.2.1/418b51ef1b2be724e0d86e0d827265be7c353989/jdsp-0.2.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

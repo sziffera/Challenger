@@ -87,7 +87,8 @@ class ChallengeRecyclerViewAdapter(
                     1,
                     challenge.avg
                 ) + " km/h"
-            date.text = challenge.date
+            val myDate: String = challenge.date
+            date.text = myDate.split(".")[0]
 
         }
     }

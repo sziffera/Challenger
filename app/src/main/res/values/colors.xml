@@ -10,4 +10,5 @@
     <color name="colorSecondaryLight">#98e4fd</color>
     <color name="colorMinus">#98e4fd</color>
     <color name="colorPlus">#f79ba3</color>
+    <color name="colorGreen">#00897B</color>
 </resources>

@@ -28,6 +28,7 @@ class DataDownloaderWorker(
         var success = true
         val countDownLatch = CountDownLatch(1)
 
+        Log.i("WM", "WorkManager started")
 
         FirebaseManager.currentUserRef?.child("username")
             ?.addListenerForSingleValueEvent(

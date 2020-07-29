@@ -2,6 +2,7 @@ package com.sziffer.challenger
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -18,6 +19,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.github.psambit9791.jdsp.filter.Wiener
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -29,7 +31,9 @@ import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import kotlinx.android.synthetic.main.activity_challenge_details.*
+import java.io.OutputStreamWriter
 import java.util.*
+import kotlin.math.abs
 
 
 class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -47,11 +51,11 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var saveStartButton: Button
     private lateinit var builder: LatLngBounds.Builder
     private var route: ArrayList<MyLocation>? = null
+    private var elevGain = 0.0
+    private var elevLoss = 0.0
     private var update: Boolean = false
     private var isItAChallenge: Boolean = false
-    private var elevationGain: Double = 0.0
     private var avgSpeed: Double = 0.0
-    private var elevationLoss: Double = 0.0
     private var start: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,6 +102,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 Intent(this, ChartsActivity::class.java)
                     .putParcelableArrayListExtra(ChartsActivity.CHALLENGE_DATA_ARRAY, route)
                     .putExtra(ChartsActivity.AVG_SPEED, challenge.avg)
+                    .putExtra(ChartsActivity.ELEVATION_GAIN, elevGain)
+                    .putExtra(ChartsActivity.ELEVATION_LOSS, elevLoss)
             )
         }
 
@@ -105,6 +111,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             //the user chose a Challenge to do it better, and wants to start recording
             isItAChallenge -> {
                 discardButton.visibility = View.GONE
+                buttonDivSpace.visibility = View.GONE
                 saveStartButton.text = getString(R.string.challenge_this_activity)
                 saveStartButton.setOnClickListener {
                     if (checkPermissions())
@@ -166,11 +173,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         if (previousChallenge != null) {
 
             challenge.name = previousChallenge!!.name
-            //challenge.firebaseId = previousChallenge!!.firebaseId
             dbHelper.updateChallenge(challenge.id.toInt(), challenge)
             updateSharedPrefForSync(applicationContext, challenge.firebaseId, KEY_UPLOAD)
-            //dbHelper.updateChallenge(previousChallenge!!.id.toInt(), challenge)
-            //updateSharedPrefForSync(applicationContext, previousChallenge!!.firebaseId, KEY_UPLOAD)
 
             Toast.makeText(
                 this, "Challenge saved successfully!"
@@ -211,7 +215,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         distanceTextView = findViewById(R.id.challengeDetailsDistanceTextView)
         durationTextView = findViewById(R.id.challengeDetailsDurationTextView)
 
-        challengeTypeTextView = findViewById(R.id.challengeDetailsTypeTextView)
         maxSpeedTextView = findViewById(R.id.challengeDetailsMaxSpeedTextView)
 
         with(challenge) {
@@ -219,7 +222,9 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             durationTextView.text = DateUtils.formatElapsedTime(dur)
             avgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
             distanceTextView.text = getStringFromNumber(1, dst) + " km"
-            challengeTypeTextView.text = type
+            if (type == getString(R.string.running)) {
+                challengeTypeImageView.setImageResource(R.drawable.running)
+            }
             avgSpeed = this.avg
             maxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
             val avgPace = dur.div(dst)
@@ -265,11 +270,30 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
                 route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
                 val polylineOptions = PolylineOptions()
-                for (i in route!!) {
+                val elevationArray = DoubleArray(route!!.size)
+                for ((index, i) in route!!.withIndex()) {
                     //TODO(calculate elevation)
                     builder.include(i.latLng)
+                    elevationArray[index] = i.altitude
                     polylineOptions.add(i.latLng)
                 }
+
+
+                if (elevationArray.size > 100) {
+                    val wiener = Wiener(elevationArray, elevationArray.size / 10)
+                    val filteredElevation = wiener.wiener_filter()
+                    for (i in 10..filteredElevation.size - 10) {
+                        if (filteredElevation[i] < filteredElevation[i + 1]) {
+                            elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
+                        } else {
+                            elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+                        }
+                    }
+                }
+                //writeToFile(elevationArray,"unfilteredElevation")
+                //writeToFile(filteredElevation,"filteredElevation")
+
+
                 runOnUiThread {
                     mMap.addPolyline(
                         polylineOptions.color(
@@ -282,8 +306,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     val padding = 50
                     val cu = CameraUpdateFactory.newLatLngBounds(builder.build(), padding)
                     mMap.animateCamera(cu)
-                    elevationGainedTextView.text = getStringFromNumber(0, elevationGain) + " m"
-                    elevationLostTextView.text = getStringFromNumber(0, elevationLoss) + " m"
+                    elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
+                    elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
                 }
 
             }
@@ -349,6 +373,16 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             )
         }
+    }
+
+    private fun writeToFile(testArray: DoubleArray, name: String) {
+        val outputStreamWriter =
+            OutputStreamWriter(openFileOutput("$name.txt", Context.MODE_PRIVATE))
+        for (item in testArray) {
+            outputStreamWriter.write("$item,")
+            outputStreamWriter.flush()
+        }
+        outputStreamWriter.close()
     }
 
     companion object {

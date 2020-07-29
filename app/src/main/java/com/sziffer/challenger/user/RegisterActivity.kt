@@ -166,12 +166,18 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
 
     override fun connectedToInternet() {
         connected = true
-        noInternetTextView.visibility = View.GONE
+        runOnUiThread {
+            noInternetTextView.visibility = View.GONE
+        }
+
     }
 
     override fun noInternetConnection() {
         connected = false
-        noInternetTextView.visibility = View.VISIBLE
+        runOnUiThread {
+            noInternetTextView.visibility = View.VISIBLE
+        }
+
     }
 
 }

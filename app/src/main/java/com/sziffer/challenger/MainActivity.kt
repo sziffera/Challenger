@@ -111,6 +111,13 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
         recordActivityButton.setOnClickListener {
             if (checkPermissions()) {
+
+                val buttonSettings = getSharedPreferences("button", 0)
+                with(buttonSettings.edit()) {
+                    putBoolean("started", false)
+                    apply()
+                }
+
                 val intent = Intent(applicationContext, ChallengeRecorderActivity::class.java)
                 intent.putExtra(ChallengeRecorderActivity.CHALLENGE, false)
                 startActivity(intent)
