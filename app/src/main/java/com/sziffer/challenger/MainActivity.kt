@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -20,18 +21,25 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.sync.DATA_DOWNLOADER_TAG
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
 import com.sziffer.challenger.user.FirebaseManager
 import com.sziffer.challenger.user.UserManager
 import com.sziffer.challenger.user.UserProfileActivity
+import com.sziffer.challenger.weather.WeatherData
 import kotlinx.android.synthetic.main.activity_main.*
+import okhttp3.*
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView
 import uk.co.deanwild.materialshowcaseview.ShowcaseConfig
+import java.io.IOException
 import java.text.SimpleDateFormat
 
 
@@ -44,6 +52,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     private lateinit var recordActivityButton: Button
     private lateinit var recyclerView: RecyclerView
     private lateinit var userManager: UserManager
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private var lastLocation: Location? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,9 +61,25 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
         Log.i("MAIN", "OnCreate")
 
-        if (!checkPermissions())
-            permissionRequest()
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
+        if (!checkPermissions()) {
+            permissionRequest()
+        } else {
+            try {
+                fusedLocationProviderClient.lastLocation.addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        lastLocation = it.result
+                        if (lastLocation != null) {
+                            fetchWeatherData()
+                        }
+                    }
+                }
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+            }
+
+        }
         startDataDownloaderWorkManager(applicationContext)
         observeWork()
 
@@ -98,8 +124,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         userProfileimageButton.setOnClickListener {
             startActivity(Intent(this, UserProfileActivity::class.java))
         }
-
-
 
         takeATourButton.setOnClickListener {
             appTour()
@@ -230,8 +254,43 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
                 .withRectangleShape(true)
                 .build()
         )
-
         sequence.start()
+    }
+
+    private fun fetchWeatherData() {
+
+        if (lastLocation == null)
+            return
+
+        val okHttpClient = OkHttpClient()
+        val request = Request.Builder()
+            .url("${URL}lat=${lastLocation!!.latitude}&lon=${lastLocation!!.longitude}")
+            .build()
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.i("WEATHER", e.toString())
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    val data = response.body()?.string()
+                    if (data != null) {
+                        val typeJson = object : TypeToken<WeatherData>() {}.type
+                        val weatherData = Gson()
+                            .fromJson<WeatherData>(data, typeJson)
+                        Log.i("WEATHER", weatherData.toString())
+                        runOnUiThread {
+                            weatherDegreesTextView.text = "${weatherData.main.temp.toInt()}°C"
+                            windSpeedTextView.text = "${weatherData.wind.speed.toInt()}km/h"
+                            windDirectionImageView.rotation = weatherData.wind.deg.toFloat()
+                        }
+                    }
+                } else {
+                    Log.i("WEATHER", "WAS NOT SUCCESSFUL")
+                }
+            }
+        })
     }
 
     private fun permissionRequest() {
@@ -270,6 +329,17 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == REQUEST) {
+            Log.i("MAIN", grantResults.toString())
+            fetchWeatherData()
+        }
+    }
+
     private fun checkPermissions(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
@@ -297,6 +367,9 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     companion object {
         private const val SHOWCASE_ID = "MainActivity"
         private const val REQUEST = 200
+        private const val URL =
+            "https://api.openweathermap.org/data/2.5/" +
+                    "weather?appid=da3db406af86d9176b3f60201d30e237&units=metric&"
 
         //final uid which is used for authorization
         const val FINAL_USER_ID = "finalUid"

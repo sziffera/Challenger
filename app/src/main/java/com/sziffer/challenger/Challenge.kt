@@ -1,7 +1,5 @@
 package com.sziffer.challenger
 
-
-
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize
 

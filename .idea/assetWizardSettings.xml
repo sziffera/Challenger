@@ -156,7 +156,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/Applications/Android%20Studio.app/Contents/plugins/android/lib/android.jar!/images/material/icons/materialiconsoutlined/mic_off/outline_mic_off_24.xml" />
+                                      <entry key="url" value="jar:file:/Applications/Android%20Studio.app/Contents/plugins/android/lib/android.jar!/images/material/icons/materialiconsoutlined/arrow_upward/outline_arrow_upward_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -166,7 +166,8 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputName" value="ic_outline_mic_off_24" />
+                            <entry key="color" value="ffffff" />
+                            <entry key="outputName" value="ic_outline_arrow_upward_24" />
                             <entry key="sourceFile" value="$USER_HOME$/Downloads/table_chart-24px.svg" />
                           </map>
                         </option>

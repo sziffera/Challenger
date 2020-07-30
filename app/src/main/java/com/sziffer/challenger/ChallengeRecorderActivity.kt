@@ -130,7 +130,16 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             autoPause = checkBox.isChecked
             Log.i(TAG, "autopause is: $autoPause")
         }
+        muteVoiceCoachButton.setOnClickListener {
+            muted = if (!muted) {
+                muteVoiceCoachButton.setImageResource(R.drawable.ic_outline_mic_off_24)
+                true
+            } else {
+                muteVoiceCoachButton.setImageResource(R.drawable.ic_settings_voice_24dp)
+                false
+            }
 
+        }
         createdChallenge = intent.getBooleanExtra(CREATED_CHALLENGE_INTENT, false).also {
             Log.i(TAG, "$it is the created challenge bool")
         }
@@ -184,7 +193,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         durationTextView.visibility = View.GONE
         challengeDataLinearLayout.visibility = View.GONE
 
-
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(id.map) as SupportMapFragment
@@ -216,17 +224,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         firstStartButton = findViewById(R.id.firstStartButton)
 
         updateView(alreadyStarted)
-
-        muteVoiceCoachButton.setOnClickListener {
-            muted = if (!muted) {
-                muteVoiceCoachButton.setImageResource(R.drawable.ic_outline_mic_off_24)
-                true
-            } else {
-                muteVoiceCoachButton.setImageResource(R.drawable.ic_settings_voice_24dp)
-                false
-            }
-
-        }
 
         firstStartButton.setOnClickListener {
             firstStartButtonOnClick()
@@ -318,11 +315,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 val cu = CameraUpdateFactory.newLatLngBounds(mapPair.first, padding)
                 mMap.animateCamera(cu)
             }
-
         }
     }
     //endregion map
-
 
     //region recording actions
     private fun finishChallenge() {
@@ -339,14 +334,10 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         Log.i(TAG, "activity type is $activityType")
 
-
         if (gpsService?.myRoute!!.size < 1) {
             buildAlertMessageNoLocationPoints()
-
         } else {
-
             if (gpsService != null) {
-
                 val currentDate: String
                 currentDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val current = LocalDateTime.now()
@@ -358,7 +349,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
                     formatter.format(date)
                 }
-
                 val gson = Gson()
                 val myLocationArrayString = gson.toJson(gpsService?.myRoute)
                 val duration: Long = gpsService!!.durationHelper.div(1000)
@@ -468,9 +458,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     differenceTextView.visibility = View.VISIBLE
                 }
                 if (isVoiceCoachEnabled)
-                    muteVoiceCoachButton.visibility = View.GONE
-                else
                     muteVoiceCoachButton.visibility = View.VISIBLE
+                else
+                    muteVoiceCoachButton.visibility = View.GONE
 
                 gpsService?.requestLocationUpdates()
                 with(buttonSharedPreferences.edit()) {
@@ -654,7 +644,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         }
     }
 
-
     private fun PackageManager.missingSystemFeature(name: String): Boolean = !hasSystemFeature(name)
 
     /** calculates and stores the number for the voice coach */
@@ -678,7 +667,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             }
 
         }
-
         Log.i(TAG, numberForVoiceCoach.toString())
         voiceCoachCustomDialog.dismiss()
     }
@@ -819,7 +807,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 }
             }
 
-
             val avgDur = duration / 1000
             val avg = rawDistance / avgDur
 
@@ -925,5 +912,4 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         var numberForVoiceCoach: Int = 0
             private set
     }
-
 }
