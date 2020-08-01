@@ -142,4 +142,9 @@
     <string name="finish_recording_message">Do you want to finish recording?</string>
     <string name="cancel">Cancel</string>
     <string name="prevent_screen_lock">Prevent screen lock</string>
+    <string name="no_internet_connection_will_update">No internet connection. Challenger will download data as soon as connected to the internet.</string>
+    <string name="voice_coach_settings">Voice coach settings</string>
+    <string name="ride_settings">Ride settings</string>
+    <string name="start_stop_pause">Start, Stop, Pause</string>
+    <string name="difference">Difference</string>
 </resources>

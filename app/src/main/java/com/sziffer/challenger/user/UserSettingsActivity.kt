@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
-import android.widget.CheckBox
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.UserProfileChangeRequest
@@ -45,16 +44,9 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
         updateProfileButton.setOnClickListener {
             updateUserData()
         }
-        autoPauseCheckBox.isChecked = userManager.autoPause
-        preventScreenLockCheckBox.isChecked = userManager.preventScreenLock
-        autoPauseCheckBox.setOnClickListener {
-            val checkBox = it as CheckBox
-            userManager.autoPause = checkBox.isChecked
-        }
-        preventScreenLockCheckBox.setOnClickListener {
-            val checkBox = it as CheckBox
-            userManager.preventScreenLock = checkBox.isChecked
-        }
+
+        initSettingsSwitches()
+
     }
 
     override fun onStart() {
@@ -289,6 +281,38 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
     override fun connectedToInternet() {
         connected = true
         noInternetTextView.visibility = View.GONE
+    }
+
+    private fun initSettingsSwitches() {
+        autoPauseSwitch.isChecked = userManager.autoPause
+        preventScreenLockSwitch.isChecked = userManager.preventScreenLock
+        differenceSwitch.isChecked = userManager.difference
+        avgSpeedSwitch.isChecked = userManager.avgSpeed
+        durationSwitch.isChecked = userManager.duration
+        distanceSwitch.isChecked = userManager.distance
+        startStopSwitch.isChecked = userManager.startStop
+
+        autoPauseSwitch.setOnCheckedChangeListener { _, isChecked ->
+            userManager.autoPause = isChecked
+        }
+        preventScreenLockSwitch.setOnCheckedChangeListener { _, isChecked ->
+            userManager.preventScreenLock = isChecked
+        }
+        startStopSwitch.setOnCheckedChangeListener { _, isChecked ->
+            userManager.startStop = isChecked
+        }
+        differenceSwitch.setOnCheckedChangeListener { _, isChecked ->
+            userManager.difference = isChecked
+        }
+        distanceSwitch.setOnCheckedChangeListener { _, isChecked ->
+            userManager.distance = isChecked
+        }
+        durationSwitch.setOnCheckedChangeListener { _, isChecked ->
+            userManager.duration = isChecked
+        }
+        avgSpeedSwitch.setOnCheckedChangeListener { _, isChecked ->
+            userManager.avgSpeed = isChecked
+        }
     }
 
     companion object {

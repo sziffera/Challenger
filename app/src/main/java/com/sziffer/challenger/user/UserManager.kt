@@ -82,6 +82,62 @@ class UserManager(
             field = value
         }
 
+    var startStop: Boolean = false
+        get() {
+            return sharedPreferences.getBoolean(KEY_USER_START_STOP, false)
+        }
+        set(value) {
+            with(sharedPreferences.edit()) {
+                putBoolean(KEY_USER_START_STOP, value)
+                apply()
+            }
+            field = value
+        }
+    var distance: Boolean = false
+        get() {
+            return sharedPreferences.getBoolean(KEY_USER_DISTANCE, false)
+        }
+        set(value) {
+            with(sharedPreferences.edit()) {
+                putBoolean(KEY_USER_DISTANCE, value)
+                apply()
+            }
+            field = value
+        }
+    var duration: Boolean = false
+        get() {
+            return sharedPreferences.getBoolean(KEY_USER_DURATION, false)
+        }
+        set(value) {
+            with(sharedPreferences.edit()) {
+                putBoolean(KEY_USER_DURATION, value)
+                apply()
+            }
+            field = value
+        }
+    var difference: Boolean = false
+        get() {
+            return sharedPreferences.getBoolean(KEY_USER_DIFFERENCE, false)
+        }
+        set(value) {
+            with(sharedPreferences.edit()) {
+                putBoolean(KEY_USER_DIFFERENCE, value)
+                apply()
+            }
+            field = value
+        }
+    var avgSpeed: Boolean = false
+        get() {
+            return sharedPreferences.getBoolean(KEY_USER_AVG, false)
+        }
+        set(value) {
+            with(sharedPreferences.edit()) {
+                putBoolean(KEY_USER_AVG, value)
+                apply()
+            }
+            field = value
+        }
+
     companion object {
         private const val NAME = "UserManager"
         private const val KEY_USER = "${NAME}.user"
@@ -91,5 +147,11 @@ class UserManager(
         private const val KEY_USER_PREVENT_SCREEN_LOCK = "${NAME}.screenLock"
         private const val KEY_USER_HEIGHT = "${NAME}.height"
         private const val KEY_USER_EMAIL = "${NAME}.email"
+        private const val KEY_USER_AVG = "${NAME}.avg"
+        private const val KEY_USER_DURATION = "${NAME}.dur"
+        private const val KEY_USER_DISTANCE = "${NAME}.dist"
+        private const val KEY_USER_DIFFERENCE = "${NAME}.diff"
+        private const val KEY_USER_START_STOP = "${NAME}.startStop"
+        private const val KEY_USER_USE_CELLULAR = "${NAME}.useCellular"
     }
 }

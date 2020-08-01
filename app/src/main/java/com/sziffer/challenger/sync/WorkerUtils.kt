@@ -35,7 +35,7 @@ private fun startWorkManager(context: Context) {
 fun startDataDownloaderWorkManager(context: Context) {
     Log.i("MAIN", "WM started from MainActivity")
     val constraints = Constraints.Builder()
-        .setRequiredNetworkType(NetworkType.UNMETERED)
+        .setRequiredNetworkType(NetworkType.CONNECTED)
         .setRequiresBatteryNotLow(true)
         .build()
 

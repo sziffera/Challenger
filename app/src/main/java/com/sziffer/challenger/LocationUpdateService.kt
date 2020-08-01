@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
+import com.sziffer.challenger.user.UserManager
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.absoluteValue
@@ -37,6 +38,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     private lateinit var audioManager: AudioManager
     private lateinit var audioAttributes: AudioAttributes
     private lateinit var audioFocusRequest: AudioFocusRequest
+    private lateinit var userManager: UserManager
 
     /** helps to restore the TTS in case of focus loss */
     private var played = true
@@ -106,6 +108,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     override fun onCreate() {
 
         initTextToSpeech()
+
+        userManager = com.sziffer.challenger.user.UserManager(this)
 
         distanceForVoiceCoach = ChallengeRecorderActivity.numberForVoiceCoach.toFloat()
 
@@ -321,6 +325,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
                             //if the user has just stopped
                             if (!zeroSpeed) {
+                                if (userManager.startStop)
+                                    startSpeaking("Recording paused")
                                 zeroSpeedPauseTime = System.currentTimeMillis()
                             }
                             zeroSpeed = true
@@ -328,6 +334,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
                             //the user's speed was zero, removing the elapsed time
                             if (zeroSpeed) {
+                                if (userManager.startStop)
+                                    startSpeaking("Recording resumed")
                                 durationHelper -= System.currentTimeMillis() - zeroSpeedPauseTime
                             }
                             zeroSpeed = false
@@ -364,7 +372,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
     /** stops the service */
     fun finishAndSaveRoute() {
-
+        if (userManager.startStop)
+            startSpeaking("Recording finished")
         stopSelf()
         removeLocationUpdates()
     }
@@ -446,8 +455,10 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     private fun startVoiceCoach() {
 
         //the user muted the voice coach, no need to continue
-        if (ChallengeRecorderActivity.muted)
+        if (ChallengeRecorderActivity.muted) {
+            Log.i(TAG, "Muted, so returned")
             return
+        }
         try {
             val km: String = if (getStringFromNumber(
                     1, distance
@@ -474,22 +485,34 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                 } else
                     "minutes"
 
-
-            var speak: String = "The distance is: " +
+            var text: String = ""
+            if (userManager.distance)
+                Log.i(TAG, "Distance added to speech")
+            text += "distance: " +
                     "${getStringFromNumber(
                         1, distance
                             .div(1000)
-                    )} $km. The duration is:"
-
-            speak += if (hours == 0) {
-                " $minutes $min."
-            } else
-                " $hours $hour and $minutes $min."
+                    )} $km. "
+            if (userManager.duration) {
+                Log.i(TAG, "Dur added to speech")
+                text += "duration: "
+                text += if (hours == 0) {
+                    " $minutes $min."
+                } else
+                    " $hours $hour and $minutes $min."
+            }
+            if (userManager.avgSpeed) {
+                Log.i(TAG, "AVG added to speech")
+                val sec = (System.currentTimeMillis() - start + durationHelper).div(1000)
+                val avgInMs = distance.div(sec)
+                text += "average speed: ${getStringFromNumber(1, avgInMs)} " +
+                        "kilometres per hour."
+            }
 
 
             //adding difference to voice coach in case of challenge
-            if (ChallengeRecorderActivity.challenge ||
-                ChallengeRecorderActivity.createdChallenge
+            if ((ChallengeRecorderActivity.challenge ||
+                        ChallengeRecorderActivity.createdChallenge) && userManager.difference
             ) {
 
                 updateDifference()
@@ -514,32 +537,15 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                         "second"
                     else
                         "seconds"
-                speak += "The difference is: $diffIsMinus"
-                speak += if (minutes == 0)
+                text += "The difference is: $diffIsMinus"
+                text += if (minutes == 0)
                     " $seconds $sec "
                 else
                     " $minutes $min and $seconds $sec "
             }
 
-            val focusRequest: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                audioManager.requestAudioFocus(audioFocusRequest)
-            } else {
-                audioManager.requestAudioFocus(
-                    this,
-                    AudioManager.STREAM_NOTIFICATION,
-                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
-                )
-            }
+            startSpeaking(text)
 
-            val map = HashMap<String, String>()
-            map[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = TTS_ID
-
-            when (focusRequest) {
-                AudioManager.AUDIOFOCUS_REQUEST_FAILED -> return
-                AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> {
-                    textToSpeech.speak(speak, TextToSpeech.QUEUE_FLUSH, null, TTS_ID)
-                }
-            }
         } catch (e: NumberFormatException) {
             e.printStackTrace()
         }
@@ -570,6 +576,39 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
             }
         }
+    }
+
+    /** requests audio focus and starts speech when focus gained */
+    private fun startSpeaking(text: String) {
+        Log.i(TAG, "startSpeaking() invoked")
+        //if the voice coach is not enabled, no need to continue
+        if (!ChallengeRecorderActivity.isVoiceCoachEnabled)
+            return
+
+        val focusRequest: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioManager.requestAudioFocus(audioFocusRequest)
+        } else {
+            audioManager.requestAudioFocus(
+                this,
+                AudioManager.STREAM_NOTIFICATION,
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+            )
+        }
+
+        val map = HashMap<String, String>()
+        map[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = TTS_ID
+
+        when (focusRequest) {
+            AudioManager.AUDIOFOCUS_REQUEST_FAILED -> return
+            AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> {
+                textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, TTS_ID)
+            }
+        }
+    }
+
+    fun sayRecordingStarted() {
+        if (userManager.startStop)
+            startSpeaking("Recording started")
     }
     //endregion voice coach
 
@@ -698,6 +737,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
      * */
     private fun updateUI() {
         val intent = Intent(ACTION_BROADCAST)
+        //if the zero speed is true, the recording was paused automatically, no need to update UI.
+        intent.putExtra(AUTO_PAUSE_ACTIVE, zeroSpeed)
         intent.putExtra(DISTANCE, distance)
         intent.putExtra(EXTRA_LOCATION, mLocation)
         intent.putExtra(
@@ -797,6 +838,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             "$PACKAGE_NAME.location"
         const val DISTANCE = "$PACKAGE_NAME.distance"
         const val DURATION = "$PACKAGE_NAME.duration"
+        const val AUTO_PAUSE_ACTIVE = "$PACKAGE_NAME.autoPauseActive"
         private const val EXTRA_STARTED_FROM_NOTIFICATION =
             PACKAGE_NAME +
                     ".started_from_notification"

@@ -24,24 +24,29 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="12dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="12dp"
         android:layout_marginBottom="5dp"
-        android:visibility="visible"
-        android:background="@color/colorLightOpacity"
-        android:padding="5dp"
         app:layout_constraintBottom_toTopOf="@+id/showMoreButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/chooseChallenge">
 
-    </androidx.recyclerview.widget.RecyclerView>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@color/colorLightOpacity"
+            android:padding="5dp"
+            android:visibility="visible">
+
+        </androidx.recyclerview.widget.RecyclerView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <Button
         android:id="@+id/showMoreButton"
@@ -172,6 +177,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
+        android:visibility="invisible"
         android:layout_marginEnd="16dp"
         android:text="20°C"
         android:textAllCaps="true"
@@ -185,15 +191,17 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
         android:layout_marginEnd="15dp"
+        android:visibility="invisible"
         app:layout_constraintEnd_toStartOf="@+id/weatherDegreesTextView"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_outline_arrow_upward_24" />
+        app:srcCompat="@drawable/ic_outline_keyboard_return_24" />
 
     <TextView
         android:id="@+id/windSpeedTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="5dp"
+        android:visibility="invisible"
         android:text="5km/h"
         app:layout_constraintEnd_toStartOf="@id/weatherDegreesTextView"
         app:layout_constraintTop_toBottomOf="@+id/windDirectionImageView" />

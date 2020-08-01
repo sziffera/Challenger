@@ -7,11 +7,13 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LifecycleObserver
@@ -19,6 +21,7 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -30,9 +33,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.sync.DATA_DOWNLOADER_TAG
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
-import com.sziffer.challenger.user.FirebaseManager
-import com.sziffer.challenger.user.UserManager
-import com.sziffer.challenger.user.UserProfileActivity
+import com.sziffer.challenger.user.*
 import com.sziffer.challenger.weather.WeatherData
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
@@ -43,7 +44,9 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 
 
-class MainActivity : AppCompatActivity(), LifecycleObserver {
+class MainActivity : AppCompatActivity(), LifecycleObserver,
+    SwipeRefreshLayout.OnRefreshListener,
+    NetworkStateListener {
 
     private lateinit var sharedPreferences: SharedPreferences
     private var dbHelper: ChallengeDbHelper? = null
@@ -55,11 +58,19 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private var lastLocation: Location? = null
 
+    private lateinit var connectivityManager: ConnectivityManager
+    private lateinit var myNetworkCallback: MyNetworkCallback
+    private var connected = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         Log.i("MAIN", "OnCreate")
+
+        connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
+                as ConnectivityManager
+        myNetworkCallback = MyNetworkCallback(this, connectivityManager)
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -80,8 +91,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
             }
 
         }
-        startDataDownloaderWorkManager(applicationContext)
-        observeWork()
 
         userManager = UserManager(applicationContext)
 
@@ -150,6 +159,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
             }
         }
 
+        swipeRefreshLayout.setOnRefreshListener(this)
+
         showMoreChallengeButton.setOnClickListener {
 
             startActivity(
@@ -160,6 +171,12 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     }
 
     override fun onStart() {
+
+        if (connectivityManager.allNetworks.isEmpty()) {
+            connected = false
+        }
+        myNetworkCallback.registerCallback()
+
         Log.i("MAIN", "OnStart")
         super.onStart()
         setUpView()
@@ -168,6 +185,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
     override fun onStop() {
         Log.i("MAIN", "OnStop")
+        myNetworkCallback.unregisterCallback()
         dbHelper?.close()
         dbHelper = null
         super.onStop()
@@ -191,6 +209,9 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         list.reverse()
 
         if (list.isEmpty()) {
+            //starting data downloader,
+            startDataDownloaderWorkManager(applicationContext)
+            observeWork()
             chooseChallenge.text = getText(R.string.it_s_empty_here_let_s_do_some_sports)
             recyclerView.visibility = View.INVISIBLE
             takeATourTextView.visibility = View.VISIBLE
@@ -226,6 +247,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
                 if (workInfo != null && workInfo[0].state == WorkInfo.State.SUCCEEDED) {
                     Log.i("MAIN", "WorkManager succeeded")
                     setUpView()
+                    swipeRefreshLayout.isRefreshing = false
                 }
             })
     }
@@ -281,9 +303,19 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
                             .fromJson<WeatherData>(data, typeJson)
                         Log.i("WEATHER", weatherData.toString())
                         runOnUiThread {
+                            weatherDegreesTextView.visibility = View.VISIBLE
+                            windSpeedTextView.visibility = View.VISIBLE
+                            windDirectionImageView.visibility = View.VISIBLE
                             weatherDegreesTextView.text = "${weatherData.main.temp.toInt()}°C"
                             windSpeedTextView.text = "${weatherData.wind.speed.toInt()}km/h"
-                            windDirectionImageView.rotation = weatherData.wind.deg.toFloat()
+                            windDirectionImageView.rotation = -90f + weatherData.wind.deg
+
+                            //TODO(change wind direction color based on speed)
+                            if (weatherData.wind.speed > 30) {
+
+                            } else if (weatherData.wind.speed > 60) {
+
+                            }
                         }
                     }
                 } else {
@@ -291,6 +323,27 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
                 }
             }
         })
+    }
+
+
+    override fun onRefresh() {
+        startDataDownloaderWorkManager(applicationContext)
+        observeWork()
+        if (!connected) {
+            Toast.makeText(
+                this, getString(R.string.no_internet_connection_will_update),
+                Toast.LENGTH_LONG
+            ).show()
+            swipeRefreshLayout.isRefreshing = false
+        }
+    }
+
+    override fun noInternetConnection() {
+        connected = false
+    }
+
+    override fun connectedToInternet() {
+        connected = true
     }
 
     private fun permissionRequest() {
@@ -380,5 +433,4 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         //get unregistered user id
         const val NOT_REGISTERED = "registered"
     }
-
 }

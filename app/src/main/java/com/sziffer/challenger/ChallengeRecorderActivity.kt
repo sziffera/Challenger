@@ -467,6 +467,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     putBoolean("started", true)
                     apply()
                 }
+                gpsService?.sayRecordingStarted()
             }
 
             override fun onTick(millisUntilFinished: Long) {
@@ -752,8 +753,15 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
             val location: Location? =
                 intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION)
-            val rawDistance: Float = intent.getFloatExtra(LocationUpdatesService.DISTANCE, 0.0f)
+            val rawDistance: Float = intent.getFloatExtra(
+                LocationUpdatesService.DISTANCE,
+                0.0f
+            )
             val duration: Long = intent.getLongExtra(LocationUpdatesService.DURATION, 0)
+            val autoPauseActive = intent.getBooleanExtra(
+                LocationUpdatesService.AUTO_PAUSE_ACTIVE,
+                false
+            )
 
             mMap.addPolyline(
                 PolylineOptions()
@@ -762,7 +770,10 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
             if (challenge || createdChallenge) {
 
-                val difference = intent.getLongExtra(LocationUpdatesService.DIFFERENCE, 0).div(1000)
+                val difference = intent.getLongExtra(
+                    LocationUpdatesService.DIFFERENCE,
+                    0
+                ).div(1000)
                 when (difference.toInt()) {
                     0 -> {
                         differenceTextView.text =
@@ -810,22 +821,32 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             val avgDur = duration / 1000
             val avg = rawDistance / avgDur
 
-            Log.i(TAG, "dist: $rawDistance, time: $duration")
-            durationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
-            distanceTextView.text = "${getStringFromNumber(2, rawDistance / 1000)} km"
-            maxSpeedTextView.text = "${gpsService?.maxSpeed?.times(3.6)?.let {
-                getStringFromNumber(
-                    1,
-                    it
-                )
-            }} km/h"
-            avgSpeedTextView.text = "${getStringFromNumber(1, avg.times(3.6))} km/h"
 
-            if (location != null) {
-                val latLng = LatLng(location.latitude, location.longitude)
-                mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
-                val speed = location.speed * 3.6
-                speedTextView.text = getStringFromNumber(1, speed) + " km/h"
+            if (autoPauseActive) {
+                speedTextView.text = getString(R.string._0_0_km_h)
+            } else {
+                durationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
+                distanceTextView.text = "${getStringFromNumber(
+                    2,
+                    rawDistance / 1000
+                )} km"
+                maxSpeedTextView.text = "${gpsService?.maxSpeed?.times(3.6)?.let {
+                    getStringFromNumber(
+                        1,
+                        it
+                    )
+                }} km/h"
+                avgSpeedTextView.text = "${getStringFromNumber(
+                    1,
+                    avg.times(3.6)
+                )} km/h"
+
+                if (location != null) {
+                    val latLng = LatLng(location.latitude, location.longitude)
+                    mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
+                    val speed = location.speed * 3.6
+                    speedTextView.text = getStringFromNumber(1, speed) + " km/h"
+                }
             }
         }
     }
