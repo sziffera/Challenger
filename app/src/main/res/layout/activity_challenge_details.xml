@@ -11,6 +11,7 @@
     android:orientation="vertical">
 
     <ScrollView
+        android:id="@+id/challengeDetailsScrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -21,14 +22,25 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <fragment
-                android:id="@+id/challengeDetailsMap"
-                class="com.google.android.gms.maps.SupportMapFragment"
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="450dp"
-                android:layout_marginHorizontal="12dp"
+                android:layout_height="450dp">
 
-                tools:context=".ChallengeDetailsActivity" />
+                <fragment
+                    android:id="@+id/challengeDetailsMap"
+                    class="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginHorizontal="12dp"
+                    tools:context=".ChallengeDetailsActivity" />
+
+                <ImageView
+                    android:id="@+id/transparentImageView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@android:color/transparent" />
+
+            </RelativeLayout>
 
             <EditText
                 android:id="@+id/challengeDetailsNameEditText"

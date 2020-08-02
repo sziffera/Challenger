@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.text.format.DateUtils
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -141,6 +142,32 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
         initVariables()
+
+        //solving the Google Maps touch error caused by ScrollView
+        transparentImageView.setOnTouchListener(object : View.OnTouchListener {
+            @SuppressLint("ClickableViewAccessibility")
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                when (event?.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        challengeDetailsScrollView
+                            .requestDisallowInterceptTouchEvent(true)
+                        return false
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        challengeDetailsScrollView
+                            .requestDisallowInterceptTouchEvent(false)
+                        return true
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        challengeDetailsScrollView
+                            .requestDisallowInterceptTouchEvent(true)
+                        return false
+                    }
+                    else -> return true
+                }
+            }
+        })
+
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.challengeDetailsMap) as SupportMapFragment
         mapFragment.getMapAsync(this)
