@@ -37,9 +37,15 @@
         android:theme="@style/AppTheme">
 
 
-        <activity android:name=".ChartsActivity" />
-        <activity android:name=".user.UserSettingsActivity" />
-        <activity android:name=".user.ForgotPasswordActivity" />
+        <activity
+            android:name=".ChartsActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".user.UserSettingsActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".user.ForgotPasswordActivity"
+            android:screenOrientation="portrait" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -61,13 +67,24 @@
         <activity
             android:name=".ChallengeRecorderActivity"
             android:label="@string/title_activity_challenge_recorder"
+            android:screenOrientation="portrait"
             android:launchMode="singleTop" />
 
-        <activity android:name=".ChallengeDetailsActivity" />
-        <activity android:name=".CreateChallengeActivity" />
-        <activity android:name=".AllChallengeActivity" />
-        <activity android:name=".user.UserProfileActivity" />
-        <activity android:name=".user.LoginActivity" />
+        <activity
+            android:name=".ChallengeDetailsActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".CreateChallengeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".AllChallengeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".user.UserProfileActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".user.LoginActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".SplashScreenActivity"
             android:theme="@style/AppTheme.Launcher">
@@ -77,10 +94,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".user.RegisterActivity" />
+        <activity
+            android:name=".user.RegisterActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".MainActivity"
-            android:launchMode="singleTop" />
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
     </application>
 
 

@@ -274,13 +274,17 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
     }
 
     override fun noInternetConnection() {
-        connected = false
-        noInternetTextView.visibility = View.VISIBLE
+        runOnUiThread {
+            connected = false
+            noInternetTextView.visibility = View.VISIBLE
+        }
     }
 
     override fun connectedToInternet() {
-        connected = true
-        noInternetTextView.visibility = View.GONE
+        runOnUiThread {
+            connected = true
+            noInternetTextView.visibility = View.INVISIBLE
+        }
     }
 
     private fun initSettingsSwitches() {

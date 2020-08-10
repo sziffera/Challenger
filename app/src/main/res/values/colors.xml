@@ -11,4 +11,5 @@
     <color name="colorMinus">#98e4fd</color>
     <color name="colorPlus">#f79ba3</color>
     <color name="colorGreen">#00897B</color>
+    <color name="colorPrimaryDarkLightOpacity">#993C93B4</color>
 </resources>

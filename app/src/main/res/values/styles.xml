@@ -20,7 +20,7 @@
     <style name="AlertDialogCustom" parent="Theme.AppCompat.DayNight.Dialog.Alert">
         <item name="buttonBarNeutralButtonStyle">@style/NeutralButtonStyle</item>
         <item name="android:windowTitleStyle">@style/DialogTitle</item>
-        <item name="android:windowBackground">@color/colorStop</item>
+        <item name="android:windowBackground">@color/colorPrimaryDark</item>
         <item name="android:colorAccent">#FFFFFF</item>
         <item name="android:textColor">#FFFFFF</item>
         <item name="android:textColorPrimary">#FFFFFF</item>
@@ -33,7 +33,7 @@
     </style>
 
     <style name="NeutralButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
-        <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:textColor">#FFFFFF</item>
         <item name="android:textSize">20sp</item>
     </style>
 

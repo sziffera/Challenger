@@ -745,6 +745,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             DURATION,
             System.currentTimeMillis() - start + durationHelper
         )
+        intent.putExtra(ALTITUDE, correctedAltitude.toInt())
 
         if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge)
             intent.putExtra(DIFFERENCE, difference)
@@ -838,6 +839,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             "$PACKAGE_NAME.location"
         const val DISTANCE = "$PACKAGE_NAME.distance"
         const val DURATION = "$PACKAGE_NAME.duration"
+        const val ELEVATION_GAINED = "$PACKAGE_NAME.elevationGained"
+        const val ALTITUDE = "$PACKAGE_NAME.altitude"
         const val AUTO_PAUSE_ACTIVE = "$PACKAGE_NAME.autoPauseActive"
         private const val EXTRA_STARTED_FROM_NOTIFICATION =
             PACKAGE_NAME +
@@ -845,7 +848,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
         /** helps when to show and remove notification */
         private var serviceIsRunningInForeground: Boolean = false
-        private const val ALTITUDES_SIZE = 4
+        private const val ALTITUDES_SIZE = 6
 
         /** minimum speed in m/s (approximately 2km/h) */
         private const val MINIMUM_SPEED: Double = 0.555555

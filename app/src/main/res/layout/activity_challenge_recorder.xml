@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="bottom"
     android:animateLayoutChanges="true"
     android:background="@drawable/gradient_background"
     android:orientation="vertical">
@@ -13,89 +14,131 @@
         class="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginHorizontal="10dp"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="5dp"
         android:layout_weight="1"
         tools:context=".ChallengeRecorderActivity" />
+
 
     <LinearLayout
         android:id="@+id/recordingDataView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="bottom"
         android:orientation="vertical"
         android:visibility="gone">
 
-        <TextView
-            android:id="@+id/recorderDurationTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:gravity="center"
-            android:letterSpacing="0.1"
-            android:text="@string/_00_00"
-            android:textSize="70sp" />
-
-        <TextView
-            android:id="@+id/differenceTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/_00_00"
-            android:textColor="@color/colorMinus"
-            android:textSize="35sp" />
-
-        <ImageButton
-            android:id="@+id/muteVoiceCoachButton"
-            android:layout_width="match_parent"
-            android:layout_height="45dp"
-            android:backgroundTint="@android:color/transparent"
-            android:tint="@android:color/white"
-            app:srcCompat="@drawable/ic_settings_voice_24dp" />
-
-        <ImageView
-            android:id="@+id/activityTypeImageView"
-            android:layout_width="match_parent"
-            android:layout_height="35dp"
-            android:contentDescription="@string/activity_type"
-            app:srcCompat="@drawable/cycling" />
-
         <LinearLayout
-            android:id="@+id/challengeDataLinearLayout"
+            android:id="@+id/detailsLinearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/challengeRecorderDistanceTextView"
-                android:layout_width="0dp"
+                android:id="@+id/recorderDurationTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:letterSpacing="0.1"
+                android:text="@string/_00_00"
+                android:textSize="70sp" />
+
+            <View
+                android:id="@+id/divider5"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_weight="1"
+                android:background="?android:attr/listDivider" />
+
+            <TextView
+                android:id="@+id/differenceTextView"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="@string/_0_0_km"
-                android:textColor="@android:color/white"
-                android:textSize="40sp" />
+                android:text="@string/_00_00"
+                android:textColor="@color/colorMinus"
+                android:textSize="35sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/muteVoiceCoachButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:backgroundTint="@android:color/transparent"
+                    android:tint="@android:color/white"
+                    app:srcCompat="@drawable/ic_settings_voice_24dp" />
+
+                <ImageView
+                    android:id="@+id/activityTypeImageView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/activity_type"
+                    app:srcCompat="@drawable/cycling" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/divider7"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_weight="1"
+                android:background="?android:attr/listDivider" />
 
             <TextView
                 android:id="@+id/challengeRecorderSpeedTextView"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
                 android:text="@string/_0_0_km_h"
                 android:textColor="@android:color/white"
-                android:textSize="40sp" />
-        </LinearLayout>
+                android:textSize="55sp" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/speed"
+                android:textAllCaps="true"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+
+            <View
+                android:id="@+id/divider8"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_weight="1"
+                android:background="?android:attr/listDivider" />
+
+            <TextView
+                android:id="@+id/challengeRecorderDistanceTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/_0_0_km"
+                android:textColor="@android:color/white"
+                android:textSize="55sp" />
+
+            <TextView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
@@ -104,75 +147,117 @@
                 android:textColor="@android:color/white"
                 android:textSize="15sp" />
 
-            <TextView
-                android:layout_width="0dp"
+            <View
+                android:id="@+id/divider9"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_weight="1"
+                android:background="?android:attr/listDivider" />
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="@string/speed"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/avgSpeedTextView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/_0_0_km_h"
+                    android:textColor="@android:color/white"
+                    android:textSize="30sp" />
+
+                <TextView
+                    android:id="@+id/maxSpeedTextView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/_0_0_km_h"
+                    android:textColor="@android:color/white"
+                    android:textSize="30sp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center|center_horizontal"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/average_speed"
+                    android:textAllCaps="true"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center|center_horizontal"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/max_speed"
+                    android:textAllCaps="true"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_weight="1"
+                android:background="?android:attr/listDivider" />
+
+            <TextView
+                android:id="@+id/altitudeTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|center_horizontal"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/_0m"
+                android:textAllCaps="true"
+                android:textColor="@android:color/white"
+                android:textSize="25sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|center_horizontal"
+                android:layout_marginTop="7dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/altitude"
                 android:textAllCaps="true"
                 android:textColor="@android:color/white"
                 android:textSize="15sp" />
+
         </LinearLayout>
+
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/avgSpeedTextView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="@string/_0_0_km_h"
-                android:textColor="@android:color/white"
-                android:textSize="40sp" />
-
-            <TextView
-                android:id="@+id/maxSpeedTextView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="@string/_0_0_km_h"
-                android:textColor="@android:color/white"
-                android:textSize="40sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="@string/average_speed"
-                android:textAllCaps="true"
-                android:textColor="@android:color/white"
-                android:textSize="15sp" />
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="@string/max_speed"
-                android:textAllCaps="true"
-                android:textColor="@android:color/white"
-                android:textSize="15sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
             android:orientation="horizontal">
 
 
@@ -180,7 +265,6 @@
                 android:id="@+id/startChallengeRecording"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
                 android:layout_marginVertical="20dp"
                 android:layout_weight="1"
                 android:background="@drawable/round_edittext"
@@ -188,16 +272,19 @@
                 android:textColor="@color/colorStop"
                 android:textSize="17sp" />
 
+            <Space
+                android:id="@+id/startStopSpace"
+                android:layout_width="12dp"
+                android:layout_height="wrap_content" />
+
             <Button
                 android:id="@+id/stopRecording"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="20dp"
-                android:layout_marginStart="3dp"
-                android:layout_marginEnd="12dp"
                 android:layout_weight="1"
                 android:background="@drawable/round_edittext"
-                android:backgroundTint="@color/colorStop"
+                android:backgroundTint="@color/colorPlus"
                 android:text="@string/finish"
                 android:textSize="17sp" />
 
@@ -284,9 +371,10 @@
             android:layout_gravity="center"
             android:background="@android:color/transparent"
             android:drawableStart="@drawable/ic_settings_voice_24dp"
+            android:drawableTint="@color/colorPlus"
             android:paddingHorizontal="10dp"
             android:text="@string/set_up_voice_coach"
-            android:textColor="@color/colorMinus"
+            android:textColor="@color/colorPlus"
             android:textSize="14sp" />
 
         <Button
@@ -312,4 +400,15 @@
             android:textSize="17sp" />
 
     </LinearLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/recorderBottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#30758F"
+        android:visibility="gone"
+        app:itemIconTint="@color/recorder_menu_state_list"
+        app:itemTextColor="@color/recorder_menu_state_list"
+        app:menu="@menu/challenge_recorder_menu" />
 </LinearLayout>

@@ -161,17 +161,6 @@
         app:layout_constraintBottom_toTopOf="@+id/chooseChallenge"
         app:layout_constraintStart_toEndOf="@+id/userProfileimageButton" />
 
-    <Button
-        android:id="@+id/weatherTestButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginBottom="21dp"
-        android:visibility="gone"
-        android:text="Button"
-        app:layout_constraintBottom_toTopOf="@+id/chooseChallenge"
-        app:layout_constraintStart_toEndOf="@+id/userProfileimageButton" />
-
     <TextView
         android:id="@+id/weatherDegreesTextView"
         android:layout_width="wrap_content"

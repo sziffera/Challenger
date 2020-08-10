@@ -13,6 +13,8 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IFillFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.github.psambit9791.jdsp.filter.Wiener
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.android.synthetic.main.activity_charts.*
 
 class ChartsActivity : AppCompatActivity() {
@@ -34,7 +36,11 @@ class ChartsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_charts)
 
-        challengeData = intent.getParcelableArrayListExtra(CHALLENGE_DATA_ARRAY)
+        val id = intent.getLongExtra(CHALLENGE_ID, 0)
+        val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+        val challenge = ChallengeDbHelper(this).getChallenge(id.toInt())
+        challengeData = Gson().fromJson<ArrayList<MyLocation>>(challenge?.routeAsString, typeJson)
+
         avgSpeed = intent.getDoubleExtra(AVG_SPEED, 0.0)
 
         elevationGain = intent.getDoubleExtra(ELEVATION_GAIN, 0.0)
@@ -104,7 +110,7 @@ class ChartsActivity : AppCompatActivity() {
                 data[index] = i.altitude
             }
 
-            val wiener = Wiener(data, data.size.div(10))
+            val wiener = Wiener(data, data.size.div(data.size / 10))
             val filtered = wiener.wiener_filter()
 
             elevationData = ArrayList()
@@ -231,7 +237,7 @@ class ChartsActivity : AppCompatActivity() {
 
     companion object {
         const val AVG_SPEED = "avgSpeed"
-        const val CHALLENGE_DATA_ARRAY = "challengeDataArray"
+        const val CHALLENGE_ID = "challengeId"
         const val ELEVATION_GAIN = "elevationGain"
         const val ELEVATION_LOSS = "elevationLoss"
     }

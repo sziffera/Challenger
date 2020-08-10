@@ -101,7 +101,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             startActivity(
                 Intent(this, ChartsActivity::class.java)
-                    .putParcelableArrayListExtra(ChartsActivity.CHALLENGE_DATA_ARRAY, route)
+                    .putExtra(ChartsActivity.CHALLENGE_ID, id)
                     .putExtra(ChartsActivity.AVG_SPEED, challenge.avg)
                     .putExtra(ChartsActivity.ELEVATION_GAIN, elevGain)
                     .putExtra(ChartsActivity.ELEVATION_LOSS, elevLoss)
@@ -305,9 +305,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     polylineOptions.add(i.latLng)
                 }
 
-
                 if (elevationArray.size > 100) {
-                    val wiener = Wiener(elevationArray, elevationArray.size / 10)
+                    val wiener = Wiener(elevationArray, elevationArray.size / 25)
                     val filteredElevation = wiener.wiener_filter()
                     for (i in 10..filteredElevation.size - 10) {
                         if (filteredElevation[i] < filteredElevation[i + 1]) {
@@ -319,7 +318,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
                 //writeToFile(elevationArray,"unfilteredElevation")
                 //writeToFile(filteredElevation,"filteredElevation")
-
 
                 runOnUiThread {
                     mMap.addPolyline(

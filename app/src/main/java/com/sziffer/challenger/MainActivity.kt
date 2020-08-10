@@ -1,6 +1,7 @@
 package com.sziffer.challenger
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
@@ -42,13 +43,18 @@ import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView
 import uk.co.deanwild.materialshowcaseview.ShowcaseConfig
 import java.io.IOException
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
+import kotlin.Comparator
 
 
 class MainActivity : AppCompatActivity(), LifecycleObserver,
     SwipeRefreshLayout.OnRefreshListener,
     NetworkStateListener {
 
-    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var userIdSharedPreferences: SharedPreferences
+    private lateinit var lastRefreshSharedPreferences: SharedPreferences
     private var dbHelper: ChallengeDbHelper? = null
     private lateinit var newChallengeButton: Button
     private lateinit var showMoreChallengeButton: Button
@@ -94,7 +100,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
         userManager = UserManager(applicationContext)
 
-        sharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
+        userIdSharedPreferences = getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
+        lastRefreshSharedPreferences = getSharedPreferences(LAST_REFRESH, Context.MODE_PRIVATE)
 
         if (FirebaseManager.isUserValid) {
             Log.i("MAIN", "the user is registered")
@@ -104,7 +111,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
             } else {
                 FirebaseManager.currentUserRef
                     ?.child("username")?.addListenerForSingleValueEvent(object :
-                    ValueEventListener {
+                        ValueEventListener {
                     override fun onCancelled(p0: DatabaseError) {
                     }
 
@@ -248,6 +255,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                     Log.i("MAIN", "WorkManager succeeded")
                     setUpView()
                     swipeRefreshLayout.isRefreshing = false
+                    updateRefreshDate()
                 }
             })
     }
@@ -307,7 +315,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                             windSpeedTextView.visibility = View.VISIBLE
                             windDirectionImageView.visibility = View.VISIBLE
                             weatherDegreesTextView.text = "${weatherData.main.temp.toInt()}°C"
-                            windSpeedTextView.text = "${weatherData.wind.speed.toInt()}km/h"
+                            val windSpeed = weatherData.wind.speed.times(3.6)
+                            windSpeedTextView.text = "${windSpeed.toInt()}km/h"
                             windDirectionImageView.rotation = -90f + weatherData.wind.deg
 
                             //TODO(change wind direction color based on speed)
@@ -327,6 +336,16 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
 
     override fun onRefresh() {
+
+        if (!shouldRefreshDataSet()) {
+            swipeRefreshLayout.isRefreshing = false
+            Toast.makeText(
+                this, getString(R.string.last_update_warning),
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
         startDataDownloaderWorkManager(applicationContext)
         observeWork()
         if (!connected) {
@@ -335,6 +354,44 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                 Toast.LENGTH_LONG
             ).show()
             swipeRefreshLayout.isRefreshing = false
+        }
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    private fun shouldRefreshDataSet(): Boolean {
+        val lastRefreshString = lastRefreshSharedPreferences
+            .getString(LAST_REFRESH_TIME, null)
+        return if (lastRefreshString == null)
+            true
+        else {
+            val lastRefreshDate: Date? = SimpleDateFormat("dd-MM-yyyy. HH:mm")
+                .parse(lastRefreshString)
+            val currentTime = Calendar.getInstance().time
+            //difference in sec
+            val difference = (currentTime.time - (lastRefreshDate?.time ?: 0))
+                .div(1000).also {
+                    Log.i("MAIN", "$it is the difference")
+                }
+            difference > 600
+        }
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun updateRefreshDate() {
+        val currentDate: String
+        currentDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val current = LocalDateTime.now()
+            val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
+            current.format(formatter)
+
+        } else {
+            val date = Date();
+            val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
+            formatter.format(date)
+        }
+        with(lastRefreshSharedPreferences.edit()) {
+            putString(LAST_REFRESH_TIME, currentDate)
+            apply()
         }
     }
 
@@ -429,6 +486,9 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
         //key for the user's sharedPref
         const val UID_SHARED_PREF = "sharedPrefUid"
+
+        private const val LAST_REFRESH = "${SHOWCASE_ID}.LastRefresh"
+        private const val LAST_REFRESH_TIME = "time"
 
         //get unregistered user id
         const val NOT_REGISTERED = "registered"

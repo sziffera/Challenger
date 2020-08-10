@@ -24,6 +24,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentTransaction
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.LocationServices
@@ -69,6 +71,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     private var mBound = false
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var userManager: UserManager
+    private lateinit var mapFragment: SupportMapFragment
 
     /** Bluetooth */
     private val bluetoothAdapter: BluetoothAdapter? by lazy(LazyThreadSafetyMode.NONE) {
@@ -111,6 +114,13 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         super.onCreate(savedInstanceState)
         setContentView(layout.activity_challenge_recorder)
 
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
+        mapFragment = supportFragmentManager
+            .findFragmentById(id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+
+
         //setting user preferences based on settings
         userManager = UserManager(this)
         if (userManager.autoPause) {
@@ -124,6 +134,24 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         dbHelper = ChallengeDbHelper(this)
         initChips()
         initVoiceCoach()
+
+        recorderBottomNavigationView.setOnNavigationItemSelectedListener {
+            when (it.itemId) {
+                R.id.action_details -> {
+                    Log.i("MENU", "DETAILS")
+                    mapFragment.view?.visibility = View.GONE
+                    detailsLinearLayout.visibility = View.VISIBLE
+                    true
+                }
+                R.id.action_map -> {
+                    detailsLinearLayout.visibility = View.GONE
+                    mapFragment.view?.visibility = View.VISIBLE
+                    Log.i("MENU", "MAP")
+                    true
+                }
+                else -> true
+            }
+        }
 
         autoPauseCheckBox.setOnClickListener {
             val checkBox = it as CheckBox
@@ -191,12 +219,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         durationTextView = findViewById(id.recorderDurationTextView)
         durationTextView.visibility = View.GONE
-        challengeDataLinearLayout.visibility = View.GONE
+        //challengeDataLinearLayout.visibility = View.GONE
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-            .findFragmentById(id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+
     }
 
     override fun onStop() {
@@ -244,7 +269,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         }
 
         finishButton.setOnClickListener {
-            val builder: AlertDialog.Builder = AlertDialog.Builder(this, style.AlertDialogCustom)
+            val builder: AlertDialog.Builder = AlertDialog
+                .Builder(this, style.AlertDialogCustom)
             builder.setTitle(getString(R.string.finish_challenge))
                 .setMessage(getString(R.string.finish_recording_message))
                 .setCancelable(true)
@@ -345,7 +371,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     current.format(formatter)
 
                 } else {
-                    val date = Date();
+                    val date = Date()
                     val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
                     formatter.format(date)
                 }
@@ -441,6 +467,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
                 if (autoPause) {
                     startStopButton.visibility = View.GONE
+                    startStopSpace.visibility = View.GONE
                 } else
                     startStopButton.visibility = View.VISIBLE
 
@@ -451,7 +478,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
                 activityTypeImageView.visibility = View.VISIBLE
                 durationTextView.visibility = View.VISIBLE
-                challengeDataLinearLayout.visibility = View.VISIBLE
+                //challengeDataLinearLayout.visibility = View.VISIBLE
                 finishButton.visibility = View.VISIBLE
 
                 if (createdChallenge || challenge) {
@@ -461,6 +488,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     muteVoiceCoachButton.visibility = View.VISIBLE
                 else
                     muteVoiceCoachButton.visibility = View.GONE
+
+                recorderBottomNavigationView.visibility = View.VISIBLE
+                mapFragment.view?.visibility = View.GONE
 
                 gpsService?.requestLocationUpdates()
                 with(buttonSharedPreferences.edit()) {
@@ -575,6 +605,12 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
 
     //region helper methods
+
+    inline fun FragmentManager.inTransaction(func: FragmentTransaction.() -> Unit) {
+        val fragmentTransaction = beginTransaction()
+        fragmentTransaction.func()
+        fragmentTransaction.commit()
+    }
 
     private fun setUpCadenceSensor() {
 
@@ -762,6 +798,13 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 LocationUpdatesService.AUTO_PAUSE_ACTIVE,
                 false
             )
+
+            val altitude = intent.getIntExtra(LocationUpdatesService.ALTITUDE, 0)
+            val elevationGained = intent
+                .getIntExtra(LocationUpdatesService.ELEVATION_GAINED, 0)
+
+            altitudeTextView.text = "${altitude}m"
+
 
             mMap.addPolyline(
                 PolylineOptions()
