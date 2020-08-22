@@ -15,6 +15,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LifecycleObserver
@@ -35,6 +36,7 @@ import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.sync.DATA_DOWNLOADER_TAG
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
 import com.sziffer.challenger.user.*
+import com.sziffer.challenger.weather.UvIndex
 import com.sziffer.challenger.weather.WeatherData
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
@@ -44,9 +46,9 @@ import uk.co.deanwild.materialshowcaseview.ShowcaseConfig
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.Comparator
 
 
 class MainActivity : AppCompatActivity(), LifecycleObserver,
@@ -107,22 +109,22 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
             Log.i("MAIN", "the user is registered")
             if (userManager.username != null) {
                 Log.i("MAIN", "set from usermanager")
-                heyUserTextView.text = "Hey, " + userManager.username + "!"
+                heyUserTextView.text = "Hi " + userManager.username + "!"
             } else {
                 FirebaseManager.currentUserRef
                     ?.child("username")?.addListenerForSingleValueEvent(object :
                         ValueEventListener {
-                    override fun onCancelled(p0: DatabaseError) {
-                    }
+                        override fun onCancelled(p0: DatabaseError) {
+                        }
 
-                    override fun onDataChange(p0: DataSnapshot) {
-                        Log.i("FIREBASE", p0.toString())
-                        val name = p0.getValue(String::class.java) as String
-                        heyUserTextView.text = "Hey, " + name + "!"
-                        //also store the name for further usage
-                        userManager.username = name
-                    }
-                })
+                        override fun onDataChange(p0: DataSnapshot) {
+                            Log.i("FIREBASE", p0.toString())
+                            val name = p0.getValue(String::class.java) as String
+                            heyUserTextView.text = "Hey, " + name + "!"
+                            //also store the name for further usage
+                            userManager.username = name
+                        }
+                    })
             }
 
 
@@ -203,7 +205,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
         dbHelper = ChallengeDbHelper(this)
         val list = dbHelper?.getAllChallenges() as MutableList<Challenge>
 
-        list.sortWith(Comparator { o1, o2 ->
+        //sorts the challenge list based on date
+        list.sortWith { o1, o2 ->
             if (o1.date.isEmpty() || o2.date.isEmpty()) 0
             else {
                 val format = SimpleDateFormat("dd-MM-yyyy. HH:mm")
@@ -212,7 +215,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                 date1
                     .compareTo(date2)
             }
-        })
+        }
         list.reverse()
 
         if (list.isEmpty()) {
@@ -287,14 +290,34 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
         sequence.start()
     }
 
+    //region Weather
+
+    /** Sets windDirectionImage's color based on wind speed according to Beaufort Scala*/
+    private fun setBeaufortWindColor(windSpeed: Int) {
+        when (windSpeed) {
+            in 0..49 -> windDirectionImageView.setColorFilter(android.R.color.white)
+            in 50..61 -> windDirectionImageView.setColorFilter(R.color.colorWindYellow)
+            in 62..74 -> windDirectionImageView.setColorFilter(android.R.color.holo_orange_light)
+            in 75..88 -> windDirectionImageView.setColorFilter(android.R.color.holo_orange_dark)
+            in 89..102 -> windDirectionImageView.setColorFilter(android.R.color.holo_red_light)
+            in 103..117 -> windDirectionImageView.setColorFilter(android.R.color.holo_red_dark)
+            else -> windDirectionImageView.setColorFilter(R.color.colorStop)
+        }
+    }
+
+    /** Downloads weather data based on lastKnownLocation */
     private fun fetchWeatherData() {
 
         if (lastLocation == null)
             return
 
+        //variable to help deciding whether it is dark or not outside
+        var shouldShowUv = true
+
+        //fetching current weather data
         val okHttpClient = OkHttpClient()
-        val request = Request.Builder()
-            .url("${URL}lat=${lastLocation!!.latitude}&lon=${lastLocation!!.longitude}")
+        var request = Request.Builder()
+            .url("${WEATHER_URL}lat=${lastLocation!!.latitude}&lon=${lastLocation!!.longitude}")
             .build()
 
         okHttpClient.newCall(request).enqueue(object : Callback {
@@ -302,6 +325,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                 Log.i("WEATHER", e.toString())
             }
 
+
+            @SuppressLint("SimpleDateFormat")
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
                     val data = response.body()?.string()
@@ -310,6 +335,28 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                         val weatherData = Gson()
                             .fromJson<WeatherData>(data, typeJson)
                         Log.i("WEATHER", weatherData.toString())
+
+                        val cal = Calendar.getInstance()
+                        val tz = cal.timeZone
+                        val format = SimpleDateFormat("HH:mm")
+                        format.timeZone = tz
+                        val localSunset = format.format(Date(weatherData.sys.sunset * 1000))
+                        val localSunrise = format.format(Date(weatherData.sys.sunrise * 1000))
+                        Log.i("DATENOW", format.format(Date().time))
+                        shouldShowUv = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            LocalTime.now().isAfter(LocalTime.parse(localSunrise)) &&
+                                    LocalTime.now().isBefore(LocalTime.parse(localSunset))
+                        } else {
+                            val localTimeString = format.format(Date())
+                            val localTime = format.parse(localTimeString)
+                            val sunrise: Date = format.parse(localSunrise)
+                            val sunset: Date = format.parse(localSunset)
+                            //returns -1 if the date is before the compared
+                            sunrise.compareTo(localTime) == -1 && localTime?.compareTo(sunset) == -1
+                        }
+
+                        Log.d("date", "$localSunset $localSunrise and the bool is: $shouldShowUv")
+
                         runOnUiThread {
                             weatherDegreesTextView.visibility = View.VISIBLE
                             windSpeedTextView.visibility = View.VISIBLE
@@ -318,13 +365,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                             val windSpeed = weatherData.wind.speed.times(3.6)
                             windSpeedTextView.text = "${windSpeed.toInt()}km/h"
                             windDirectionImageView.rotation = -90f + weatherData.wind.deg
-
-                            //TODO(change wind direction color based on speed)
-                            if (weatherData.wind.speed > 30) {
-
-                            } else if (weatherData.wind.speed > 60) {
-
-                            }
+                            setBeaufortWindColor(windSpeed.toInt())
                         }
                     }
                 } else {
@@ -332,8 +373,74 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                 }
             }
         })
+
+        //fetching uv index
+        //if the local time shows that it's dark outside, no need to show UV
+        if (!shouldShowUv)
+            return
+
+        request = Request.Builder()
+            .url("${UV_INDEX_URL}lat=${lastLocation!!.latitude}&lon=${lastLocation!!.longitude}")
+            .build()
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                //do nothing
+                Log.i("UVINDEX", "FAILED")
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    val data = response.body()?.string()
+                    if (data != null) {
+                        val typeJson = object : TypeToken<UvIndex>() {}.type
+                        val uvIndex = Gson()
+                            .fromJson<UvIndex>(data, typeJson)
+                        Log.i("UVINDEX", uvIndex.value.toString())
+                        runOnUiThread {
+                            uvIndexTextView.text = getStringFromNumber(1, uvIndex.value)
+                            uvLinearLayout.visibility = View.VISIBLE
+                            if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                                setUvIndexColor(uvIndex = uvIndex.value)
+                            }
+                        }
+                    }
+                }
+            }
+        })
     }
 
+    /** Sets the background color for UV index based on its strength */
+    @RequiresApi(Build.VERSION_CODES.M)
+    @SuppressLint("ResourceAsColor")
+    //api level
+    private fun setUvIndexColor(uvIndex: Double) {
+        when (uvIndex) {
+            in 0.0..2.9 -> {
+                uvIndexTextView.backgroundTintList = resources.getColorStateList(
+                    R.color.colorGreen,
+                    null
+                )
+            }
+            in 3.0..5.9 -> {
+                uvIndexTextView.backgroundTintList =
+                    resources.getColorStateList(R.color.colorWindYellow, null)
+            }
+            in 6.0..7.9 -> {
+                uvIndexTextView.backgroundTintList =
+                    resources.getColorStateList(android.R.color.holo_orange_dark, null)
+            }
+            in 8.0..10.9 -> {
+                uvIndexTextView.backgroundTintList =
+                    resources.getColorStateList(android.R.color.holo_red_dark, null)
+            }
+            else -> {
+                uvIndexTextView.backgroundTintList =
+                    resources.getColorStateList(android.R.color.holo_purple, null)
+            }
+        }
+    }
+
+    //endregion Weather
 
     override fun onRefresh() {
 
@@ -477,9 +584,12 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
     companion object {
         private const val SHOWCASE_ID = "MainActivity"
         private const val REQUEST = 200
-        private const val URL =
+        private const val WEATHER_URL =
             "https://api.openweathermap.org/data/2.5/" +
                     "weather?appid=da3db406af86d9176b3f60201d30e237&units=metric&"
+        private const val UV_INDEX_URL =
+            "https://api.openweathermap.org/data/2.5/" +
+                    "uvi?appid=da3db406af86d9176b3f60201d30e237&"
 
         //final uid which is used for authorization
         const val FINAL_USER_ID = "finalUid"

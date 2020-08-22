@@ -138,6 +138,41 @@ class UserManager(
             field = value
         }
 
+    var bmi: Float = 0f
+        get() {
+            return sharedPreferences.getFloat(KEY_USER_BMI, 0f)
+        }
+        set(value) {
+            with(sharedPreferences.edit()) {
+                putFloat(KEY_USER_BMI, value)
+                apply()
+            }
+            field = value
+        }
+
+    var bodyFat: Float = 0f
+        get() {
+            return sharedPreferences.getFloat(KEY_USER_BODY_FAT, 0f)
+        }
+        set(value) {
+            with(sharedPreferences.edit()) {
+                putFloat(KEY_USER_BODY_FAT, value)
+                apply()
+            }
+            field = value
+        }
+    var isFemale: Boolean = true
+        get() {
+            return sharedPreferences.getBoolean(KEY_USER_IS_FEMALE, true)
+        }
+        set(value) {
+            with(sharedPreferences.edit()) {
+                putBoolean(KEY_USER_IS_FEMALE, value)
+                apply()
+            }
+            field = value
+        }
+
     companion object {
         private const val NAME = "UserManager"
         private const val KEY_USER = "${NAME}.user"
@@ -152,6 +187,8 @@ class UserManager(
         private const val KEY_USER_DISTANCE = "${NAME}.dist"
         private const val KEY_USER_DIFFERENCE = "${NAME}.diff"
         private const val KEY_USER_START_STOP = "${NAME}.startStop"
-        private const val KEY_USER_USE_CELLULAR = "${NAME}.useCellular"
+        private const val KEY_USER_BMI = "${NAME}.bmi"
+        private const val KEY_USER_BODY_FAT = "${NAME}.bodyFat"
+        private const val KEY_USER_IS_FEMALE = "${NAME}.isFemale"
     }
 }

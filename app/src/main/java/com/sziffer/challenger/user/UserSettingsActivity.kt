@@ -2,6 +2,7 @@ package com.sziffer.challenger.user
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.Log
@@ -14,7 +15,6 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.R
-import com.sziffer.challenger.getStringFromNumber
 import com.sziffer.challenger.isEmailAddressValid
 import kotlinx.android.synthetic.main.activity_user_settings.*
 
@@ -45,7 +45,11 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
             updateUserData()
         }
 
-        initSettingsSwitches()
+        calculateBodyFatButton.setOnClickListener {
+            startActivity(
+                Intent(this, BodyFatCalculatorActivity::class.java)
+            )
+        }
 
     }
 
@@ -63,6 +67,11 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
         myNetworkCallback.unregisterCallback()
         super.onStop()
 
+    }
+
+    override fun onResume() {
+        initSettingsSwitches()
+        super.onResume()
     }
 
     /** downloads user data from Firebase and sets the values of text views. */
@@ -102,63 +111,6 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
                     }
                 })
             }
-            if (userManager.weight != 0) {
-                weight = userManager.weight
-                if (height != 0)
-                    calculateAndSetBmi()
-                weightEditText.hint = "${weight}kg"
-            } else {
-                FirebaseManager.currentUserRef?.child("weight")?.addValueEventListener(object :
-                    ValueEventListener {
-                    override fun onCancelled(p0: DatabaseError) {
-                    }
-
-                    override fun onDataChange(p0: DataSnapshot) {
-                        weight = try {
-                            Log.i("FIREBASE", p0.toString())
-                            p0.getValue(Int::class.java) as Int
-
-                        } catch (e: TypeCastException) {
-                            0
-                        } finally {
-                            userManager.weight = weight
-                            weightEditText.hint = "${weight}kg"
-                            //if height is already downloaded, calls calculate bmi method
-                            if (height != 0)
-                                calculateAndSetBmi()
-                        }
-
-                    }
-                })
-            }
-            if (userManager.height != 0) {
-                height = userManager.height
-                if (weight != 0)
-                    calculateAndSetBmi()
-                heightEditText.hint = "${height}cm"
-            } else {
-                FirebaseManager.currentUserRef?.child("height")?.addValueEventListener(object :
-                    ValueEventListener {
-                    override fun onCancelled(p0: DatabaseError) {
-                    }
-
-                    override fun onDataChange(p0: DataSnapshot) {
-
-                        height = try {
-                            Log.i("FIREBASE", p0.toString())
-                            p0.getValue(Int::class.java) as Int
-                        } catch (e: TypeCastException) {
-                            0
-                        } finally {
-                            userManager.height = height
-                            heightEditText.hint = "${height}cm"
-                            if (weight != 0)
-                                calculateAndSetBmi()
-                        }
-
-                    }
-                })
-            }
         }
     }
 
@@ -167,8 +119,6 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
         isDataDownloaded = true
         val heightInMetres: Double = height.div(100.0)
         val bmi = weight.div(heightInMetres * heightInMetres)
-        bmiTextView.text = getStringFromNumber(1, bmi)
-        bmiInfoTextView.text = getBmiInfo(bmi)
     }
 
     private fun getBmiInfo(bmi: Double): String {
@@ -196,79 +146,39 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
         if (!FirebaseManager.isUserValid) {
             return
         }
-        if (username != usernameEditText.text.toString() && usernameEditText.text.isNotEmpty()) {
+        //setting the username
+        if (!username.equals(usernameEditText.text.toString()) && usernameEditText.text.isNotEmpty()) {
             userManager.username = usernameEditText.text.toString()
             username = usernameEditText.text.toString()
-            FirebaseManager.mAuth.currentUser!!.updateProfile(
+            FirebaseManager.mAuth.currentUser?.updateProfile(
                 UserProfileChangeRequest.Builder()
                     .setDisplayName(username).build()
-            ).addOnSuccessListener {
+            )?.addOnSuccessListener {
                 Log.i("REGISTER", "display name set successfully")
             }
-            FirebaseManager.currentUserRef!!.child("username").setValue(
+            FirebaseManager.currentUserRef?.child("username")?.setValue(
                 usernameEditText.text.toString()
             )
         }
 
-        if (email != emailEditText.text.toString()
+        if (!email.equals(emailEditText.text.toString())
             && emailEditText.text.toString().isEmailAddressValid()
         ) {
 
-            FirebaseManager.currentUserRef!!.child("username").setValue(
+            FirebaseManager.currentUserRef?.child("email")?.setValue(
                 usernameEditText.text.toString()
             )
-            userManager.email = usernameEditText.text.toString()
-            email = usernameEditText.text.toString()
-            FirebaseManager.mAuth.currentUser!!.updateEmail(
-                usernameEditText.text.toString()
-            ).addOnSuccessListener {
+            userManager.email = emailEditText.text.toString()
+            email = emailEditText.text.toString()
+            FirebaseManager.mAuth.currentUser?.updateEmail(
+                emailEditText.text.toString()
+            )?.addOnSuccessListener {
                 Log.i(TAG, "email update successful")
             }
 
         }
-        var calculateBmiAgain = false
-        if (weightEditText.text.toString().isNotEmpty()) {
-            try {
-                val updated = weightEditText.text.toString().toInt()
-                if (updated == weight) return
-                calculateBmiAgain = true
-                FirebaseManager.currentUserRef!!.child("weight")
-                    .setValue(updated)
-                userManager.weight = updated
-                weight = updated
-            } catch (e: NumberFormatException) {
-                weightEditText.startAnimation(
-                    AnimationUtils.loadAnimation(
-                        this,
-                        R.anim.shake
-                    )
-                )
-                return
-            }
-        }
 
-        if (height != heightEditText.text.toString().toInt()) {
-            try {
-                val updated = heightEditText.text.toString().toInt()
-                if (updated == height) return
-                calculateBmiAgain = true
-                FirebaseManager.currentUserRef!!.child("height")
-                    .setValue(updated)
-                userManager.height = updated
-                height = updated
-            } catch (e: NumberFormatException) {
-                heightEditText.startAnimation(
-                    AnimationUtils.loadAnimation(
-                        this,
-                        R.anim.shake
-                    )
-                )
-                return
-            }
 
-        }
-        if (calculateBmiAgain)
-            calculateAndSetBmi()
         Toast.makeText(this, R.string.update_success, Toast.LENGTH_SHORT).show()
 
     }
@@ -288,7 +198,10 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
     }
 
     private fun initSettingsSwitches() {
+
         autoPauseSwitch.isChecked = userManager.autoPause
+
+        //autoPauseSwitchCompat.isChecked = userManager.autoPause
         preventScreenLockSwitch.isChecked = userManager.preventScreenLock
         differenceSwitch.isChecked = userManager.difference
         avgSpeedSwitch.isChecked = userManager.avgSpeed
@@ -296,9 +209,11 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
         distanceSwitch.isChecked = userManager.distance
         startStopSwitch.isChecked = userManager.startStop
 
+
         autoPauseSwitch.setOnCheckedChangeListener { _, isChecked ->
             userManager.autoPause = isChecked
         }
+
         preventScreenLockSwitch.setOnCheckedChangeListener { _, isChecked ->
             userManager.preventScreenLock = isChecked
         }

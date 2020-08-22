@@ -81,90 +81,21 @@
                 android:textColor="@android:color/white"
                 android:textSize="15sp" />
 
-            <LinearLayout
+            <Button
+                android:id="@+id/calculateBodyFatButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp">
+                android:layout_height="35dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:textColor="@color/colorAccent"
+                android:backgroundTint="@android:color/white"
+                android:background="@drawable/round_edittext"
+
+                android:text="@string/body_fat_calculator" />
 
 
-                <EditText
-                    android:id="@+id/weightEditText"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginVertical="5dp"
-                    android:layout_marginEnd="5dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/round_edittext"
-                    android:backgroundTint="@color/colorLightOpacity"
-                    android:drawableStart="@drawable/fitness_center_24px"
-                    android:ems="10"
-                    android:gravity="center"
-                    android:hint="@string/weight"
-                    android:inputType="number"
-                    android:padding="3dp"
-                    android:textColor="@android:color/white"
-                    android:textColorHint="@android:color/white"
-                    android:textSize="15sp" />
-
-                <EditText
-                    android:id="@+id/heightEditText"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginVertical="5dp"
-                    android:layout_marginStart="5dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/round_edittext"
-                    android:backgroundTint="@color/colorLightOpacity"
-                    android:drawableStart="@drawable/height_24px"
-                    android:ems="10"
-                    android:gravity="center"
-                    android:hint="@string/height"
-                    android:inputType="number"
-                    android:padding="3dp"
-                    android:textColor="@android:color/white"
-                    android:textColorHint="@android:color/white"
-                    android:textSize="15sp" />
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/bmiTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="0dp"
-                android:text="20"
-                android:textAllCaps="true"
-                android:textSize="25sp" />
-
-            <TextView
-                android:id="@+id/textView15"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/your_bmi"
-                android:textAllCaps="true"
-                android:textSize="13sp" />
-
-            <TextView
-                android:id="@+id/bmiInfoTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:text="@string/normal"
-                android:textAllCaps="true"
-                android:layout_marginBottom="7dp"
-                android:textSize="13sp">
-
-            </TextView>
-
-            <View
-                android:id="@+id/divider4"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -187,7 +118,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/prevent_screen_lock"
-                android:layout_marginBottom="3dp"
+                android:layout_marginBottom="15dp"
                 android:textAllCaps="true"
                 android:textColor="@android:color/white" />
 
@@ -201,7 +132,7 @@
                 android:id="@+id/textView16"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginVertical="8dp"
+                android:layout_marginVertical="15dp"
                 android:gravity="center"
                 android:text="@string/voice_coach_settings"
                 android:textAllCaps="true" />

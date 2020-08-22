@@ -70,7 +70,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:contentDescription="@string/activity_type"
-        android:tint="@color/colorMinus"
+        app:tint="@color/colorMinus"
         app:layout_constraintBottom_toBottomOf="@id/challengeItem"
         app:layout_constraintStart_toStartOf="@+id/challengeItem"
         app:layout_constraintTop_toBottomOf="@id/challengeNameTextView"

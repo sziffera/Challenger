@@ -195,5 +195,28 @@
         app:layout_constraintEnd_toStartOf="@id/weatherDegreesTextView"
         app:layout_constraintTop_toBottomOf="@+id/windDirectionImageView" />
 
+    <LinearLayout
+        android:id="@+id/uvLinearLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:orientation="vertical"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@id/windSpeedTextView"
+        app:layout_constraintEnd_toStartOf="@+id/windSpeedTextView">
+
+        <TextView
+            android:id="@+id/textView21"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="UV" />
+
+        <TextView
+            android:id="@+id/uvIndexTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="7.8" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

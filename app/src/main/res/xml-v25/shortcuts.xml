@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <shortcut
+        android:id="@+id/record"
+        android:enabled="true"
+        android:icon="@drawable/ic_play_circle_outline_24px"
+        android:shortcutLongLabel="@string/record_activity"
+        android:shortcutDisabledMessage="@string/record_activity"
+        android:shortcutShortLabel="@string/record_activity">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.sziffer.challenger.MainActivity"
+            android:targetPackage="com.sziffer.challenger" />
+        <intent
+            android:action="RANDOM"
+            android:targetPackage="com.sziffer.challenger"
+            android:targetClass="com.sziffer.challenger.ChallengeRecorderActivity" />
+
+    </shortcut>
+
+    <shortcut
+        android:id="@+id/create"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/create_a_challenge">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sziffer.challenger"
+            android:targetClass="CreateChallengeActivity" />
+    </shortcut>
+
+</shortcuts>

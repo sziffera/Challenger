@@ -70,6 +70,10 @@ class UserProfileActivity : AppCompatActivity() {
         } else {
             userSettingsButton.visibility = View.GONE
         }
+        if (userManager.bmi != 0f)
+            bmiIndexTextView.text = getStringFromNumber(1, userManager.bmi)
+        if (userManager.bodyFat != 0f)
+            bodyFatTextView.text = "${getStringFromNumber(1, userManager.bodyFat)}%"
     }
 
     @SuppressLint("SetTextI18n")

@@ -10,7 +10,7 @@
 
     <TextView
         android:id="@+id/chooseChallenge"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:layout_marginTop="74dp"
@@ -57,7 +57,7 @@
         android:background="@android:color/transparent"
         app:layout_constraintBottom_toTopOf="@id/createChallengeButton"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="10dp"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
@@ -67,7 +67,7 @@
         android:layout_marginStart="12dp"
         android:shadowColor="@color/colorLightOpacity"
         android:layout_marginEnd="12dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="10dp"
         android:background="@drawable/round_edittext"
         android:text="@string/create_a_challenge"
         android:textColor="@color/colorAccent"
@@ -153,11 +153,11 @@
         android:id="@+id/heyUserTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="6dp"
+        android:layout_marginBottom="24dp"
+        android:text="Hi!"
         android:textAllCaps="true"
         android:textSize="17sp"
-        android:layout_marginBottom="24dp"
-        android:text=""
         app:layout_constraintBottom_toTopOf="@+id/chooseChallenge"
         app:layout_constraintStart_toEndOf="@+id/userProfileimageButton" />
 
@@ -166,11 +166,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:visibility="invisible"
         android:layout_marginEnd="16dp"
         android:text="20°C"
         android:textAllCaps="true"
         android:textSize="25sp"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -190,10 +190,36 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="5dp"
-        android:visibility="invisible"
         android:text="5km/h"
+        android:visibility="invisible"
         app:layout_constraintEnd_toStartOf="@id/weatherDegreesTextView"
         app:layout_constraintTop_toBottomOf="@+id/windDirectionImageView" />
+
+    <LinearLayout
+        android:id="@+id/uvLinearLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:orientation="vertical"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@id/windSpeedTextView"
+        app:layout_constraintEnd_toStartOf="@+id/windSpeedTextView">
+
+        <TextView
+            android:id="@+id/textView21"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="UV" />
+
+        <TextView
+            android:id="@+id/uvIndexTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/round_edittext"
+            android:padding="2dp"
+            android:text="7.8" />
+
+    </LinearLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

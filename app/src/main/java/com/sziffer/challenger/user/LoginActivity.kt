@@ -270,6 +270,7 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
 
     override fun noInternetConnection() {
         runOnUiThread {
+            connected = false
             noInternetTextView.visibility = View.VISIBLE
         }
 
@@ -277,6 +278,7 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
 
     override fun connectedToInternet() {
         runOnUiThread {
+            connected = true
             noInternetTextView.visibility = View.GONE
         }
 

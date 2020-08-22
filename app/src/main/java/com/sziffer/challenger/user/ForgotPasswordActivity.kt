@@ -95,12 +95,17 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
     }
 
     override fun connectedToInternet() {
-        connected = true
-        noInternetTextView.visibility = View.GONE
+        runOnUiThread {
+            connected = true
+            noInternetTextView.visibility = View.GONE
+        }
+
     }
 
     override fun noInternetConnection() {
-        connected = false
-        noInternetTextView.visibility = View.VISIBLE
+        runOnUiThread {
+            connected = false
+            noInternetTextView.visibility = View.VISIBLE
+        }
     }
 }

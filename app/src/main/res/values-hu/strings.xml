@@ -101,4 +101,48 @@
         Ezután nincs is más dolgod, csak kihozni magadból a maximumot! Ebben igyekszünk segíteni, ha aktiválod a Voice Coach funkciót az általad beállított
         időközönként a Challenger hangosan tájékoztat a részideidről és a beállított tempótól való eltérésről.
     </string>
+    <string name="title_notifications">Értesítések</string>
+    <string name="set_up_cadence_sensor">Pedálfordulatmérő beállítása</string>
+    <string name="ble_not_supported">Ez az eszköz sajnos nem tud csatlakozni BLE eszközhöz</string>
+    <string name="item">elem</string>
+    <string name="unknown_device">Ismeretlen eszköz</string>
+    <string name="speed">sebesség</string>
+    <string name="elevation">Emelkedés</string>
+    <string name="finish_challenge">Felvétel befejezése</string>
+    <string name="finish_recording_message">Biztosan le szeretnéd allítani a felvételt?</string>
+    <string name="cancel">Mégse</string>
+    <string name="prevent_screen_lock">Képernyő ébren tartása</string>
+    <string name="no_internet_connection_will_update">Nincs internetkapcsolat. Az alkalmazás letölti az adataid, amint tudott csatlakozni.</string>
+    <string name="voice_coach_settings">Hang asszisztens beállítása</string>
+    <string name="ride_settings">Felvétel beállítások</string>
+    <string name="start_stop_pause">Elindulás, Leállítás, Szünet</string>
+    <string name="difference">Különbség</string>
+    <string name="last_update_warning">Adataid nemrég frissítettük</string>
+    <string name="altitude">magasság</string>
+    <string name="create">Létrehozás</string>
+    <string name="record">Felvétel</string>
+    <string name="have_an_account_log_in">Van már fiókod? Jelentkezz be!</string>
+    <string name="body_fat_calculator">Testzsír és BMI kalkulátor</string>
+    <string name="calculate">Számítás</string>
+    <string name="female">Nő</string>
+    <string name="male">Férfi</string>
+    <string name="calculate_body_fat">Számold ki a testzsir százalékod</string>
+    <string name="hip">Csípő</string>
+    <string name="waist">Derék</string>
+    <string name="neck_at_narrowest">Nyak (legszűkebb részen)</string>
+    <string name="waistmale">Derék (köldöknél)</string>
+    <string name="hipfemale">Csípő (legszélesebb részen)</string>
+    <string name="waistfemale">Derék (legkeskenyebb részen)</string>
+    <string name="neck">Nyak</string>
+    <string name="your_body_fat_is">A testzsírod</string>
+    <string name="not_calculated">Nincs számolva</string>
+    <string name="essential_fat">Szükséges zsír</string>
+    <string name="athletic">Atletikus</string>
+    <string name="fit">Fitt</string>
+    <string name="acceptable">Elfogadható</string>
+    <string name="please_wait">Várj egy pillanatot, az adatok feldolgozás alatt állnak</string>
+    <string name="save_ok">Kihívás sikeresen mentve!</string>
+    <string name="cant_save">Valami hiba történt, nem tudtuk elmenteni a kihívást!</string>
+    <string name="please_name_challenge">Adj meg egy nevet!</string>
+    <string name="back_to_recording">Felvétel megnyitása</string>
 </resources>

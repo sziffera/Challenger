@@ -166,7 +166,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             removeLocationUpdates()
             stopSelf()
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     override fun onDestroy() {
@@ -753,10 +753,12 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             .sendBroadcast(intent)
 
         if (serviceIsRunningInForeground) {
-            mNotificationManager!!.notify(
-                NOTIFICATION_ID,
-                updateAndGetNotification()
-            )
+            if (!zeroSpeed) {
+                mNotificationManager!!.notify(
+                    NOTIFICATION_ID,
+                    updateAndGetNotification()
+                )
+            }
         }
     }
     //endregion helper methods
@@ -772,7 +774,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         )
         builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .addAction(
-                R.drawable.ic_play_circle_outline_24px, getString(R.string.launch_activity),
+                R.drawable.ic_play_circle_outline_24px, getString(R.string.back_to_recording),
                 activityPendingIntent
             )
             .setContentText(getNotificationText())

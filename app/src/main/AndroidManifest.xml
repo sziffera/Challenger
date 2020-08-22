@@ -35,8 +35,9 @@
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
-
+        <activity
+            android:name=".user.BodyFatCalculatorActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ChartsActivity"
             android:screenOrientation="portrait" />
@@ -58,7 +59,6 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-
         <service
             android:name=".LocationUpdatesService"
             android:enabled="true"
@@ -67,15 +67,16 @@
         <activity
             android:name=".ChallengeRecorderActivity"
             android:label="@string/title_activity_challenge_recorder"
-            android:screenOrientation="portrait"
-            android:launchMode="singleTop" />
-
+            android:launchMode="singleTop"
+            android:exported="true"
+            android:screenOrientation="portrait"></activity>
         <activity
             android:name=".ChallengeDetailsActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".CreateChallengeActivity"
-            android:screenOrientation="portrait" />
+            android:exported="true"
+            android:screenOrientation="portrait"></activity>
         <activity
             android:name=".AllChallengeActivity"
             android:screenOrientation="portrait" />
@@ -88,11 +89,15 @@
         <activity
             android:name=".SplashScreenActivity"
             android:theme="@style/AppTheme.Launcher">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
         <activity
             android:name=".user.RegisterActivity"
@@ -102,6 +107,5 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait" />
     </application>
-
 
 </manifest>

@@ -66,7 +66,7 @@
     <string name="title_activity_chart_details" translatable="false">ChartDetailsActivity</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard" translatable="false">Dashboard</string>
-    <string name="title_notifications" translatable="false">Notifications</string>
+    <string name="title_notifications">Notifications</string>
     <string name="map">Map</string>
     <string name="table">Table</string>
     <string name="chart">Chart</string>
@@ -149,8 +149,31 @@
     <string name="difference">Difference</string>
     <string name="last_update_warning">The last update was not long ago</string>
     <string name="altitude">Altitude</string>
-    <string name="_0m">0m</string>
+    <string name="_0m" translatable="false">0m</string>
     <string name="create">Create</string>
     <string name="record">Record</string>
     <string name="have_an_account_log_in">Have an account? Log in</string>
+    <string name="body_fat_calculator">Body fat and BMI calculator</string>
+    <string name="calculate">Calculate</string>
+    <string name="female">Female</string>
+    <string name="male">Male</string>
+    <string name="waistfemale">Waist (at narrowest)</string>
+    <string name="hipfemale">Hip (at widest)</string>
+    <string name="waistmale">Waist (at navel)</string>
+    <string name="neck_at_narrowest">Neck (at narrowest)</string>
+    <string name="calculate_body_fat">Calculate body fat</string>
+    <string name="waist">Waist</string>
+    <string name="hip">Hip</string>
+    <string name="your_body_fat_is">Your body fat is</string>
+    <string name="not_calculated">Not calculated</string>
+    <string name="essential_fat">Essential fat</string>
+    <string name="athletic">Athletic</string>
+    <string name="fit">Fit</string>
+    <string name="acceptable">Acceptable</string>
+    <string name="please_wait">Please wait a second, your data is being fetched</string>
+    <string name="save_ok">Challenge saved successfully!</string>
+    <string name="cant_save">Can\'t save challenge, somethin happened</string>
+    <string name="please_name_challenge">Please name the challenge!</string>
+    <string name="back_to_recording">Back to recording</string>
+    <string name="neck">Neck</string>
 </resources>

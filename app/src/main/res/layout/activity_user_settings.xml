@@ -128,6 +128,16 @@
 
             </LinearLayout>
 
+            <Button
+                android:id="@+id/calculateBodyFatButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/colorAccent"
+                android:backgroundTint="@android:color/white"
+                android:background="@drawable/round_edittext"
+                android:textSize="17sp"
+                android:text="@string/body_fat_calculator" />
+
             <TextView
                 android:id="@+id/bmiTextView"
                 android:layout_width="wrap_content"

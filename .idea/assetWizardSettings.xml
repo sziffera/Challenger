@@ -156,7 +156,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/Applications/Android%20Studio.app/Contents/plugins/android/lib/android.jar!/images/material/icons/materialiconsoutlined/keyboard_return/outline_keyboard_return_24.xml" />
+                                      <entry key="url" value="jar:file:/Applications/Android%20Studio.app/Contents/plugins/android/lib/android.jar!/images/material/icons/materialiconsoutlined/360/outline_360_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -167,7 +167,7 @@
                         <option name="values">
                           <map>
                             <entry key="color" value="ffffff" />
-                            <entry key="outputName" value="ic_outline_keyboard_return_24" />
+                            <entry key="outputName" value="ic_outline_360_24" />
                             <entry key="sourceFile" value="$USER_HOME$/Downloads/table_chart-24px.svg" />
                           </map>
                         </option>

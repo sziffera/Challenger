@@ -96,7 +96,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         showChartsButton.setOnClickListener {
             if (route == null) {
                 //the Gson() conversion has not finished yet.
-                Toast.makeText(this, "Please wait a few seconds", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.please_wait), Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
             startActivity(
@@ -204,11 +204,10 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             updateSharedPrefForSync(applicationContext, challenge.firebaseId, KEY_UPLOAD)
 
             Toast.makeText(
-                this, "Challenge saved successfully!"
-                , Toast.LENGTH_SHORT
+                this, getString(R.string.save_ok), Toast.LENGTH_SHORT
             ).show()
         } else {
-            Toast.makeText(this, "Can't update challenge", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.cant_save), Toast.LENGTH_LONG).show()
         }
         startMainActivity()
     }
@@ -216,7 +215,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun saveChallenge() {
 
         if (challengeNameEditText.text.isEmpty()) {
-            challengeNameEditText.error = "Please name the challenge!"
+            challengeNameEditText.error = getString(R.string.please_name_challenge)
             return
         }
         challenge.name = challengeNameEditText.text.toString()
@@ -225,7 +224,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         updateSharedPrefForSync(applicationContext, challenge.firebaseId, KEY_UPLOAD)
 
-        Toast.makeText(this, "Challenge saved successfully", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
         startMainActivity()
     }
 
@@ -299,7 +298,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val polylineOptions = PolylineOptions()
                 val elevationArray = DoubleArray(route!!.size)
                 for ((index, i) in route!!.withIndex()) {
-                    //TODO(calculate elevation)
+
                     builder.include(i.latLng)
                     elevationArray[index] = i.altitude
                     polylineOptions.add(i.latLng)
