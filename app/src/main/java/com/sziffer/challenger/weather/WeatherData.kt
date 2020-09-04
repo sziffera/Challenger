@@ -4,6 +4,7 @@ data class WeatherData(
     val main: Main,
     val wind: Wind,
     val sys: Sys,
+    val clouds: Cloud,
     val weather: Array<Weather>
 )
 
@@ -11,6 +12,10 @@ data class Weather(
     val description: String,
     val id: Int,
     val main: String
+)
+
+data class Cloud(
+    val all: Int
 )
 
 data class Wind(

@@ -145,4 +145,16 @@
     <string name="cant_save">Valami hiba történt, nem tudtuk elmenteni a kihívást!</string>
     <string name="please_name_challenge">Adj meg egy nevet!</string>
     <string name="back_to_recording">Felvétel megnyitása</string>
+    <string name="share">Megosztás</string>
+    <string name="invalid_email">Kérjük adj meg egy valós email címet</string>
+    <string name="invalid_password">A jelszó legalább 6 karakter hosszúságú kell hogy legyen</string>
+    <string name="successful_sign_up">Sikeres regisztrálás</string>
+    <string name="unsuccessful_sing_up">Sikertelen regisztrálás</string>
+    <string name="cant_send_email">Sajnos nem tudtuk elküldeni az emailt, bizonyosodj meg róla, hogy helyesen adtad meg az emai címet</string>
+    <string name="email_sent">Email elküldve!</string>
+    <string name="sing_in_failed">Sikertelen bejelentkezés</string>
+    <string name="successful_login">Sikeres bejelentkezés!</string>
+    <string name="please_fill_required_fields">Kérlek tölts ki minden mezőt!</string>
+    <string name="height_in_cm">Magasság (cm)</string>
+    <string name="weight_in_kg">Súly (kg)</string>
 </resources>

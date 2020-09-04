@@ -191,6 +191,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         serviceIsRunningInForeground = false
         stopForeground(true)
         mChangingConfiguration = false
+        if (requestingLocationUpdates(this) && myRoute.size > 1)
+            updateUI()
         return mBinder
     }
 
@@ -199,6 +201,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         serviceIsRunningInForeground = false
         stopForeground(true)
         mChangingConfiguration = false
+        if (requestingLocationUpdates(this) && myRoute.size > 1)
+            updateUI()
         super.onRebind(intent)
     }
 
@@ -315,7 +319,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             //filtering location jumping
             if (tempDistance < 100) {
                 if (location.hasSpeed()) {
-                    if (maxSpeed < location.speed)
+                    if (maxSpeed < location.speed && location.speed < 27.7)
                         maxSpeed = location.speed
 
                     //if auto pause is set
@@ -350,7 +354,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                     if (location.hasAltitude())
                         handleNewAltitude(location.altitude)
 
-                    if (saveLocationCounter % 3 == 0) {
+                    if (saveLocationCounter % 5 == 0) {
                         route.add(LatLng(location.latitude, location.longitude))
 
                         myRoute.add(

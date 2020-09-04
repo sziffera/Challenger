@@ -65,6 +65,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
     private lateinit var userManager: UserManager
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private var lastLocation: Location? = null
+    private lateinit var okHttpClient: OkHttpClient
 
     private lateinit var connectivityManager: ConnectivityManager
     private lateinit var myNetworkCallback: MyNetworkCallback
@@ -81,6 +82,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
         myNetworkCallback = MyNetworkCallback(this, connectivityManager)
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+
+        okHttpClient = OkHttpClient()
 
         if (!checkPermissions()) {
             permissionRequest()
@@ -153,7 +156,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
         recordActivityButton.setOnClickListener {
             if (checkPermissions()) {
-
+                setRequestingLocationUpdates(this, false)
                 val buttonSettings = getSharedPreferences("button", 0)
                 with(buttonSettings.edit()) {
                     putBoolean("started", false)
@@ -313,10 +316,11 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
         //variable to help deciding whether it is dark or not outside
         var shouldShowUv = true
+        var cloudiness = 0
 
         //fetching current weather data
-        val okHttpClient = OkHttpClient()
-        var request = Request.Builder()
+
+        val request = Request.Builder()
             .url("${WEATHER_URL}lat=${lastLocation!!.latitude}&lon=${lastLocation!!.longitude}")
             .build()
 
@@ -336,6 +340,10 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                             .fromJson<WeatherData>(data, typeJson)
                         Log.i("WEATHER", weatherData.toString())
 
+                        cloudiness = weatherData.clouds.all.also {
+                            Log.i("CLOUDS", it.toString())
+                        }
+
                         val cal = Calendar.getInstance()
                         val tz = cal.timeZone
                         val format = SimpleDateFormat("HH:mm")
@@ -343,6 +351,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                         val localSunset = format.format(Date(weatherData.sys.sunset * 1000))
                         val localSunrise = format.format(Date(weatherData.sys.sunrise * 1000))
                         Log.i("DATENOW", format.format(Date().time))
+
                         shouldShowUv = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             LocalTime.now().isAfter(LocalTime.parse(localSunrise)) &&
                                     LocalTime.now().isBefore(LocalTime.parse(localSunset))
@@ -354,6 +363,10 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                             //returns -1 if the date is before the compared
                             sunrise.compareTo(localTime) == -1 && localTime?.compareTo(sunset) == -1
                         }
+
+                        //if its not cloudy and not night, fetching UV index
+                        if (shouldShowUv && weatherData.clouds.all < 95)
+                            fetchUvIndex()
 
                         Log.d("date", "$localSunset $localSunrise and the bool is: $shouldShowUv")
 
@@ -373,13 +386,10 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                 }
             }
         })
+    }
 
-        //fetching uv index
-        //if the local time shows that it's dark outside, no need to show UV
-        if (!shouldShowUv)
-            return
-
-        request = Request.Builder()
+    private fun fetchUvIndex() {
+        val request = Request.Builder()
             .url("${UV_INDEX_URL}lat=${lastLocation!!.latitude}&lon=${lastLocation!!.longitude}")
             .build()
         okHttpClient.newCall(request).enqueue(object : Callback {

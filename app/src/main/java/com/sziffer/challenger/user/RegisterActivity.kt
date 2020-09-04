@@ -84,7 +84,7 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
         }
 
         if (password.length < 6) {
-            passwordText.error = "Password must be at least 6 characters"
+            passwordText.error = getString(R.string.invalid_password)
             passwordText.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
@@ -95,7 +95,7 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
         }
 
         if (!email.isEmailAddressValid()) {
-            emailText.error = "Please provide a valid email address"
+            emailText.error = getString(R.string.invalid_email)
             emailText.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
@@ -147,11 +147,16 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
                     }
 
                     startActivity(Intent(this, MainActivity::class.java))
-                    Toast.makeText(this, "Successful sign-up", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.successful_sign_up), Toast.LENGTH_SHORT)
+                        .show()
                     finish()
 
                 } else { // If sign in failed
-                    Toast.makeText(this, "Unsuccessful sign-up", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.unsuccessful_sing_up),
+                        Toast.LENGTH_SHORT
+                    ).show()
                     registerButton.isEnabled = true
                     registerButton.startAnimation(
                         AnimationUtils.loadAnimation(

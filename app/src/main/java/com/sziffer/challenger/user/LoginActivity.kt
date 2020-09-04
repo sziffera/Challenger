@@ -133,7 +133,7 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
             buttonShake()
             Toast.makeText(
                 applicationContext,
-                "Please fill the required fields",
+                getString(R.string.please_fill_required_fields),
                 Toast.LENGTH_SHORT
             ).show()
             return
@@ -147,7 +147,11 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
         )
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
             if (it.isSuccessful) {
-                Toast.makeText(applicationContext, "Successful login!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    applicationContext,
+                    getString(R.string.successful_login),
+                    Toast.LENGTH_SHORT
+                ).show()
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
             } else {
@@ -159,7 +163,11 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
                         R.anim.fade_in
                     )
                 )
-                Toast.makeText(applicationContext, "Sign-in failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    applicationContext,
+                    getString(R.string.sing_in_failed),
+                    Toast.LENGTH_SHORT
+                ).show()
 
             }
         }

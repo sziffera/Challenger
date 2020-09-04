@@ -1,10 +1,14 @@
 package com.sziffer.challenger
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.provider.Settings
+import android.view.View
 import androidx.preference.PreferenceManager
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+
 
 const val KEY_REQUESTING_LOCATION_UPDATES = "requestingLocationUpdates"
 
@@ -47,3 +51,11 @@ fun zoomAndRouteCreator(locations: ArrayList<MyLocation>): Pair<LatLngBounds, Ar
     }
     return Pair(builder.build(), latLng)
 }
+
+fun takeScreenshot(view: View): Bitmap {
+    val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    view.draw(canvas)
+    return bitmap
+}
+

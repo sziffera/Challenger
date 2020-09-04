@@ -75,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_weight="1"
-                android:text="height in kg"
+                android:text="@string/height_in_cm"
                 android:textAllCaps="true"
                 android:textSize="15sp" />
 
@@ -119,7 +119,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_weight="1"
-                android:text="Weight in kg"
+                android:text="@string/weight_in_kg"
                 android:textAllCaps="true"
                 android:textSize="15sp" />
 

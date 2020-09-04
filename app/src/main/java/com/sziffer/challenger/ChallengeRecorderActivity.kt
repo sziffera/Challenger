@@ -317,7 +317,11 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         mMap = googleMap
 
         if (checkPermissions()) {
-            mMap.isMyLocationEnabled = true
+            with(mMap) {
+                isMyLocationEnabled = true
+                uiSettings.isCompassEnabled = true
+                uiSettings.isZoomControlsEnabled = true
+            }
             val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
             fusedLocationClient.lastLocation.addOnSuccessListener {
                 if (it != null) {
@@ -808,7 +812,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
             mMap.addPolyline(
                 PolylineOptions()
+                    .color(R.color.colorPrimaryDark)
                     .addAll(gpsService?.route)
+
             )
 
             if (challenge || createdChallenge) {

@@ -59,7 +59,7 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
         }
 
         if (!resetPasswordEmailEditText.text.toString().isEmailAddressValid()) {
-            resetPasswordEmailEditText.error = "Please provide a valid email address"
+            resetPasswordEmailEditText.error = getString(R.string.invalid_email)
             resetPasswordEmailEditText.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
@@ -72,7 +72,7 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
         FirebaseManager.mAuth.sendPasswordResetEmail(resetPasswordEmailEditText.text.toString())
             .addOnCompleteListener {
                 if (it.isSuccessful) {
-                    Toast.makeText(this, "Email sent!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.email_sent), Toast.LENGTH_SHORT).show()
                     startActivity(
                         Intent(this, LoginActivity::class.java),
                         ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
@@ -86,7 +86,7 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
                     )
                     Toast.makeText(
                         this,
-                        "Can't send email, make sure your email address is valid",
+                        getString(R.string.cant_send_email),
                         Toast.LENGTH_LONG
                     ).show()
                 }

@@ -62,14 +62,36 @@
                 android:textColorHint="@color/colorPlus"
                 android:textSize="20sp" />
 
-            <ImageView
-                android:id="@+id/challengeTypeImageView"
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:layout_gravity="center"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginHorizontal="20dp"
+                android:orientation="horizontal">
 
-                android:layout_marginBottom="12dp"
-                app:srcCompat="@drawable/cycling" />
+                <ImageView
+                    android:id="@+id/challengeTypeImageView"
+                    android:layout_width="25dp"
+                    android:layout_weight="1"
+                    android:layout_height="25dp"
+                    android:layout_gravity="center"
+                    app:srcCompat="@drawable/cycling" />
+
+                <Space
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/shareChallengeButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="end"
+                    android:background="@android:color/transparent"
+                    android:textColor="@android:color/white"
+                    android:drawableStart="@drawable/ic_outline_share_24"
+                    android:text="@string/share" />
+            </LinearLayout>
 
 
             <androidx.gridlayout.widget.GridLayout

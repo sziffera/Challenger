@@ -2,11 +2,19 @@ package com.sziffer.challenger
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.text.InputType
 import android.text.format.DateUtils
 import android.util.Log
@@ -20,6 +28,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.github.psambit9791.jdsp.filter.Wiener
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -32,7 +41,8 @@ import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import kotlinx.android.synthetic.main.activity_challenge_details.*
-import java.io.OutputStreamWriter
+import java.io.*
+import java.io.File.separator
 import java.util.*
 import kotlin.math.abs
 
@@ -44,7 +54,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var distanceTextView: TextView
     private lateinit var durationTextView: TextView
     private lateinit var challengeNameEditText: EditText
-    private lateinit var challengeTypeTextView: TextView
     private lateinit var maxSpeedTextView: TextView
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var challenge: Challenge
@@ -54,10 +63,13 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var route: ArrayList<MyLocation>? = null
     private var elevGain = 0.0
     private var elevLoss = 0.0
+    private var sharingImageBitmap: Bitmap? = null
     private var update: Boolean = false
     private var isItAChallenge: Boolean = false
     private var avgSpeed: Double = 0.0
     private var start: Long = 0
+
+    //region lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -171,7 +183,18 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.challengeDetailsMap) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+
+        shareChallengeButton.setOnClickListener {
+            initShareImage()
+        }
+
+
     }
+
+    //endregion lifecycle
+
+    //region helper methods
 
     override fun onMapReady(p0: GoogleMap) {
 
@@ -285,6 +308,10 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         startMainActivity()
     }
 
+    //endregion helper methods
+
+    //region processing
+
     /**
      * Starts a thread that converts the string data to MyLocation array and
      * calculates the LatLngBound for zooming on Map
@@ -319,6 +346,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 //writeToFile(filteredElevation,"filteredElevation")
 
                 runOnUiThread {
+
                     mMap.addPolyline(
                         polylineOptions.color(
                             ContextCompat.getColor(
@@ -327,7 +355,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                             )
                         )
                     )
-                    val padding = 50
+                    val padding = 100
                     val cu = CameraUpdateFactory.newLatLngBounds(builder.build(), padding)
                     mMap.animateCamera(cu)
                     elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
@@ -338,7 +366,110 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         }.start()
     }
 
+    //endregion processing
 
+    //region sharing
+
+    /** takes a screenshot of map and adds text to image */
+    private fun initShareImage() {
+
+        val callback: GoogleMap.SnapshotReadyCallback = GoogleMap.SnapshotReadyCallback {
+            val canvas = Canvas(it)
+            val scale = resources.displayMetrics.density
+            val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = ContextCompat.getColor(
+                    this@ChallengeDetailsActivity,
+                    android.R.color.white
+                )
+                textSize = 16 * scale
+                textAlign = Paint.Align.CENTER
+                setShadowLayer(1f, 0f, 1f, Color.DKGRAY)
+            }
+            val background = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = ContextCompat.getColor(
+                    this@ChallengeDetailsActivity,
+                    R.color.colorPrimaryDark
+                )
+            }
+
+            val drawable = ContextCompat.getDrawable(this, R.drawable.sharing_logo)
+            drawable?.setBounds(
+                (it.width * 0.83).toInt(),
+                (it.height * 0.1).toInt(), (it.width * 0.98).toInt(), (it.height * 0.16).toInt()
+            )
+            drawable?.draw(canvas)
+
+            canvas.drawRect(
+                0f, 0f, it.width.toFloat(),
+                it.height * 0.07f, background
+            )
+
+            canvas.drawText("CHALLENGER", it.width * 0.5f, it.height * 0.05f, textPaint)
+
+            canvas.drawRect(
+                0f, it.height * 0.93f, it.width.toFloat(),
+                it.height.toFloat(), background
+            )
+            canvas.drawText(
+                DateUtils.formatElapsedTime(challenge.dur),
+                0.5f * it.width, 0.98f * it.height, textPaint
+            )
+            textPaint.textAlign = Paint.Align.LEFT
+            canvas.drawText(
+                "${getStringFromNumber(1, challenge.dst)} km",
+                (0.05f * it.width), it.height.toFloat() * 0.98f, textPaint
+            )
+            textPaint.textAlign = Paint.Align.RIGHT
+            canvas.drawText(
+                "${getStringFromNumber(1, challenge.avg)} km/h",
+                (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
+            )
+            sharingImageBitmap = it
+            shareBitmap(it, challenge.date)
+            //saveImage(it, this, "Challenger")
+
+        }
+        mMap.snapshot(callback)
+    }
+
+    /** Saves bitmap */
+    private fun shareBitmap(bitmap: Bitmap, name: String) {
+
+        //get cache directory
+        val cachePath = File(externalCacheDir, "challenger_images/")
+        cachePath.mkdirs()
+
+        //create png file
+        val file = File(cachePath, "$name.png")
+        val fileOutputStream: FileOutputStream
+        try {
+            fileOutputStream = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
+            fileOutputStream.flush()
+            fileOutputStream.close()
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+        //---Share File---//
+        //get file uri
+        val myImageFileUri: Uri =
+            FileProvider.getUriForFile(this, applicationContext.packageName + ".provider", file)
+
+        //create a intent
+        val intent = Intent(Intent.ACTION_SEND)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.putExtra(Intent.EXTRA_STREAM, myImageFileUri)
+        intent.type = "image/png"
+        startActivity(Intent.createChooser(intent, "Share with"))
+    }
+
+    //endregion sharing
+
+    //region permission
     private fun permissionRequest() {
         val locationApproved = ActivityCompat
             .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
@@ -398,7 +529,9 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         }
     }
+    //endregion permission
 
+    //region for testing
     private fun writeToFile(testArray: DoubleArray, name: String) {
         val outputStreamWriter =
             OutputStreamWriter(openFileOutput("$name.txt", Context.MODE_PRIVATE))
@@ -408,6 +541,61 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         outputStreamWriter.close()
     }
+
+
+    private fun saveImage(bitmap: Bitmap, context: Context, folderName: String) {
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            val values = contentValues()
+            values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/$folderName")
+            values.put(MediaStore.Images.Media.IS_PENDING, true)
+            // RELATIVE_PATH and IS_PENDING are introduced in API 29.
+
+            val uri: Uri? = context.contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                values
+            )
+            if (uri != null) {
+                saveImageToStream(bitmap, context.contentResolver.openOutputStream(uri))
+                values.put(MediaStore.Images.Media.IS_PENDING, false)
+                context.contentResolver.update(uri, values, null, null)
+            }
+        } else {
+            val directory = File(
+                Environment.getExternalStorageDirectory().toString() + separator + folderName
+            )
+            // getExternalStorageDirectory is deprecated in API 29
+
+            if (!directory.exists()) {
+                directory.mkdirs()
+            }
+            val fileName = System.currentTimeMillis().toString() + ".png"
+            val file = File(directory, fileName)
+            saveImageToStream(bitmap, FileOutputStream(file))
+            val values = contentValues()
+            values.put(MediaStore.Images.Media.DATA, file.absolutePath)
+            // .DATA is deprecated in API 29
+            context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+        }
+    }
+
+    private fun contentValues(): ContentValues {
+        val values = ContentValues()
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis() / 1000)
+        return values
+    }
+
+    private fun saveImageToStream(bitmap: Bitmap, outputStream: OutputStream?) {
+        if (outputStream != null) {
+            try {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                outputStream.close()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    //endregion for testing
 
     companion object {
         private val TAG = this::class.java.simpleName

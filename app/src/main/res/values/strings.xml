@@ -176,4 +176,16 @@
     <string name="please_name_challenge">Please name the challenge!</string>
     <string name="back_to_recording">Back to recording</string>
     <string name="neck">Neck</string>
+    <string name="share">share</string>
+    <string name="invalid_email">Please provide a valid email address</string>
+    <string name="invalid_password">Password must be at least 6 characters</string>
+    <string name="successful_sign_up">Successful sign-up</string>
+    <string name="unsuccessful_sing_up">Unsuccessful sign-up</string>
+    <string name="cant_send_email">Can\'t send email, make sure your email address is valid</string>
+    <string name="email_sent">Email sent!</string>
+    <string name="sing_in_failed">Sign-in failed</string>
+    <string name="successful_login">Successful login!</string>
+    <string name="please_fill_required_fields">Please fill the required fields</string>
+    <string name="height_in_cm">height in cm</string>
+    <string name="weight_in_kg">Weight in kg</string>
 </resources>
