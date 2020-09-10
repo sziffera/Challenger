@@ -354,7 +354,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                     if (location.hasAltitude())
                         handleNewAltitude(location.altitude)
 
-                    if (saveLocationCounter % 5 == 0) {
+                    if (saveLocationCounter % LOCATION_SAVE_NUMBER == 0) {
                         route.add(LatLng(location.latitude, location.longitude))
 
                         myRoute.add(
@@ -864,6 +864,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         const val NOTIFICATION_ID = 12345678
         var previousChallenge: ArrayList<MyLocation> = ArrayList()
         private const val TTS_ID = "VoiceCoach"
-
+        private const val LOCATION_SAVE_NUMBER = 5
     }
 }
