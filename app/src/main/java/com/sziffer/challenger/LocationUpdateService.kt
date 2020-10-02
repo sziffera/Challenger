@@ -509,7 +509,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                 Log.i(TAG, "AVG added to speech")
                 val sec = (System.currentTimeMillis() - start + durationHelper).div(1000)
                 val avgInMs = distance.div(sec)
-                text += "average speed: ${getStringFromNumber(1, avgInMs)} " +
+                text += "average speed: ${getStringFromNumber(1, avgInMs.times(3.6))} " +
                         "kilometres per hour."
             }
 
