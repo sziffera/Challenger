@@ -21,8 +21,8 @@ android {
         applicationId "com.sziffer.challenger"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 17
-        versionName "1.0.1"
+        versionCode 20
+        versionName "1.0.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -56,14 +56,14 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.core:core-ktx:1.3.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
-    implementation 'com.google.firebase:firebase-auth:19.4.0'
+    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'com.google.firebase:firebase-auth:20.0.1'
     implementation 'com.firebaseui:firebase-ui-auth:6.2.0'
     implementation 'com.firebaseui:firebase-ui-database:6.2.1'
-    implementation 'com.google.firebase:firebase-database:19.4.0'
+    implementation 'com.google.firebase:firebase-database:19.6.0'
     implementation 'com.google.android.gms:play-services-maps:17.0.0'
-    implementation 'com.google.android.gms:play-services-location:17.0.0'
+    implementation 'com.google.android.gms:play-services-location:17.1.0'
     implementation 'com.google.maps.android:android-maps-utils:1.1.0'
     implementation "androidx.work:work-runtime-ktx:2.4.0"
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
@@ -76,8 +76,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.gridlayout:gridlayout:1.0.0'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
-    implementation 'com.google.firebase:firebase-analytics:17.5.0'
-    implementation 'com.google.firebase:firebase-crashlytics:17.2.1'
+    implementation 'com.google.firebase:firebase-analytics:18.0.0'
+    implementation 'com.google.firebase:firebase-crashlytics:17.3.0'
     implementation "android.arch.lifecycle:extensions:1.1.1"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
 
@@ -87,7 +87,7 @@ dependencies {
     implementation 'com.github.psambit9791:jdsp:0.2.1'
 
     //in app review
-    implementation 'com.google.android.play:core:1.8.0'
+    implementation 'com.google.android.play:core:1.9.0'
     implementation 'com.google.android.play:core-ktx:1.8.1'
 
     /*

@@ -15,6 +15,9 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.github.psambit9791.jdsp.filter.Wiener
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.model.MyLocation
+import com.sziffer.challenger.utils.getStringFromNumber
 import kotlinx.android.synthetic.main.activity_charts.*
 
 class ChartsActivity : AppCompatActivity() {

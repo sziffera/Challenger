@@ -6,8 +6,8 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.sziffer.challenger.ChallengeDbHelper
-import com.sziffer.challenger.user.FirebaseManager
+import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.database.FirebaseManager
 
 class DataSyncWorker(private val appContext: Context, workerParams: WorkerParameters) :
     Worker(appContext, workerParams) {

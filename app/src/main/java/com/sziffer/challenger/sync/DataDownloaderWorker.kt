@@ -7,9 +7,9 @@ import androidx.work.WorkerParameters
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
-import com.sziffer.challenger.Challenge
-import com.sziffer.challenger.ChallengeDbHelper
-import com.sziffer.challenger.user.FirebaseManager
+import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.model.Challenge
 import com.sziffer.challenger.user.UserManager
 import java.util.concurrent.CountDownLatch
 

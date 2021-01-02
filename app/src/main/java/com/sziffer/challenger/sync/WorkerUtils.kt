@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.work.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.sziffer.challenger.user.FirebaseManager
+import com.sziffer.challenger.database.FirebaseManager
 import java.util.concurrent.TimeUnit
 
 const val KEY_SYNC = "keySync"

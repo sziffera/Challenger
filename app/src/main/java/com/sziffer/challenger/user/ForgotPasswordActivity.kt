@@ -10,7 +10,10 @@ import android.view.animation.AnimationUtils
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.sziffer.challenger.R
-import com.sziffer.challenger.isEmailAddressValid
+import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.utils.MyNetworkCallback
+import com.sziffer.challenger.utils.NetworkStateListener
+import com.sziffer.challenger.utils.isEmailAddressValid
 import kotlinx.android.synthetic.main.activity_forgot_password.*
 
 class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {

@@ -158,6 +158,7 @@
         app:layout_constraintGuide_percent="0.12139606" />
 
     <LinearLayout
+        android:id="@+id/linearLayout3"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
@@ -204,6 +205,21 @@
 
 
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/thisYearKmTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:text="This year: 0km"
+        android:gravity="center"
+        android:textAllCaps="true"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toTopOf="@+id/signInSignOutButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout3" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

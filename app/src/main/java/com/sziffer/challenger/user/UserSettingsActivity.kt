@@ -15,7 +15,10 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.R
-import com.sziffer.challenger.isEmailAddressValid
+import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.utils.MyNetworkCallback
+import com.sziffer.challenger.utils.NetworkStateListener
+import com.sziffer.challenger.utils.isEmailAddressValid
 import kotlinx.android.synthetic.main.activity_user_settings.*
 
 class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {

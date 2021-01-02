@@ -6,7 +6,7 @@ import android.view.View
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import com.sziffer.challenger.R
-import com.sziffer.challenger.getStringFromNumber
+import com.sziffer.challenger.utils.getStringFromNumber
 import kotlinx.android.synthetic.main.activity_body_fat_calculator.*
 import kotlin.math.log
 

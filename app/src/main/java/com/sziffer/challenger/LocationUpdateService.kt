@@ -19,7 +19,11 @@ import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
+import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.user.UserManager
+import com.sziffer.challenger.utils.getStringFromNumber
+import com.sziffer.challenger.utils.requestingLocationUpdates
+import com.sziffer.challenger.utils.setRequestingLocationUpdates
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.absoluteValue
@@ -101,7 +105,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     /** helper for voice coach and update difference method */
     private var threadCounter = 0
 
-    /** helper variable for saving data just in every 3rd new location update */
+    /** helper variable for saving data just in every nth new location update */
     private var saveLocationCounter = 0
 
     //region service lifecycle
@@ -229,6 +233,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
         start = System.currentTimeMillis()
         timerIsRunning = true
+        zeroSpeed = false
         initAndStartUpdaterThread()
 
         Log.i(TAG, "Requesting location updates")
@@ -258,6 +263,9 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
         timerIsRunning = false
         durationHelper += System.currentTimeMillis() - start
+        zeroSpeed = true
+        if (!ChallengeRecorderActivity.autoPause)
+            updateUI()
         Log.i(TAG, "Removing location updates")
         try {
             mFusedLocationClient!!.removeLocationUpdates(mLocationCallback)
@@ -370,8 +378,9 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                 }
 
             }
-            mLocation = location
+
         }
+        mLocation = location
     }
 
     /** stops the service */
@@ -493,10 +502,12 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             if (userManager.distance)
                 Log.i(TAG, "Distance added to speech")
             text += "distance: " +
-                    "${getStringFromNumber(
-                        1, distance
-                            .div(1000)
-                    )} $km. "
+                    "${
+                        getStringFromNumber(
+                            1, distance
+                                .div(1000)
+                        )
+                    } $km. "
             if (userManager.duration) {
                 Log.i(TAG, "Dur added to speech")
                 text += "duration: "
@@ -741,7 +752,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
      * */
     private fun updateUI() {
         val intent = Intent(ACTION_BROADCAST)
-        //if the zero speed is true, the recording was paused automatically, no need to update UI.
+        //if the zero speed is true, the recording was paused, no need to update UI.
         intent.putExtra(AUTO_PAUSE_ACTIVE, zeroSpeed)
         intent.putExtra(DISTANCE, distance)
         intent.putExtra(EXTRA_LOCATION, mLocation)

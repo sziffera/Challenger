@@ -157,4 +157,5 @@
     <string name="please_fill_required_fields">Kérlek tölts ki minden mezőt!</string>
     <string name="height_in_cm">Magasság (cm)</string>
     <string name="weight_in_kg">Súly (kg)</string>
+    <string name="this_year">Ebben az évben</string>
 </resources>

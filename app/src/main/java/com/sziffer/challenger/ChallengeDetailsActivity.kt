@@ -1,19 +1,15 @@
 package com.sziffer.challenger
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.provider.MediaStore
 import android.text.InputType
 import android.text.format.DateUtils
@@ -26,7 +22,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.github.psambit9791.jdsp.filter.Wiener
@@ -38,11 +33,17 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.model.Challenge
+import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
+import com.sziffer.challenger.utils.getStringFromNumber
+import com.sziffer.challenger.utils.locationPermissionCheck
+import com.sziffer.challenger.utils.locationPermissionRequest
 import kotlinx.android.synthetic.main.activity_challenge_details.*
 import java.io.*
-import java.io.File.separator
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
 
@@ -127,10 +128,10 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 buttonDivSpace.visibility = View.GONE
                 saveStartButton.text = getString(R.string.challenge_this_activity)
                 saveStartButton.setOnClickListener {
-                    if (checkPermissions())
+                    if (locationPermissionCheck(this))
                         startChallenge()
                     else
-                        permissionRequest()
+                        locationPermissionRequest(this, this)
                 }
                 challengeNameEditText.inputType = InputType.TYPE_NULL
                 challengeNameEditText.setText(challenge.name.toUpperCase(Locale.ROOT))
@@ -469,67 +470,32 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     //endregion sharing
 
-    //region permission
-    private fun permissionRequest() {
-        val locationApproved = ActivityCompat
-            .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) ==
-                PackageManager.PERMISSION_GRANTED
+    //region GPX
 
+    private fun createAndSaveGpx(name: String) {
 
-        if (!locationApproved) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ),
-                    REQUEST
-                )
-            } else {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ),
-                    REQUEST
-                )
-            }
+        if (route == null) return
+
+        val header =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?><gpx xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"MapSource 6.15.5\" version=\"1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"  xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\"><trk>\n"
+        val name = """
+            <name>${name}</name><trkseg>
+            
+            """.trimIndent()
+
+        var segments = ""
+        val challengeDateFormat = SimpleDateFormat("dd-MM-yyyy. HH:mm")
+        val date = challengeDateFormat.parse(challenge.date)
+        val gpxDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        for (location in route!!) {
+
+            segments += "<trkpt lat=\"" + location.latLng.latitude + "\" lon=\"" + location.latLng.longitude + "\"><time>" + "</time></trkpt>\n";
         }
+        val footer = "</trkseg></trk></gpx>"
 
     }
 
-    private fun checkPermissions(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            )
-
-        } else {
-            return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        }
-    }
-    //endregion permission
+    //endregion GPX
 
     //region for testing
     private fun writeToFile(testArray: DoubleArray, name: String) {
@@ -542,41 +508,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         outputStreamWriter.close()
     }
 
-
-    private fun saveImage(bitmap: Bitmap, context: Context, folderName: String) {
-        if (android.os.Build.VERSION.SDK_INT >= 29) {
-            val values = contentValues()
-            values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/$folderName")
-            values.put(MediaStore.Images.Media.IS_PENDING, true)
-            // RELATIVE_PATH and IS_PENDING are introduced in API 29.
-
-            val uri: Uri? = context.contentResolver.insert(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                values
-            )
-            if (uri != null) {
-                saveImageToStream(bitmap, context.contentResolver.openOutputStream(uri))
-                values.put(MediaStore.Images.Media.IS_PENDING, false)
-                context.contentResolver.update(uri, values, null, null)
-            }
-        } else {
-            val directory = File(
-                Environment.getExternalStorageDirectory().toString() + separator + folderName
-            )
-            // getExternalStorageDirectory is deprecated in API 29
-
-            if (!directory.exists()) {
-                directory.mkdirs()
-            }
-            val fileName = System.currentTimeMillis().toString() + ".png"
-            val file = File(directory, fileName)
-            saveImageToStream(bitmap, FileOutputStream(file))
-            val values = contentValues()
-            values.put(MediaStore.Images.Media.DATA, file.absolutePath)
-            // .DATA is deprecated in API 29
-            context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-        }
-    }
 
     private fun contentValues(): ContentValues {
         val values = ContentValues()

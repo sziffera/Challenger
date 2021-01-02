@@ -1,12 +1,10 @@
 package com.sziffer.challenger
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.location.Location
 import android.net.ConnectivityManager
 import android.os.Build
@@ -17,7 +15,6 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -33,9 +30,13 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.model.Challenge
 import com.sziffer.challenger.sync.DATA_DOWNLOADER_TAG
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
 import com.sziffer.challenger.user.*
+import com.sziffer.challenger.utils.*
 import com.sziffer.challenger.weather.UvIndex
 import com.sziffer.challenger.weather.WeatherData
 import kotlinx.android.synthetic.main.activity_main.*
@@ -85,8 +86,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
         okHttpClient = OkHttpClient()
 
-        if (!checkPermissions()) {
-            permissionRequest()
+        if (!locationPermissionCheck(this)) {
+            locationPermissionRequest(this, this)
         } else {
             try {
                 fusedLocationProviderClient.lastLocation.addOnCompleteListener {
@@ -155,7 +156,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
         }
 
         recordActivityButton.setOnClickListener {
-            if (checkPermissions()) {
+            if (locationPermissionCheck(this)) {
                 setRequestingLocationUpdates(this, false)
                 val buttonSettings = getSharedPreferences("button", 0)
                 with(buttonSettings.edit()) {
@@ -167,7 +168,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                 intent.putExtra(ChallengeRecorderActivity.CHALLENGE, false)
                 startActivity(intent)
             } else {
-                permissionRequest()
+                locationPermissionRequest(this, this)
             }
         }
 
@@ -261,7 +262,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                     Log.i("MAIN", "WorkManager succeeded")
                     setUpView()
                     swipeRefreshLayout.isRefreshing = false
-                    updateRefreshDate()
+                    updateRefreshDate(UpdateTypes.DATA_SYNC)
                 }
             })
     }
@@ -298,28 +299,28 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
     /** Sets windDirectionImage's color based on wind speed according to Beaufort Scala*/
     private fun setBeaufortWindColor(windSpeed: Int) {
         when (windSpeed) {
-            in 0..49 -> windDirectionImageView.setColorFilter(android.R.color.white)
-            in 50..61 -> windDirectionImageView.setColorFilter(R.color.colorWindYellow)
-            in 62..74 -> windDirectionImageView.setColorFilter(android.R.color.holo_orange_light)
-            in 75..88 -> windDirectionImageView.setColorFilter(android.R.color.holo_orange_dark)
-            in 89..102 -> windDirectionImageView.setColorFilter(android.R.color.holo_red_light)
-            in 103..117 -> windDirectionImageView.setColorFilter(android.R.color.holo_red_dark)
-            else -> windDirectionImageView.setColorFilter(R.color.colorStop)
+            in 0..38 -> windDirectionImageView.setColorFilter(android.R.color.white)
+            in 39..49 -> windDirectionImageView.setColorFilter(R.color.colorWindYellow)
+            in 50..61 -> windDirectionImageView.setColorFilter(android.R.color.holo_orange_light)
+            in 62..74 -> windDirectionImageView.setColorFilter(android.R.color.holo_orange_dark)
+            in 75..88 -> windDirectionImageView.setColorFilter(android.R.color.holo_red_light)
+            in 89..102 -> windDirectionImageView.setColorFilter(android.R.color.holo_red_dark)
+            in 103..117 -> windDirectionImageView.setColorFilter(R.color.colorStop)
+            else -> windDirectionImageView.setColorFilter(android.R.color.black)
         }
     }
 
     /** Downloads weather data based on lastKnownLocation */
     private fun fetchWeatherData() {
 
-        if (lastLocation == null)
+        // if the last location is null or the weather has just been fetched, no need to update
+        if (lastLocation == null || !shouldRefreshDataSet(UpdateTypes.WEATHER, 20))
             return
 
         //variable to help deciding whether it is dark or not outside
-        var shouldShowUv = true
-        var cloudiness = 0
+        var shouldShowUv: Boolean
 
         //fetching current weather data
-
         val request = Request.Builder()
             .url("${WEATHER_URL}lat=${lastLocation!!.latitude}&lon=${lastLocation!!.longitude}")
             .build()
@@ -339,10 +340,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                         val weatherData = Gson()
                             .fromJson<WeatherData>(data, typeJson)
                         Log.i("WEATHER", weatherData.toString())
-
-                        cloudiness = weatherData.clouds.all.also {
-                            Log.i("CLOUDS", it.toString())
-                        }
 
                         val cal = Calendar.getInstance()
                         val tz = cal.timeZone
@@ -379,6 +376,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                             windSpeedTextView.text = "${windSpeed.toInt()}km/h"
                             windDirectionImageView.rotation = -90f + weatherData.wind.deg
                             setBeaufortWindColor(windSpeed.toInt())
+                            // updating weather update time for weather
+                            updateRefreshDate(UpdateTypes.WEATHER)
                         }
                     }
                 } else {
@@ -452,9 +451,10 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
     //endregion Weather
 
+    // swipe refresh layout helper method
     override fun onRefresh() {
 
-        if (!shouldRefreshDataSet()) {
+        if (!shouldRefreshDataSet(UpdateTypes.DATA_SYNC, 10)) {
             swipeRefreshLayout.isRefreshing = false
             Toast.makeText(
                 this, getString(R.string.last_update_warning),
@@ -475,9 +475,14 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
     }
 
     @SuppressLint("SimpleDateFormat")
-    private fun shouldRefreshDataSet(): Boolean {
-        val lastRefreshString = lastRefreshSharedPreferences
-            .getString(LAST_REFRESH_TIME, null)
+    private fun shouldRefreshDataSet(type: UpdateTypes, minutes: Int): Boolean {
+
+        val lastRefreshString = if (type == UpdateTypes.DATA_SYNC) lastRefreshSharedPreferences
+            .getString(LAST_REFRESH_TIME_SYNC, null)
+        else
+            lastRefreshSharedPreferences
+                .getString(LAST_REFRESH_TIME_WEATHER, null)
+
         return if (lastRefreshString == null)
             true
         else {
@@ -489,12 +494,12 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                 .div(1000).also {
                     Log.i("MAIN", "$it is the difference")
                 }
-            difference > 600
+            difference > minutes * 10
         }
     }
 
     @SuppressLint("SimpleDateFormat")
-    fun updateRefreshDate() {
+    private fun updateRefreshDate(type: UpdateTypes) {
         val currentDate: String
         currentDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val current = LocalDateTime.now()
@@ -507,7 +512,10 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
             formatter.format(date)
         }
         with(lastRefreshSharedPreferences.edit()) {
-            putString(LAST_REFRESH_TIME, currentDate)
+            if (type == UpdateTypes.DATA_SYNC)
+                putString(LAST_REFRESH_TIME_SYNC, currentDate)
+            else
+                putString(LAST_REFRESH_TIME_WEATHER, currentDate)
             apply()
         }
     }
@@ -520,42 +528,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
         connected = true
     }
 
-    private fun permissionRequest() {
-        val locationApproved = ActivityCompat
-            .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) ==
-                PackageManager.PERMISSION_GRANTED
-
-
-        if (!locationApproved) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ),
-                    REQUEST
-                )
-            } else {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ),
-                    REQUEST
-                )
-            }
-        }
-
-    }
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -563,32 +535,23 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
     ) {
         if (requestCode == REQUEST) {
             Log.i("MAIN", grantResults.toString())
-            fetchWeatherData()
+            try {
+                fusedLocationProviderClient.lastLocation.addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        lastLocation = it.result
+                        if (lastLocation != null) {
+                            fetchWeatherData()
+                        }
+                    }
+                }
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+            }
         }
     }
 
-    private fun checkPermissions(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            )
-
-        } else {
-            return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        }
+    private enum class UpdateTypes {
+        WEATHER, DATA_SYNC
     }
 
     companion object {
@@ -608,7 +571,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
         const val UID_SHARED_PREF = "sharedPrefUid"
 
         private const val LAST_REFRESH = "${SHOWCASE_ID}.LastRefresh"
-        private const val LAST_REFRESH_TIME = "time"
+        private const val LAST_REFRESH_TIME_SYNC = "time"
+        private const val LAST_REFRESH_TIME_WEATHER = "weatherTime"
 
         //get unregistered user id
         const val NOT_REGISTERED = "registered"

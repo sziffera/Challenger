@@ -25,7 +25,10 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.sziffer.challenger.MainActivity
 import com.sziffer.challenger.R
-import com.sziffer.challenger.isEmailAddressValid
+import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.utils.MyNetworkCallback
+import com.sziffer.challenger.utils.NetworkStateListener
+import com.sziffer.challenger.utils.isEmailAddressValid
 import kotlinx.android.synthetic.main.activity_login.*
 
 

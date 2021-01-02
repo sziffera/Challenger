@@ -1,6 +1,5 @@
 package com.sziffer.challenger
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ListActivity
 import android.bluetooth.BluetoothAdapter
@@ -22,7 +21,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
@@ -40,10 +38,14 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.LocationUpdatesService.LocalBinder
 import com.sziffer.challenger.R.*
-import com.sziffer.challenger.dialogs.CustomListDialog
-import com.sziffer.challenger.dialogs.DataAdapter
-import com.sziffer.challenger.sensors.LeDeviceListAdapter
+import com.sziffer.challenger.ble.LeDeviceListAdapter
+import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.model.Challenge
+import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.user.UserManager
+import com.sziffer.challenger.utils.*
+import com.sziffer.challenger.utils.dialogs.CustomListDialog
+import com.sziffer.challenger.utils.dialogs.DataAdapter
 import kotlinx.android.synthetic.main.activity_challenge_recorder.*
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
@@ -74,7 +76,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     private lateinit var mapFragment: SupportMapFragment
 
     /** Bluetooth */
-    private val bluetoothAdapter: BluetoothAdapter? by lazy(LazyThreadSafetyMode.NONE) {
+    private val bluetoothAdapter: BluetoothAdapter by lazy {
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothManager.adapter
     }
@@ -213,8 +215,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             }
         }
 
-        if (!checkPermissions()) {
-            permissionRequest()
+        if (!locationPermissionCheck(this)) {
+            locationPermissionRequest(this, this)
         }
 
         durationTextView = findViewById(id.recorderDurationTextView)
@@ -296,6 +298,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
     override fun onResume() {
         super.onResume()
+
         LocalBroadcastManager.getInstance(this).registerReceiver(
             activityDataReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
@@ -316,7 +319,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         mMap = googleMap
 
-        if (checkPermissions()) {
+        if (locationPermissionCheck(this)) {
             with(mMap) {
                 isMyLocationEnabled = true
                 uiSettings.isCompassEnabled = true
@@ -725,67 +728,6 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     }
     //endregion helper methods
 
-    //region permission requests
-    private fun permissionRequest() {
-        val locationApproved = ActivityCompat
-            .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) ==
-                PackageManager.PERMISSION_GRANTED
-
-
-        if (!locationApproved) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ),
-                    REQUEST
-                )
-            } else {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ),
-                    REQUEST
-                )
-            }
-        }
-    }
-
-    private fun checkPermissions(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            )
-
-        } else {
-            return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) && PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        }
-    }
-    //endregion permission requests
-
     private inner class ActivityDataReceiver : BroadcastReceiver() {
 
         @SuppressLint("SetTextI18n")
@@ -875,20 +817,26 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 speedTextView.text = getString(R.string._0_0_km_h)
             } else {
                 durationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
-                distanceTextView.text = "${getStringFromNumber(
-                    2,
-                    rawDistance / 1000
-                )} km"
-                maxSpeedTextView.text = "${gpsService?.maxSpeed?.times(3.6)?.let {
+                distanceTextView.text = "${
+                    getStringFromNumber(
+                        2,
+                        rawDistance / 1000
+                    )
+                } km"
+                maxSpeedTextView.text = "${
+                    gpsService?.maxSpeed?.times(3.6)?.let {
+                        getStringFromNumber(
+                            1,
+                            it
+                        )
+                    }
+                } km/h"
+                avgSpeedTextView.text = "${
                     getStringFromNumber(
                         1,
-                        it
+                        avg.times(3.6)
                     )
-                }} km/h"
-                avgSpeedTextView.text = "${getStringFromNumber(
-                    1,
-                    avg.times(3.6)
-                )} km/h"
+                } km/h"
 
                 if (location != null) {
                     val latLng = LatLng(location.latitude, location.longitude)
@@ -927,7 +875,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     companion object {
-        private const val REQUEST = 200
+        private const val ENABLE_BLUETOOTH_REQUEST_CODE = 1
         private const val REQUEST_ENABLE_BT = 1232
         private const val SCAN_PERIOD: Long = 10000
         const val CHALLENGE = "challenge"

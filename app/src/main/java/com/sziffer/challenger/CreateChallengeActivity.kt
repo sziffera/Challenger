@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
+import com.sziffer.challenger.utils.getStringFromNumber
 import kotlinx.android.synthetic.main.activity_create_challenge.*
 import java.util.*
 

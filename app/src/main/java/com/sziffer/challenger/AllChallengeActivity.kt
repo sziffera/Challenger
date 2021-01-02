@@ -9,6 +9,8 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.model.Challenge
 import com.sziffer.challenger.sync.KEY_DELETE
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import com.sziffer.challenger.user.UserProfileActivity

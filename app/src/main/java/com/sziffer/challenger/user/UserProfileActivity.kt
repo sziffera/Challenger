@@ -9,20 +9,25 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
-import com.sziffer.challenger.ChallengeDbHelper
 import com.sziffer.challenger.R
-import com.sziffer.challenger.getStringFromNumber
+import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.utils.getStringFromNumber
 import kotlinx.android.synthetic.main.activity_user_profile.*
+import java.util.*
 
 class UserProfileActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var userManager: UserManager
+    private var currentYear: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_profile)
         userManager = UserManager(applicationContext)
+        currentYear = Calendar.getInstance().get(Calendar.YEAR)
+        Log.d("YEAR", currentYear.toString())
         initUi()
     }
 
@@ -35,7 +40,18 @@ class UserProfileActivity : AppCompatActivity() {
         var totalKm = 0.0
         var cycling = 0.0
         var running = 0.0
+        var thisYear = 0.0
         for (item in list) {
+            val year = item.date.subSequence(6, 10).toString().also {
+                Log.d("YEAR", it)
+            }
+            try {
+                if (year.toInt() == currentYear) {
+                    thisYear += item.dst
+                }
+            } catch (e: NumberFormatException) {
+                e.printStackTrace()
+            }
 
             if (item.type == getString(R.string.running)) {
                 running += item.dst
@@ -50,16 +66,23 @@ class UserProfileActivity : AppCompatActivity() {
             Log.i("user", "$it is the percentage")
         }
 
+        thisYearKmTextView.text = "${getString(R.string.this_year)}:" +
+                " ${getStringFromNumber(1, thisYear)} km"
+
         totalKmTextView.text =
             getStringFromNumber(1, totalKm)
-        totalCyclingTextView.text = "${getStringFromNumber(
-            1,
-            cycling
-        )} km"
-        totalRunningTextView.text = "${getStringFromNumber(
-            1,
-            running
-        )} km"
+        totalCyclingTextView.text = "${
+            getStringFromNumber(
+                1,
+                cycling
+            )
+        } km"
+        totalRunningTextView.text = "${
+            getStringFromNumber(
+                1,
+                running
+            )
+        } km"
 
         if (FirebaseManager.isUserValid) {
 
