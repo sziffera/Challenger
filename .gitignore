@@ -12,6 +12,10 @@
 # Files for the ART/Dalvik VM
 *.dex
 
+
+app/src/main/java/com/sziffer/challenger/utils/PrivateKeys.kt
+google-services.json
+
 # Java class files
 *.class
 

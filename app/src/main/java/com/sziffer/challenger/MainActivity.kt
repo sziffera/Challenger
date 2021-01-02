@@ -559,10 +559,10 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
         private const val REQUEST = 200
         private const val WEATHER_URL =
             "https://api.openweathermap.org/data/2.5/" +
-                    "weather?appid=YOUR_API_KEY&units=metric&"
+                    "weather?appid=$WEATHER_KEY&units=metric&"
         private const val UV_INDEX_URL =
             "https://api.openweathermap.org/data/2.5/" +
-                    "uvi?YOUR_API_KEY&"
+                    "uvi?$WEATHER_KEY&"
 
         //final uid which is used for authorization
         const val FINAL_USER_ID = "finalUid"
