@@ -13,7 +13,7 @@
 *.dex
 
 
-app/src/main/java/com/sziffer/challenger/utils/PrivateKeys.kt
+PrivateKeys.kt
 google-services.json
 
 # Java class files
