@@ -6,8 +6,8 @@ import android.view.View
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import com.sziffer.challenger.R
+import com.sziffer.challenger.databinding.ActivityBodyFatCalculatorBinding
 import com.sziffer.challenger.utils.getStringFromNumber
-import kotlinx.android.synthetic.main.activity_body_fat_calculator.*
 import kotlin.math.log
 
 class BodyFatCalculatorActivity : AppCompatActivity() {
@@ -19,14 +19,17 @@ class BodyFatCalculatorActivity : AppCompatActivity() {
     private var waist = 0
     private lateinit var userManager: UserManager
 
+    private lateinit var binding: ActivityBodyFatCalculatorBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_body_fat_calculator)
+        binding = ActivityBodyFatCalculatorBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         userManager = UserManager(this)
 
-        femaleRadioButton.isChecked = userManager.isFemale
-        maleRadioButton.isChecked = !userManager.isFemale
+        binding.femaleRadioButton.isChecked = userManager.isFemale
+        binding.maleRadioButton.isChecked = !userManager.isFemale
 
         if (userManager.isFemale) {
             setViewForFemale()
@@ -34,7 +37,7 @@ class BodyFatCalculatorActivity : AppCompatActivity() {
             setViewForMale()
         }
 
-        femaleRadioButton.setOnCheckedChangeListener { _, isChecked ->
+        binding.femaleRadioButton.setOnCheckedChangeListener { _, isChecked ->
             userManager.isFemale = isChecked
             if (isChecked) {
                 setViewForFemale()
@@ -45,29 +48,33 @@ class BodyFatCalculatorActivity : AppCompatActivity() {
         }
 
         if (userManager.bmi != 0f)
-            bmiIndexTextView.text = getStringFromNumber(1, userManager.bmi)
+            binding.bmiIndexTextView.text = getStringFromNumber(1, userManager.bmi)
         if (userManager.bodyFat != 0f) {
-            bodyFatTextView.text = "${getStringFromNumber(1, userManager.bodyFat)}%"
-            bodyFatCategoryTextView.text = getBodyFatCategory(userManager.bodyFat.toInt())
+            binding.bodyFatTextView.text = "${getStringFromNumber(1, userManager.bodyFat)}%"
+            binding.bodyFatCategoryTextView.text = getBodyFatCategory(userManager.bodyFat.toInt())
         }
 
 
-        calculateBodyFatButton.setOnClickListener {
+        binding.calculateBodyFatButton.setOnClickListener {
             calculateBodyFat()
         }
 
     }
 
     private fun setViewForFemale() {
-        hipInfoTextView.visibility = View.VISIBLE
-        hipEditTextNumberDecimal.visibility = View.VISIBLE
-        waistInfoTextView.text = getString(R.string.waistfemale)
+        with(binding) {
+            hipInfoTextView.visibility = View.VISIBLE
+            hipEditTextNumberDecimal.visibility = View.VISIBLE
+            waistInfoTextView.text = getString(R.string.waistfemale)
+        }
     }
 
     private fun setViewForMale() {
-        hipInfoTextView.visibility = View.GONE
-        hipEditTextNumberDecimal.visibility = View.GONE
-        waistInfoTextView.text = getString(R.string.waistmale)
+        with(binding) {
+            hipInfoTextView.visibility = View.GONE
+            hipEditTextNumberDecimal.visibility = View.GONE
+            waistInfoTextView.text = getString(R.string.waistmale)
+        }
     }
 
     /** calculate body fat estimation based on US Navy formula */
@@ -76,44 +83,57 @@ class BodyFatCalculatorActivity : AppCompatActivity() {
 
         try {
 
-            height = heightEditTextNumberDecimal.text.toString().toInt()
-            weight = weightEditTextNumberDecimal.text.toString().toInt()
-            neck = neckEditTextNumberDecimal.text.toString().toInt()
-            if (userManager.isFemale) {
-                hip = hipEditTextNumberDecimal.text.toString().toInt()
-            }
-            waist = waistEditTextNumberDecimal.text.toString().toInt()
+            with(binding) {
+
+                height = heightEditTextNumberDecimal.text.toString().toInt()
+                weight = weightEditTextNumberDecimal.text.toString().toInt()
+                neck = neckEditTextNumberDecimal.text.toString().toInt()
+                if (userManager.isFemale) {
+                    hip = hipEditTextNumberDecimal.text.toString().toInt()
+                }
+                waist = waistEditTextNumberDecimal.text.toString().toInt()
 
 
-            if (height == 0) {
-                heightEditTextNumberDecimal.startAnimation(
-                    AnimationUtils.loadAnimation(this, R.anim.shake)
-                )
-                return
-            }
-            if (weight == 0) {
-                weightEditTextNumberDecimal.startAnimation(
-                    AnimationUtils.loadAnimation(this, R.anim.shake)
-                )
-                return
-            }
-            if (neck == 0) {
-                neckEditTextNumberDecimal.startAnimation(
-                    AnimationUtils.loadAnimation(this, R.anim.shake)
-                )
-                return
-            }
-            if (hip == 0 && userManager.isFemale) {
-                hipEditTextNumberDecimal.startAnimation(
-                    AnimationUtils.loadAnimation(this, R.anim.shake)
-                )
-                return
-            }
-            if (waist == 0) {
-                waistEditTextNumberDecimal.startAnimation(
-                    AnimationUtils.loadAnimation(this, R.anim.shake)
-                )
-                return
+                if (height == 0) {
+                    heightEditTextNumberDecimal.startAnimation(
+                        AnimationUtils.loadAnimation(
+                            this@BodyFatCalculatorActivity, R.anim.shake
+                        )
+                    )
+                    return
+                }
+                if (weight == 0) {
+                    weightEditTextNumberDecimal.startAnimation(
+                        AnimationUtils.loadAnimation(
+                            this@BodyFatCalculatorActivity, R.anim.shake
+                        )
+                    )
+                    return
+                }
+                if (neck == 0) {
+                    neckEditTextNumberDecimal.startAnimation(
+                        AnimationUtils.loadAnimation(
+                            this@BodyFatCalculatorActivity, R.anim.shake
+                        )
+                    )
+                    return
+                }
+                if (hip == 0 && userManager.isFemale) {
+                    hipEditTextNumberDecimal.startAnimation(
+                        AnimationUtils.loadAnimation(
+                            this@BodyFatCalculatorActivity, R.anim.shake
+                        )
+                    )
+                    return
+                }
+                if (waist == 0) {
+                    waistEditTextNumberDecimal.startAnimation(
+                        AnimationUtils.loadAnimation(
+                            this@BodyFatCalculatorActivity, R.anim.shake
+                        )
+                    )
+                    return
+                }
             }
 
             val bodyFat: Double =
@@ -146,9 +166,9 @@ class BodyFatCalculatorActivity : AppCompatActivity() {
 
             userManager.bodyFat = bodyFat.toFloat()
             userManager.bmi = calculateBmi()
-            bmiIndexTextView.text = getStringFromNumber(1, calculateBmi())
-            bodyFatTextView.text = "${getStringFromNumber(1, bodyFat)}%"
-            bodyFatCategoryTextView.text = getBodyFatCategory(bodyFat.toInt())
+            binding.bmiIndexTextView.text = getStringFromNumber(1, calculateBmi())
+            binding.bodyFatTextView.text = "${getStringFromNumber(1, bodyFat)}%"
+            binding.bodyFatCategoryTextView.text = getBodyFatCategory(bodyFat.toInt())
 
         } catch (e: NumberFormatException) {
             e.printStackTrace()

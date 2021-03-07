@@ -15,9 +15,7 @@ import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
-import android.widget.Button
 import android.widget.CheckBox
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -40,13 +38,13 @@ import com.sziffer.challenger.LocationUpdatesService.LocalBinder
 import com.sziffer.challenger.R.*
 import com.sziffer.challenger.ble.LeDeviceListAdapter
 import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.databinding.ActivityChallengeRecorderBinding
 import com.sziffer.challenger.model.Challenge
 import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.user.UserManager
 import com.sziffer.challenger.utils.*
 import com.sziffer.challenger.utils.dialogs.CustomListDialog
 import com.sziffer.challenger.utils.dialogs.DataAdapter
-import kotlinx.android.synthetic.main.activity_challenge_recorder.*
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -60,13 +58,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     DataAdapter.RecyclerViewItemClickListener {
 
     private lateinit var mMap: GoogleMap
-    private lateinit var speedTextView: TextView
-    private lateinit var distanceTextView: TextView
-    private lateinit var finishButton: Button
-    private lateinit var firstStartButton: Button
     private var recordedChallenge: Challenge? = null
-    private lateinit var startStopButton: Button
-    private lateinit var durationTextView: TextView
     private var gpsService: LocationUpdatesService? = null
     private lateinit var buttonSharedPreferences: SharedPreferences
     private lateinit var voiceCoachCustomDialog: CustomListDialog
@@ -74,6 +66,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var userManager: UserManager
     private lateinit var mapFragment: SupportMapFragment
+
+    private lateinit var binding: ActivityChallengeRecorderBinding
 
     /** Bluetooth */
     private val bluetoothAdapter: BluetoothAdapter by lazy {
@@ -114,7 +108,10 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     //region activity lifecycle
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(layout.activity_challenge_recorder)
+
+        binding = ActivityChallengeRecorderBinding.inflate(layoutInflater)
+
+        setContentView(binding.root)
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
 
@@ -126,7 +123,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         //setting user preferences based on settings
         userManager = UserManager(this)
         if (userManager.autoPause) {
-            autoPauseCheckBox.isChecked = true
+            binding.autoPauseCheckBox.isChecked = true
             autoPause = true
         }
         if (userManager.preventScreenLock) {
@@ -137,16 +134,16 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         initChips()
         initVoiceCoach()
 
-        recorderBottomNavigationView.setOnNavigationItemSelectedListener {
+        binding.recorderBottomNavigationView.setOnNavigationItemSelectedListener {
             when (it.itemId) {
                 R.id.action_details -> {
                     Log.i("MENU", "DETAILS")
                     mapFragment.view?.visibility = View.GONE
-                    detailsLinearLayout.visibility = View.VISIBLE
+                    binding.detailsLinearLayout.visibility = View.VISIBLE
                     true
                 }
                 R.id.action_map -> {
-                    detailsLinearLayout.visibility = View.GONE
+                    binding.detailsLinearLayout.visibility = View.GONE
                     mapFragment.view?.visibility = View.VISIBLE
                     Log.i("MENU", "MAP")
                     true
@@ -155,17 +152,17 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             }
         }
 
-        autoPauseCheckBox.setOnClickListener {
+        binding.autoPauseCheckBox.setOnClickListener {
             val checkBox = it as CheckBox
             autoPause = checkBox.isChecked
             Log.i(TAG, "autopause is: $autoPause")
         }
-        muteVoiceCoachButton.setOnClickListener {
+        binding.muteVoiceCoachButton.setOnClickListener {
             muted = if (!muted) {
-                muteVoiceCoachButton.setImageResource(R.drawable.ic_outline_mic_off_24)
+                binding.muteVoiceCoachButton.setImageResource(R.drawable.ic_outline_mic_off_24)
                 true
             } else {
-                muteVoiceCoachButton.setImageResource(R.drawable.ic_settings_voice_24dp)
+                binding.muteVoiceCoachButton.setImageResource(R.drawable.ic_settings_voice_24dp)
                 false
             }
 
@@ -174,7 +171,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             Log.i(TAG, "$it is the created challenge bool")
         }
 
-        setUpCadenceSensorButton.setOnClickListener {
+        binding.setUpCadenceSensorButton.setOnClickListener {
             setUpCadenceSensor()
         }
 
@@ -195,8 +192,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
             if (challenge) {
 
-                activityChooserChipGroup.visibility = View.GONE
-                chooseAnActivity.visibility = View.GONE
+                binding.activityChooserChipGroup.visibility = View.GONE
+                binding.chooseAnActivity.visibility = View.GONE
 
                 val recordedChallengeId = intent.getIntExtra(RECORDED_CHALLENGE_ID, -1)
                 recordedChallenge = dbHelper.getChallenge(recordedChallengeId)
@@ -211,7 +208,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 LocationUpdatesService.previousChallenge = route
 
             } else {
-                this.differenceTextView.visibility = View.GONE
+                this.binding.differenceTextView.visibility = View.GONE
             }
         }
 
@@ -219,9 +216,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             locationPermissionRequest(this, this)
         }
 
-        durationTextView = findViewById(id.recorderDurationTextView)
-        durationTextView.visibility = View.GONE
-        //challengeDataLinearLayout.visibility = View.GONE
+        binding.recorderDurationTextView.visibility = View.GONE
 
 
     }
@@ -246,20 +241,14 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
         val alreadyStarted = buttonSharedPreferences.getBoolean("started", false)
 
-        startStopButton = findViewById(id.startChallengeRecording)
-        finishButton = findViewById(id.stopRecording)
-        firstStartButton = findViewById(R.id.firstStartButton)
-
         updateView(alreadyStarted)
 
-        firstStartButton.setOnClickListener {
+        binding.firstStartButton.setOnClickListener {
             firstStartButtonOnClick()
         }
 
-        speedTextView = findViewById(id.challengeRecorderSpeedTextView)
-        distanceTextView = findViewById(id.challengeRecorderDistanceTextView)
 
-        startStopButton.setOnClickListener {
+        binding.startStopChallengeRecording.setOnClickListener {
 
             if (requestingLocationUpdates(this)) {
                 gpsService?.removeLocationUpdates()
@@ -270,7 +259,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             setButtonState(requestingLocationUpdates(this))
         }
 
-        finishButton.setOnClickListener {
+        binding.stopRecording.setOnClickListener {
             val builder: AlertDialog.Builder = AlertDialog
                 .Builder(this, style.AlertDialogCustom)
             builder.setTitle(getString(R.string.finish_challenge))
@@ -371,8 +360,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             buildAlertMessageNoLocationPoints()
         } else {
             if (gpsService != null) {
-                val currentDate: String
-                currentDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val currentDate: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val current = LocalDateTime.now()
                     val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
                     current.format(formatter)
@@ -443,7 +431,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 return
             }
             activityType == null -> {
-                activityChooserChipGroup.startAnimation(
+                binding.activityChooserChipGroup.startAnimation(
                     AnimationUtils.loadAnimation(
                         this,
                         R.anim.shake
@@ -453,14 +441,14 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             }
         }
 
-        firstStartView.visibility = View.GONE
-        countDownTextView.visibility = View.VISIBLE
+        binding.firstStartView.visibility = View.GONE
+        binding.countDownTextView.visibility = View.VISIBLE
 
         object : CountDownTimer(6000, 1000) {
             override fun onFinish() {
                 Log.i(TAG, "CDT finished")
 
-                countDownTextView.visibility = View.GONE
+                binding.countDownTextView.visibility = View.GONE
 
                 val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -473,30 +461,30 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 }
 
                 if (autoPause) {
-                    startStopButton.visibility = View.GONE
-                    startStopSpace.visibility = View.GONE
+                    binding.startStopChallengeRecording.visibility = View.GONE
+                    binding.startStopSpace.visibility = View.GONE
                 } else
-                    startStopButton.visibility = View.VISIBLE
+                    binding.startStopChallengeRecording.visibility = View.VISIBLE
 
                 if (activityType == "running")
-                    activityTypeImageView.setImageResource(R.drawable.running)
+                    binding.activityTypeImageView.setImageResource(R.drawable.running)
 
-                recordingDataView.visibility = View.VISIBLE
+                binding.recordingDataView.visibility = View.VISIBLE
 
-                activityTypeImageView.visibility = View.VISIBLE
-                durationTextView.visibility = View.VISIBLE
+                binding.activityTypeImageView.visibility = View.VISIBLE
+                binding.recorderDurationTextView.visibility = View.VISIBLE
                 //challengeDataLinearLayout.visibility = View.VISIBLE
-                finishButton.visibility = View.VISIBLE
+                binding.stopRecording.visibility = View.VISIBLE
 
                 if (createdChallenge || challenge) {
-                    differenceTextView.visibility = View.VISIBLE
+                    binding.differenceTextView.visibility = View.VISIBLE
                 }
                 if (isVoiceCoachEnabled)
-                    muteVoiceCoachButton.visibility = View.VISIBLE
+                    binding.muteVoiceCoachButton.visibility = View.VISIBLE
                 else
-                    muteVoiceCoachButton.visibility = View.GONE
+                    binding.muteVoiceCoachButton.visibility = View.GONE
 
-                recorderBottomNavigationView.visibility = View.VISIBLE
+                binding.recorderBottomNavigationView.visibility = View.VISIBLE
                 mapFragment.view?.visibility = View.GONE
 
                 gpsService?.requestLocationUpdates()
@@ -508,7 +496,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             }
 
             override fun onTick(millisUntilFinished: Long) {
-                countDownTextView.text = millisUntilFinished.div(1000).toInt().toString()
+                binding.countDownTextView.text = millisUntilFinished.div(1000).toInt().toString()
             }
         }.start()
     }
@@ -527,23 +515,23 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     private fun initVoiceCoachButton() {
-        voiceCoachSetUpButton.setOnClickListener {
+        binding.voiceCoachSetUpButton.setOnClickListener {
             voiceCoachCustomDialog.show()
             voiceCoachCustomDialog.setCanceledOnTouchOutside(false)
         }
     }
 
     private fun initChips() {
-        with(cyclingChip) {
+        with(binding.cyclingChip) {
             isAllCaps = true
             textSize = 17f
         }
-        with(runningChip) {
+        with(binding.runningChip) {
             isAllCaps = true
             textSize = 17f
         }
-        activityChooserChipGroup.setOnCheckedChangeListener { _, checkedId ->
-            activityType = activityChooserChipGroup.findViewById<Chip>(checkedId)?.text
+        binding.activityChooserChipGroup.setOnCheckedChangeListener { _, checkedId ->
+            activityType = binding.activityChooserChipGroup.findViewById<Chip>(checkedId)?.text
         }
     }
     //endregion init
@@ -648,33 +636,33 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
     private fun updateView(alreadyStarted: Boolean) {
         if (!alreadyStarted) {
-            startStopButton.visibility = View.GONE
-            finishButton.visibility = View.GONE
-            firstStartButton.visibility = View.VISIBLE
+            binding.startStopChallengeRecording.visibility = View.GONE
+            binding.stopRecording.visibility = View.GONE
+            binding.firstStartButton.visibility = View.VISIBLE
         } else {
-            firstStartView.visibility = View.GONE
+            binding.firstStartView.visibility = View.GONE
 
             if (autoPause) {
-                startStopButton.visibility = View.GONE
+                binding.startStopChallengeRecording.visibility = View.GONE
             } else {
-                startStopButton.visibility = View.VISIBLE
+                binding.startStopChallengeRecording.visibility = View.VISIBLE
             }
-            finishButton.visibility = View.VISIBLE
+            binding.stopRecording.visibility = View.VISIBLE
         }
         if (!isVoiceCoachEnabled) {
-            muteVoiceCoachButton.visibility = View.GONE
+            binding.muteVoiceCoachButton.visibility = View.GONE
         } else {
-            muteVoiceCoachButton.visibility = View.VISIBLE
+            binding.muteVoiceCoachButton.visibility = View.VISIBLE
         }
     }
 
     private fun setButtonState(requestingLocationUpdates: Boolean) {
 
         if (requestingLocationUpdates) {
-            startStopButton.text = getString(string.pause)
-            finishButton.visibility = View.VISIBLE
+            binding.startStopChallengeRecording.text = getString(string.pause)
+            binding.stopRecording.visibility = View.VISIBLE
         } else {
-            startStopButton.text = getString(string.start)
+            binding.startStopChallengeRecording.text = getString(string.start)
         }
     }
 
@@ -743,13 +731,15 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             val autoPauseActive = intent.getBooleanExtra(
                 LocationUpdatesService.AUTO_PAUSE_ACTIVE,
                 false
-            )
+            ).also {
+                Log.d(TAG, "the auto pause bool is: $it")
+            }
 
             val altitude = intent.getIntExtra(LocationUpdatesService.ALTITUDE, 0)
             val elevationGained = intent
                 .getIntExtra(LocationUpdatesService.ELEVATION_GAINED, 0)
 
-            altitudeTextView.text = "${altitude}m"
+            binding.altitudeTextView.text = "${altitude}m"
 
 
             mMap.addPolyline(
@@ -767,9 +757,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 ).div(1000)
                 when (difference.toInt()) {
                     0 -> {
-                        differenceTextView.text =
+                        binding.differenceTextView.text =
                             DateUtils.formatElapsedTime(difference.absoluteValue)
-                        differenceTextView.setTextColor(
+                        binding.differenceTextView.setTextColor(
                             ContextCompat.getColor(
                                 this@ChallengeRecorderActivity,
                                 android.R.color.white
@@ -777,8 +767,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                         )
                     }
                     in 1..3600 -> {
-                        differenceTextView.text = "+" + DateUtils.formatElapsedTime(difference)
-                        differenceTextView.setTextColor(
+                        binding.differenceTextView.text =
+                            "+" + DateUtils.formatElapsedTime(difference)
+                        binding.differenceTextView.setTextColor(
                             ContextCompat.getColor(
                                 this@ChallengeRecorderActivity,
                                 color.colorPlus
@@ -786,9 +777,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                         )
                     }
                     in -3600..0 -> {
-                        differenceTextView.text =
+                        binding.differenceTextView.text =
                             "-" + DateUtils.formatElapsedTime(difference.absoluteValue)
-                        differenceTextView.setTextColor(
+                        binding.differenceTextView.setTextColor(
                             ContextCompat.getColor(
                                 this@ChallengeRecorderActivity,
                                 color.colorMinus
@@ -797,9 +788,9 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     }
                     //the difference is too big, maybe there's a location error.
                     else -> {
-                        differenceTextView.text =
+                        binding.differenceTextView.text =
                             getString(string.difference_error)
-                        differenceTextView.setTextColor(
+                        binding.differenceTextView.setTextColor(
                             ContextCompat.getColor(
                                 this@ChallengeRecorderActivity,
                                 android.R.color.white
@@ -812,39 +803,41 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             val avgDur = duration / 1000
             val avg = rawDistance / avgDur
 
-
-            if (autoPauseActive) {
-                speedTextView.text = getString(R.string._0_0_km_h)
-            } else {
-                durationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
-                distanceTextView.text = "${
-                    getStringFromNumber(
-                        2,
-                        rawDistance / 1000
-                    )
-                } km"
-                maxSpeedTextView.text = "${
-                    gpsService?.maxSpeed?.times(3.6)?.let {
-                        getStringFromNumber(
-                            1,
-                            it
-                        )
-                    }
-                } km/h"
-                avgSpeedTextView.text = "${
+            binding.recorderDurationTextView.text = DateUtils.formatElapsedTime(duration / 1000)
+            binding.recorderDurationTextView.text = "${
+                getStringFromNumber(
+                    2,
+                    rawDistance / 1000
+                )
+            } km"
+            binding.maxSpeedTextView.text = "${
+                gpsService?.maxSpeed?.times(3.6)?.let {
                     getStringFromNumber(
                         1,
-                        avg.times(3.6)
+                        it
                     )
-                } km/h"
+                }
+            } km/h"
+            binding.avgSpeedTextView.text = "${
+                getStringFromNumber(
+                    1,
+                    avg.times(3.6)
+                )
+            } km/h"
 
-                if (location != null) {
-                    val latLng = LatLng(location.latitude, location.longitude)
-                    mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
+            if (location != null) {
+                val latLng = LatLng(location.latitude, location.longitude)
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
+                if (autoPauseActive) {
+                    binding.challengeRecorderSpeedTextView.text = "0 km/h"
+                    Log.d(TAG, "setting the speed to zero")
+                } else {
                     val speed = location.speed * 3.6
-                    speedTextView.text = getStringFromNumber(1, speed) + " km/h"
+                    binding.challengeRecorderSpeedTextView.text =
+                        getStringFromNumber(1, speed) + " km/h"
                 }
             }
+
         }
     }
 

@@ -12,8 +12,8 @@ import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.databinding.ActivityUserProfileBinding
 import com.sziffer.challenger.utils.getStringFromNumber
-import kotlinx.android.synthetic.main.activity_user_profile.*
 import java.util.*
 
 class UserProfileActivity : AppCompatActivity() {
@@ -22,9 +22,12 @@ class UserProfileActivity : AppCompatActivity() {
     private lateinit var userManager: UserManager
     private var currentYear: Int = 0
 
+    private lateinit var binding: ActivityUserProfileBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_user_profile)
+        binding = ActivityUserProfileBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         userManager = UserManager(applicationContext)
         currentYear = Calendar.getInstance().get(Calendar.YEAR)
         Log.d("YEAR", currentYear.toString())
@@ -62,22 +65,22 @@ class UserProfileActivity : AppCompatActivity() {
         }
 
         val percentage = cycling.div(totalKm).times(100)
-        statsProgressBar.progress = percentage.toInt().also {
+        binding.statsProgressBar.progress = percentage.toInt().also {
             Log.i("user", "$it is the percentage")
         }
 
-        thisYearKmTextView.text = "${getString(R.string.this_year)}:" +
+        binding.thisYearKmTextView.text = "${getString(R.string.this_year)}:" +
                 " ${getStringFromNumber(1, thisYear)} km"
 
-        totalKmTextView.text =
+        binding.totalKmTextView.text =
             getStringFromNumber(1, totalKm)
-        totalCyclingTextView.text = "${
+        binding.totalCyclingTextView.text = "${
             getStringFromNumber(
                 1,
                 cycling
             )
         } km"
-        totalRunningTextView.text = "${
+        binding.totalRunningTextView.text = "${
             getStringFromNumber(
                 1,
                 running
@@ -86,17 +89,17 @@ class UserProfileActivity : AppCompatActivity() {
 
         if (FirebaseManager.isUserValid) {
 
-            userSettingsButton.setOnClickListener {
+            binding.userSettingsButton.setOnClickListener {
                 startActivity(Intent(this, UserSettingsActivity::class.java))
             }
 
         } else {
-            userSettingsButton.visibility = View.GONE
+            binding.userSettingsButton.visibility = View.GONE
         }
         if (userManager.bmi != 0f)
-            bmiIndexTextView.text = getStringFromNumber(1, userManager.bmi)
+            binding.bmiIndexTextView.text = getStringFromNumber(1, userManager.bmi)
         if (userManager.bodyFat != 0f)
-            bodyFatTextView.text = "${getStringFromNumber(1, userManager.bodyFat)}%"
+            binding.bodyFatTextView.text = "${getStringFromNumber(1, userManager.bodyFat)}%"
     }
 
     @SuppressLint("SetTextI18n")
@@ -104,7 +107,8 @@ class UserProfileActivity : AppCompatActivity() {
         if (FirebaseManager.isUserValid) {
 
             if (userManager.username != null) {
-                welcomeUserTextView.text = "${getString(R.string.hey)}, ${userManager.username}"
+                binding.welcomeUserTextView.text =
+                    "${getString(R.string.hey)}, ${userManager.username}"
             } else {
                 FirebaseManager.currentUserRef!!.child("username")
                     .addListenerForSingleValueEvent(object : ValueEventListener {
@@ -113,7 +117,7 @@ class UserProfileActivity : AppCompatActivity() {
                         }
 
                         override fun onDataChange(p0: DataSnapshot) {
-                            welcomeUserTextView.text =
+                            binding.welcomeUserTextView.text =
                                 "${getString(R.string.hey)}, ${p0.value.toString()}!"
                             Log.i("USER", p0.value.toString())
                             userManager.username = p0.value.toString()
@@ -121,11 +125,11 @@ class UserProfileActivity : AppCompatActivity() {
                     })
             }
         } else {
-            welcomeUserTextView.text = getString(R.string.hey) + "!"
+            binding.welcomeUserTextView.text = getString(R.string.hey) + "!"
         }
 
         if (FirebaseManager.isUserValid) {
-            signInSignOutButton.setOnClickListener {
+            binding.signInSignOutButton.setOnClickListener {
                 FirebaseManager.mAuth.signOut()
                 val dbHelper = ChallengeDbHelper(this)
                 dbHelper.deleteDatabase()
@@ -139,8 +143,8 @@ class UserProfileActivity : AppCompatActivity() {
                 startLoginScreen()
             }
         } else {
-            signInSignOutButton.text = getString(R.string.create_an_account)
-            signInSignOutButton.setOnClickListener {
+            binding.signInSignOutButton.text = getString(R.string.create_an_account)
+            binding.signInSignOutButton.setOnClickListener {
                 startLoginScreen()
             }
 

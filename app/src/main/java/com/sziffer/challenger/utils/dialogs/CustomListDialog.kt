@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.sziffer.challenger.R
-import kotlinx.android.synthetic.main.list_dialog_layout.*
+
 
 class CustomListDialog(
     private var activity: Activity,
@@ -25,7 +25,7 @@ class CustomListDialog(
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(R.layout.list_dialog_layout)
 
-        recyclerView = recycler_view
+        recyclerView = findViewById(R.id.recyclerView)
         mLayoutManager = LinearLayoutManager(activity)
         recyclerView?.layoutManager = mLayoutManager
         recyclerView?.addItemDecoration(

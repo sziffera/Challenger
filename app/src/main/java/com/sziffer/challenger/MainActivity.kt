@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Button
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -19,7 +18,6 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -32,6 +30,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.databinding.ActivityMainBinding
 import com.sziffer.challenger.model.Challenge
 import com.sziffer.challenger.sync.DATA_DOWNLOADER_TAG
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
@@ -39,7 +38,6 @@ import com.sziffer.challenger.user.*
 import com.sziffer.challenger.utils.*
 import com.sziffer.challenger.weather.UvIndex
 import com.sziffer.challenger.weather.WeatherData
-import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView
@@ -59,10 +57,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
     private lateinit var userIdSharedPreferences: SharedPreferences
     private lateinit var lastRefreshSharedPreferences: SharedPreferences
     private var dbHelper: ChallengeDbHelper? = null
-    private lateinit var newChallengeButton: Button
-    private lateinit var showMoreChallengeButton: Button
-    private lateinit var recordActivityButton: Button
-    private lateinit var recyclerView: RecyclerView
     private lateinit var userManager: UserManager
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private var lastLocation: Location? = null
@@ -72,9 +66,12 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
     private lateinit var myNetworkCallback: MyNetworkCallback
     private var connected = true
 
+    private lateinit var binding: com.sziffer.challenger.databinding.ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         Log.i("MAIN", "OnCreate")
 
@@ -113,7 +110,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
             Log.i("MAIN", "the user is registered")
             if (userManager.username != null) {
                 Log.i("MAIN", "set from usermanager")
-                heyUserTextView.text = "Hi " + userManager.username + "!"
+                binding.heyUserTextView.text = "Hi " + userManager.username + "!"
             } else {
                 FirebaseManager.currentUserRef
                     ?.child("username")?.addListenerForSingleValueEvent(object :
@@ -124,7 +121,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                         override fun onDataChange(p0: DataSnapshot) {
                             Log.i("FIREBASE", p0.toString())
                             val name = p0.getValue(String::class.java) as String
-                            heyUserTextView.text = "Hey, " + name + "!"
+                            binding.heyUserTextView.text = "Hey, " + name + "!"
                             //also store the name for further usage
                             userManager.username = name
                         }
@@ -134,28 +131,24 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
         } else {
 
-            heyUserTextView.visibility = View.GONE
+            binding.heyUserTextView.visibility = View.GONE
         }
 
-        recordActivityButton = findViewById(R.id.recordActivityButton)
-        showMoreChallengeButton = findViewById(R.id.showMoreButton)
-        newChallengeButton = findViewById(R.id.createChallengeButton)
-        recyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this.applicationContext)
+        binding.recyclerView.layoutManager = LinearLayoutManager(this.applicationContext)
 
-        userProfileimageButton.setOnClickListener {
+        binding.userProfileimageButton.setOnClickListener {
             startActivity(Intent(this, UserProfileActivity::class.java))
         }
 
-        takeATourButton.setOnClickListener {
+        binding.takeATourButton.setOnClickListener {
             appTour()
         }
 
-        createChallengeButton.setOnClickListener {
+        binding.createChallengeButton.setOnClickListener {
             startActivity(Intent(this, CreateChallengeActivity::class.java))
         }
 
-        recordActivityButton.setOnClickListener {
+        binding.recordActivityButton.setOnClickListener {
             if (locationPermissionCheck(this)) {
                 setRequestingLocationUpdates(this, false)
                 val buttonSettings = getSharedPreferences("button", 0)
@@ -172,9 +165,9 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
             }
         }
 
-        swipeRefreshLayout.setOnRefreshListener(this)
+        binding.swipeRefreshLayout.setOnRefreshListener(this)
 
-        showMoreChallengeButton.setOnClickListener {
+        binding.showMoreButton.setOnClickListener {
 
             startActivity(
                 Intent(this, AllChallengeActivity::class.java),
@@ -226,29 +219,36 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
             //starting data downloader,
             startDataDownloaderWorkManager(applicationContext)
             observeWork()
-            chooseChallenge.text = getText(R.string.it_s_empty_here_let_s_do_some_sports)
-            recyclerView.visibility = View.INVISIBLE
-            takeATourTextView.visibility = View.VISIBLE
-            emptyImageView.visibility = View.VISIBLE
-            takeATourButton.visibility = View.VISIBLE
-            showMoreChallengeButton.visibility = View.INVISIBLE
+            with(binding) {
+                chooseChallenge.text = getText(R.string.it_s_empty_here_let_s_do_some_sports)
+                recyclerView.visibility = View.INVISIBLE
+                takeATourTextView.visibility = View.VISIBLE
+                emptyImageView.visibility = View.VISIBLE
+                takeATourButton.visibility = View.VISIBLE
+                showMoreButton.visibility = View.INVISIBLE
+            }
 
         } else {
-            chooseChallenge.text = getText(R.string.choose_a_challenge)
-            recyclerView.visibility = View.VISIBLE
-            takeATourTextView.visibility = View.GONE
-            emptyImageView.visibility = View.GONE
-            takeATourButton.visibility = View.GONE
-            showMoreChallengeButton.visibility = View.VISIBLE
-            with(recyclerView) {
-                adapter =
-                    ChallengeRecyclerViewAdapter(list as ArrayList<Challenge>, this@MainActivity)
-                addItemDecoration(
-                    DividerItemDecoration(
-                        recyclerView.context,
-                        DividerItemDecoration.VERTICAL
+            with(binding) {
+                chooseChallenge.text = getText(R.string.choose_a_challenge)
+                recyclerView.visibility = View.VISIBLE
+                takeATourTextView.visibility = View.GONE
+                emptyImageView.visibility = View.GONE
+                takeATourButton.visibility = View.GONE
+                showMoreButton.visibility = View.VISIBLE
+                with(recyclerView) {
+                    adapter =
+                        ChallengeRecyclerViewAdapter(
+                            list as ArrayList<Challenge>,
+                            this@MainActivity
+                        )
+                    addItemDecoration(
+                        DividerItemDecoration(
+                            recyclerView.context,
+                            DividerItemDecoration.VERTICAL
+                        )
                     )
-                )
+                }
             }
         }
         dbHelper?.close()
@@ -261,7 +261,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                 if (workInfo != null && workInfo[0].state == WorkInfo.State.SUCCEEDED) {
                     Log.i("MAIN", "WorkManager succeeded")
                     setUpView()
-                    swipeRefreshLayout.isRefreshing = false
+                    binding.swipeRefreshLayout.isRefreshing = false
                     updateRefreshDate(UpdateTypes.DATA_SYNC)
                 }
             })
@@ -276,7 +276,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
         sequence.addSequenceItem(
             MaterialShowcaseView.Builder(this)
-                .setTarget(recordActivityButton)
+                .setTarget(binding.recordActivityButton)
                 .setDismissText(getString(R.string.got_it))
                 .setContentText(getString(R.string.record_activity_showcase_text))
                 .withRectangleShape(true)
@@ -285,7 +285,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
         sequence.addSequenceItem(
             MaterialShowcaseView.Builder(this)
-                .setTarget(createChallengeButton)
+                .setTarget(binding.createChallengeButton)
                 .setDismissText(getString(R.string.let_s_do_it))
                 .setContentText(getString(R.string.create_challenge_showcase_text))
                 .withRectangleShape(true)
@@ -299,14 +299,14 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
     /** Sets windDirectionImage's color based on wind speed according to Beaufort Scala*/
     private fun setBeaufortWindColor(windSpeed: Int) {
         when (windSpeed) {
-            in 0..38 -> windDirectionImageView.setColorFilter(android.R.color.white)
-            in 39..49 -> windDirectionImageView.setColorFilter(R.color.colorWindYellow)
-            in 50..61 -> windDirectionImageView.setColorFilter(android.R.color.holo_orange_light)
-            in 62..74 -> windDirectionImageView.setColorFilter(android.R.color.holo_orange_dark)
-            in 75..88 -> windDirectionImageView.setColorFilter(android.R.color.holo_red_light)
-            in 89..102 -> windDirectionImageView.setColorFilter(android.R.color.holo_red_dark)
-            in 103..117 -> windDirectionImageView.setColorFilter(R.color.colorStop)
-            else -> windDirectionImageView.setColorFilter(android.R.color.black)
+            in 0..38 -> binding.windDirectionImageView.setColorFilter(android.R.color.white)
+            in 39..49 -> binding.windDirectionImageView.setColorFilter(R.color.colorWindYellow)
+            in 50..61 -> binding.windDirectionImageView.setColorFilter(android.R.color.holo_orange_light)
+            in 62..74 -> binding.windDirectionImageView.setColorFilter(android.R.color.holo_orange_dark)
+            in 75..88 -> binding.windDirectionImageView.setColorFilter(android.R.color.holo_red_light)
+            in 89..102 -> binding.windDirectionImageView.setColorFilter(android.R.color.holo_red_dark)
+            in 103..117 -> binding.windDirectionImageView.setColorFilter(R.color.colorStop)
+            else -> binding.windDirectionImageView.setColorFilter(android.R.color.black)
         }
     }
 
@@ -334,7 +334,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
             @SuppressLint("SimpleDateFormat")
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
-                    val data = response.body()?.string()
+                    val data = response.body?.string()
                     if (data != null) {
                         val typeJson = object : TypeToken<WeatherData>() {}.type
                         val weatherData = Gson()
@@ -368,14 +368,17 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                         Log.d("date", "$localSunset $localSunrise and the bool is: $shouldShowUv")
 
                         runOnUiThread {
-                            weatherDegreesTextView.visibility = View.VISIBLE
-                            windSpeedTextView.visibility = View.VISIBLE
-                            windDirectionImageView.visibility = View.VISIBLE
-                            weatherDegreesTextView.text = "${weatherData.main.temp.toInt()}°C"
-                            val windSpeed = weatherData.wind.speed.times(3.6)
-                            windSpeedTextView.text = "${windSpeed.toInt()}km/h"
-                            windDirectionImageView.rotation = -90f + weatherData.wind.deg
-                            setBeaufortWindColor(windSpeed.toInt())
+                            with(binding) {
+                                weatherDegreesTextView.visibility = View.VISIBLE
+                                windSpeedTextView.visibility = View.VISIBLE
+                                windDirectionImageView.visibility = View.VISIBLE
+                                weatherDegreesTextView.text = "${weatherData.main.temp.toInt()}°C"
+                                val windSpeed = weatherData.wind.speed.times(3.6)
+                                windSpeedTextView.text = "${windSpeed.toInt()}km/h"
+                                windDirectionImageView.rotation = -90f + weatherData.wind.deg
+
+                                setBeaufortWindColor(windSpeed.toInt())
+                            }
                             // updating weather update time for weather
                             updateRefreshDate(UpdateTypes.WEATHER)
                         }
@@ -399,15 +402,16 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
 
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
-                    val data = response.body()?.string()
+                    val data = response.body?.string()
                     if (data != null) {
                         val typeJson = object : TypeToken<UvIndex>() {}.type
                         val uvIndex = Gson()
                             .fromJson<UvIndex>(data, typeJson)
                         Log.i("UVINDEX", uvIndex.value.toString())
                         runOnUiThread {
-                            uvIndexTextView.text = getStringFromNumber(1, uvIndex.value)
-                            uvLinearLayout.visibility = View.VISIBLE
+                            binding.uvIndexTextView.text =
+                                getStringFromNumber(1, uvIndex.value)
+                            binding.uvLinearLayout.visibility = View.VISIBLE
                             if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                                 setUvIndexColor(uvIndex = uvIndex.value)
                             }
@@ -425,25 +429,25 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
     private fun setUvIndexColor(uvIndex: Double) {
         when (uvIndex) {
             in 0.0..2.9 -> {
-                uvIndexTextView.backgroundTintList = resources.getColorStateList(
+                binding.uvIndexTextView.backgroundTintList = resources.getColorStateList(
                     R.color.colorGreen,
                     null
                 )
             }
             in 3.0..5.9 -> {
-                uvIndexTextView.backgroundTintList =
+                binding.uvIndexTextView.backgroundTintList =
                     resources.getColorStateList(R.color.colorWindYellow, null)
             }
             in 6.0..7.9 -> {
-                uvIndexTextView.backgroundTintList =
+                binding.uvIndexTextView.backgroundTintList =
                     resources.getColorStateList(android.R.color.holo_orange_dark, null)
             }
             in 8.0..10.9 -> {
-                uvIndexTextView.backgroundTintList =
+                binding.uvIndexTextView.backgroundTintList =
                     resources.getColorStateList(android.R.color.holo_red_dark, null)
             }
             else -> {
-                uvIndexTextView.backgroundTintList =
+                binding.uvIndexTextView.backgroundTintList =
                     resources.getColorStateList(android.R.color.holo_purple, null)
             }
         }
@@ -455,7 +459,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
     override fun onRefresh() {
 
         if (!shouldRefreshDataSet(UpdateTypes.DATA_SYNC, 10)) {
-            swipeRefreshLayout.isRefreshing = false
+            binding.swipeRefreshLayout.isRefreshing = false
             Toast.makeText(
                 this, getString(R.string.last_update_warning),
                 Toast.LENGTH_SHORT
@@ -470,7 +474,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver,
                 this, getString(R.string.no_internet_connection_will_update),
                 Toast.LENGTH_LONG
             ).show()
-            swipeRefreshLayout.isRefreshing = false
+            binding.swipeRefreshLayout.isRefreshing = false
         }
     }
 

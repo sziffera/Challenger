@@ -11,10 +11,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.databinding.ActivityForgotPasswordBinding
 import com.sziffer.challenger.utils.MyNetworkCallback
 import com.sziffer.challenger.utils.NetworkStateListener
 import com.sziffer.challenger.utils.isEmailAddressValid
-import kotlinx.android.synthetic.main.activity_forgot_password.*
+
 
 class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
 
@@ -22,15 +23,18 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
     private lateinit var connectionCallback: MyNetworkCallback
     private var connected = true
 
+    private lateinit var binding: ActivityForgotPasswordBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_forgot_password)
+        binding = ActivityForgotPasswordBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
         connectionCallback = MyNetworkCallback(this, connectivityManager)
 
-        sendPasswordResetEmailButton.setOnClickListener {
+        binding.sendPasswordResetEmailButton.setOnClickListener {
             sendPasswordResetEmail()
         }
     }
@@ -38,7 +42,7 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
     override fun onStart() {
         if (connectivityManager.allNetworks.isEmpty()) {
             connected = false
-            noInternetTextView.visibility = View.VISIBLE
+            binding.noInternetTextView.visibility = View.VISIBLE
         }
         connectionCallback.registerCallback()
         super.onStart()
@@ -52,7 +56,7 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
     private fun sendPasswordResetEmail() {
 
         if (!connected) {
-            noInternetTextView.startAnimation(
+            binding.noInternetTextView.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
                     R.anim.shake
@@ -61,9 +65,9 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
             return
         }
 
-        if (!resetPasswordEmailEditText.text.toString().isEmailAddressValid()) {
-            resetPasswordEmailEditText.error = getString(R.string.invalid_email)
-            resetPasswordEmailEditText.startAnimation(
+        if (!binding.resetPasswordEmailEditText.text.toString().isEmailAddressValid()) {
+            binding.resetPasswordEmailEditText.error = getString(R.string.invalid_email)
+            binding.resetPasswordEmailEditText.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
                     R.anim.shake
@@ -72,7 +76,7 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
             return
         }
 
-        FirebaseManager.mAuth.sendPasswordResetEmail(resetPasswordEmailEditText.text.toString())
+        FirebaseManager.mAuth.sendPasswordResetEmail(binding.resetPasswordEmailEditText.text.toString())
             .addOnCompleteListener {
                 if (it.isSuccessful) {
                     Toast.makeText(this, getString(R.string.email_sent), Toast.LENGTH_SHORT).show()
@@ -81,7 +85,7 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
                         ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
                     )
                 } else {
-                    resetPasswordEmailEditText.startAnimation(
+                    binding.resetPasswordEmailEditText.startAnimation(
                         AnimationUtils.loadAnimation(
                             this,
                             R.anim.shake
@@ -100,7 +104,7 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
     override fun connectedToInternet() {
         runOnUiThread {
             connected = true
-            noInternetTextView.visibility = View.GONE
+            binding.noInternetTextView.visibility = View.GONE
         }
 
     }
@@ -108,7 +112,7 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
     override fun noInternetConnection() {
         runOnUiThread {
             connected = false
-            noInternetTextView.visibility = View.VISIBLE
+            binding.noInternetTextView.visibility = View.VISIBLE
         }
     }
 }

@@ -10,25 +10,29 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.databinding.ActivityAllChallengeBinding
 import com.sziffer.challenger.model.Challenge
 import com.sziffer.challenger.sync.KEY_DELETE
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import com.sziffer.challenger.user.UserProfileActivity
-import kotlinx.android.synthetic.main.activity_all_challenge.*
 import java.text.SimpleDateFormat
 
 
 class AllChallengeActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: ChallengeDbHelper
-    private lateinit var recyclerView: RecyclerView
     private lateinit var challenges: ArrayList<Challenge>
+    private lateinit var binding: ActivityAllChallengeBinding
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_all_challenge)
 
-        recyclerView = findViewById(R.id.allChallengeRecyclerView)
+        binding = ActivityAllChallengeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+
+
         dbHelper = ChallengeDbHelper(this)
         challenges = dbHelper.getAllChallenges()
         challenges.sortWith(Comparator { o1, o2 ->
@@ -43,16 +47,16 @@ class AllChallengeActivity : AppCompatActivity() {
         })
         challenges.reverse()
 
-        profileButton.setOnClickListener {
+        binding.profileButton.setOnClickListener {
             startActivity(Intent(this, UserProfileActivity::class.java))
         }
 
-        with(recyclerView) {
+        with(binding.allChallengeRecyclerView) {
             layoutManager = LinearLayoutManager(applicationContext)
             adapter = ChallengeRecyclerViewAdapter(challenges, applicationContext)
             addItemDecoration(
                 DividerItemDecoration(
-                    recyclerView.context,
+                    context,
                     DividerItemDecoration.VERTICAL
                 )
             )
@@ -81,12 +85,12 @@ class AllChallengeActivity : AppCompatActivity() {
                 val challenge = challenges[pos]
 
                 challenges.removeAt(pos)
-                recyclerView.adapter?.notifyItemRemoved(pos)
+                binding.allChallengeRecyclerView.adapter?.notifyItemRemoved(pos)
                 updateSharedPrefForSync(applicationContext, challenge.firebaseId, KEY_DELETE)
                 dbHelper.deleteChallenge(challenge.id)
             }
 
-        }).attachToRecyclerView(recyclerView)
+        }).attachToRecyclerView(binding.allChallengeRecyclerView)
     }
 
     override fun onStop() {

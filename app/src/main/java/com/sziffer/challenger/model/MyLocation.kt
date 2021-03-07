@@ -2,7 +2,7 @@ package com.sziffer.challenger.model
 
 import android.os.Parcelable
 import com.google.android.gms.maps.model.LatLng
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class MyLocation(

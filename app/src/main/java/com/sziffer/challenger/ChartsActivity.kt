@@ -16,9 +16,9 @@ import com.github.psambit9791.jdsp.filter.Wiener
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.databinding.ActivityChartsBinding
 import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.utils.getStringFromNumber
-import kotlinx.android.synthetic.main.activity_charts.*
 
 class ChartsActivity : AppCompatActivity() {
 
@@ -34,10 +34,13 @@ class ChartsActivity : AppCompatActivity() {
     private lateinit var limitLine: LimitLine
     private var avgSpeed: Double = 0.0
 
+    private lateinit var binding: ActivityChartsBinding
+
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_charts)
+        binding = ActivityChartsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         val id = intent.getLongExtra(CHALLENGE_ID, 0)
         val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
@@ -48,11 +51,11 @@ class ChartsActivity : AppCompatActivity() {
 
         elevationGain = intent.getDoubleExtra(ELEVATION_GAIN, 0.0)
         elevationLoss = intent.getDoubleExtra(ELEVATION_LOSS, 0.0)
-        elevationGainedTextView.text = "${getString(R.string.elevation_gained)}:" +
+        binding.elevationGainedTextView.text = "${getString(R.string.elevation_gained)}:" +
                 " ${getStringFromNumber(0, elevationGain)} m"
-        elevationLossTextView.text = "${getString(R.string.elevation_lost)}: " +
+        binding.elevationLossTextView.text = "${getString(R.string.elevation_lost)}: " +
                 "${getStringFromNumber(0, elevationLoss)} m"
-        with(speedLineChart) {
+        with(binding.speedLineChart) {
             isDragEnabled = true
             setPinchZoom(true)
             setTouchEnabled(true)
@@ -61,7 +64,7 @@ class ChartsActivity : AppCompatActivity() {
             description.isEnabled = false
         }
 
-        with(elevationLineChart) {
+        with(binding.elevationLineChart) {
             isDragEnabled = true
             setPinchZoom(true)
             setTouchEnabled(true)
@@ -80,22 +83,21 @@ class ChartsActivity : AppCompatActivity() {
         limitLine.textColor = ContextCompat.getColor(this, android.R.color.white)
         limitLine.textSize = 10f
 
-        xAxis = speedLineChart.xAxis
+        xAxis = binding.speedLineChart.xAxis
         xAxis.enableAxisLineDashedLine(10f, 10f, 0f)
         xAxis.axisMinimum = 0f
         xAxis.textColor = ContextCompat.getColor(this, android.R.color.white)
         xAxis.mAxisMaximum = challengeData!![challengeData!!.size - 1].distance
 
-        xAxisElevation = elevationLineChart.xAxis.apply {
+        xAxisElevation = binding.elevationLineChart.xAxis.apply {
             enableAxisLineDashedLine(10f, 10f, 0f)
             axisMinimum = 0f
             textColor = ContextCompat.getColor(applicationContext, android.R.color.white)
             mAxisMaximum = challengeData!![challengeData!!.size - 1].distance
         }
 
-
-        speedLineChart.axisRight.isEnabled = false
-        elevationLineChart.axisRight.isEnabled = false
+        binding.speedLineChart.axisRight.isEnabled = false
+        binding.elevationLineChart.axisRight.isEnabled = false
 
         setSpeedChartData()
         setAltitudeData()
@@ -114,7 +116,7 @@ class ChartsActivity : AppCompatActivity() {
             }
 
             val wiener = Wiener(data, data.size.div(data.size / 10))
-            val filtered = wiener.wiener_filter()
+            val filtered = wiener.filter()
 
             elevationData = ArrayList()
 
@@ -132,26 +134,26 @@ class ChartsActivity : AppCompatActivity() {
             }
         }
 
-        yAxisElevation = elevationLineChart.axisLeft.apply {
+        yAxisElevation = binding.elevationLineChart.axisLeft.apply {
             textColor = ContextCompat.getColor(applicationContext, android.R.color.white)
             enableAxisLineDashedLine(10f, 10f, 0f)
         }
 
         max += 10
         yAxisElevation.axisMaximum = max
-        elevationLineChart.setVisibleYRange(max, max, yAxisElevation.axisDependency)
+        binding.elevationLineChart.setVisibleYRange(max, max, yAxisElevation.axisDependency)
 
         val set: LineDataSet
 
-        if (elevationLineChart.data != null &&
-            elevationLineChart.data.dataSetCount > 0
+        if (binding.elevationLineChart.data != null &&
+            binding.elevationLineChart.data.dataSetCount > 0
         ) {
 
-            set = elevationLineChart.data.getDataSetByIndex(0) as LineDataSet
+            set = binding.elevationLineChart.data.getDataSetByIndex(0) as LineDataSet
             set.values = elevationData
             set.notifyDataSetChanged()
-            elevationLineChart.data.notifyDataChanged()
-            elevationLineChart.notifyDataSetChanged()
+            binding.elevationLineChart.data.notifyDataChanged()
+            binding.elevationLineChart.notifyDataSetChanged()
         } else {
 
             set = LineDataSet(elevationData, "Altitude in metres")
@@ -165,13 +167,13 @@ class ChartsActivity : AppCompatActivity() {
                 setDrawFilled(true)
                 fillColor = ContextCompat.getColor(this@ChartsActivity, R.color.colorMinus)
                 fillFormatter =
-                    IFillFormatter { _, _ -> elevationLineChart.axisLeft.mAxisMinimum }
+                    IFillFormatter { _, _ -> binding.elevationLineChart.axisLeft.mAxisMinimum }
             }
 
             val dataSets: ArrayList<ILineDataSet> = ArrayList()
             dataSets.add(set)
             val data = LineData(dataSets)
-            elevationLineChart.data = data
+            binding.elevationLineChart.data = data
         }
     }
 
@@ -195,25 +197,25 @@ class ChartsActivity : AppCompatActivity() {
             }
         }
 
-        yAxis = speedLineChart.axisLeft
+        yAxis = binding.speedLineChart.axisLeft
         yAxis.textColor = ContextCompat.getColor(this, android.R.color.white)
         yAxis.addLimitLine(limitLine)
         yAxis.enableAxisLineDashedLine(10f, 10f, 0f)
         max = max.times(3.6f) + 10
         yAxis.axisMaximum = max
-        speedLineChart.setVisibleYRange(max, max, yAxis.axisDependency)
+        binding.speedLineChart.setVisibleYRange(max, max, yAxis.axisDependency)
 
         val set: LineDataSet
 
-        if (speedLineChart.data != null &&
-            speedLineChart.data.dataSetCount > 0
+        if (binding.speedLineChart.data != null &&
+            binding.speedLineChart.data.dataSetCount > 0
         ) {
 
-            set = speedLineChart.data.getDataSetByIndex(0) as LineDataSet
+            set = binding.speedLineChart.data.getDataSetByIndex(0) as LineDataSet
             set.values = speedData
             set.notifyDataSetChanged()
-            speedLineChart.data.notifyDataChanged()
-            speedLineChart.notifyDataSetChanged()
+            binding.speedLineChart.data.notifyDataChanged()
+            binding.speedLineChart.notifyDataSetChanged()
         } else {
 
             set = LineDataSet(speedData, "Speed km/h")
@@ -227,13 +229,13 @@ class ChartsActivity : AppCompatActivity() {
                 setDrawFilled(true)
                 fillColor = ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus)
                 fillFormatter =
-                    IFillFormatter { _, _ -> speedLineChart.axisLeft.mAxisMinimum }
+                    IFillFormatter { _, _ -> binding.speedLineChart.axisLeft.mAxisMinimum }
             }
 
             val dataSets: ArrayList<ILineDataSet> = ArrayList()
             dataSets.add(set)
             val data = LineData(dataSets)
-            speedLineChart.data = data
+            binding.speedLineChart.data = data
         }
 
     }

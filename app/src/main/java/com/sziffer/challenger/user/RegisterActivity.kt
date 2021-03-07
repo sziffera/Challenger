@@ -8,8 +8,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
-import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
@@ -18,17 +16,15 @@ import com.google.firebase.database.FirebaseDatabase
 import com.sziffer.challenger.MainActivity
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.databinding.ActivityRegisterBinding
 import com.sziffer.challenger.utils.MyNetworkCallback
 import com.sziffer.challenger.utils.NetworkStateListener
 import com.sziffer.challenger.utils.isEmailAddressValid
-import kotlinx.android.synthetic.main.activity_register.*
+
 
 class RegisterActivity : AppCompatActivity(), NetworkStateListener {
 
-    private lateinit var nameText: EditText
-    private lateinit var emailText: EditText
-    private lateinit var passwordText: EditText
-    private lateinit var registerButton: Button
+    private lateinit var binding: ActivityRegisterBinding
     private lateinit var sharedPreferences: SharedPreferences
 
     private lateinit var connectivityManager: ConnectivityManager
@@ -39,23 +35,23 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_register)
+        binding = ActivityRegisterBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         sharedPreferences = getPreferences(0)
 
         userManager = UserManager(applicationContext)
 
-        nameText = findViewById(R.id.registerUsernameEditText)
-        emailText = findViewById(R.id.registerEmailEditText)
-        passwordText = findViewById(R.id.registerPasswordEditText)
-        registerButton = findViewById(R.id.registerButton)
 
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
         myNetworkCallback = MyNetworkCallback(this, connectivityManager)
 
-        registerButton.setOnClickListener {
-            createAccount(emailText.text.toString(), passwordText.text.toString())
+        binding.registerButton.setOnClickListener {
+            createAccount(
+                binding.registerEmailEditText.text.toString(),
+                binding.registerPasswordEditText.text.toString()
+            )
         }
 
     }
@@ -63,7 +59,7 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
     override fun onStart() {
         if (connectivityManager.allNetworks.isEmpty()) {
             connected = false
-            noInternetTextView.visibility = View.VISIBLE
+            binding.noInternetTextView.visibility = View.VISIBLE
         }
         myNetworkCallback.registerCallback()
         super.onStart()
@@ -77,7 +73,7 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
     private fun createAccount(email: String, password: String) {
 
         if (!connected) {
-            noInternetTextView.startAnimation(
+            binding.noInternetTextView.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
                     R.anim.shake
@@ -87,8 +83,8 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
         }
 
         if (password.length < 6) {
-            passwordText.error = getString(R.string.invalid_password)
-            passwordText.startAnimation(
+            binding.registerPasswordEditText.error = getString(R.string.invalid_password)
+            binding.registerPasswordEditText.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
                     R.anim.shake
@@ -98,8 +94,8 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
         }
 
         if (!email.isEmailAddressValid()) {
-            emailText.error = getString(R.string.invalid_email)
-            emailText.startAnimation(
+            binding.registerEmailEditText.error = getString(R.string.invalid_email)
+            binding.registerEmailEditText.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
                     R.anim.shake
@@ -107,8 +103,8 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
             )
             return
         }
-        registerButton.isEnabled = false
-        registerButton.startAnimation(
+        binding.registerButton.isEnabled = false
+        binding.registerButton.startAnimation(
             AnimationUtils.loadAnimation(
                 this,
                 R.anim.fade_out
@@ -120,7 +116,7 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
                 if (task.isSuccessful) { // Sign in success
 
                     val user = User(
-                        nameText.text.toString(),
+                        binding.registerUsernameEditText.text.toString(),
                         FirebaseManager.mAuth.currentUser?.email.toString()
                     )
 
@@ -160,8 +156,8 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
                         getString(R.string.unsuccessful_sing_up),
                         Toast.LENGTH_SHORT
                     ).show()
-                    registerButton.isEnabled = true
-                    registerButton.startAnimation(
+                    binding.registerButton.isEnabled = true
+                    binding.registerButton.startAnimation(
                         AnimationUtils.loadAnimation(
                             this,
                             R.anim.fade_in
@@ -175,7 +171,7 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
     override fun connectedToInternet() {
         connected = true
         runOnUiThread {
-            noInternetTextView.visibility = View.GONE
+            binding.noInternetTextView.visibility = View.GONE
         }
 
     }
@@ -183,7 +179,7 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
     override fun noInternetConnection() {
         connected = false
         runOnUiThread {
-            noInternetTextView.visibility = View.VISIBLE
+            binding.noInternetTextView.visibility = View.VISIBLE
         }
 
     }

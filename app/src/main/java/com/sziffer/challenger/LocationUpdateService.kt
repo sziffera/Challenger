@@ -34,9 +34,9 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     private val mBinder: IBinder = LocalBinder()
     private var mChangingConfiguration = false
     private var mNotificationManager: NotificationManager? = null
-    private var mLocationRequest: LocationRequest? = null
+    private lateinit var mLocationRequest: LocationRequest
     private var mFusedLocationClient: FusedLocationProviderClient? = null
-    private var mLocationCallback: LocationCallback? = null
+    private lateinit var mLocationCallback: LocationCallback
     private var mServiceHandler: Handler? = null
     private lateinit var builder: NotificationCompat.Builder
     private lateinit var audioManager: AudioManager
@@ -71,6 +71,9 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
     /** measures the elapsed time, while the user's speed was zero */
     private var zeroSpeedPauseTime: Long = 0
+
+    /** to store the last valid duration when auto pause turns on */
+    private var lastDuration: Long = 0
 
     /** stores the route */
     var myRoute: ArrayList<MyLocation> = ArrayList()
@@ -337,6 +340,9 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
                             //if the user has just stopped
                             if (!zeroSpeed) {
+                                //saving the current duration to update ui later
+                                lastDuration = System.currentTimeMillis() - start + durationHelper
+                                Log.d(TAG, "Auto pause is active")
                                 if (userManager.startStop)
                                     startSpeaking("Recording paused")
                                 zeroSpeedPauseTime = System.currentTimeMillis()
@@ -393,10 +399,11 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
 
     private fun createLocationRequest() {
-        mLocationRequest = LocationRequest()
-        mLocationRequest!!.interval = UPDATE_INTERVAL_IN_MILLISECONDS
-        mLocationRequest!!.fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
-        mLocationRequest!!.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        mLocationRequest = LocationRequest.create().apply {
+            interval = UPDATE_INTERVAL_IN_MILLISECONDS
+            fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
     }
     //endregion location handling
 
@@ -751,15 +758,26 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
      * running as a foreground service
      * */
     private fun updateUI() {
+
         val intent = Intent(ACTION_BROADCAST)
-        //if the zero speed is true, the recording was paused, no need to update UI.
-        intent.putExtra(AUTO_PAUSE_ACTIVE, zeroSpeed)
+
         intent.putExtra(DISTANCE, distance)
         intent.putExtra(EXTRA_LOCATION, mLocation)
-        intent.putExtra(
-            DURATION,
-            System.currentTimeMillis() - start + durationHelper
-        )
+        intent.putExtra(AUTO_PAUSE_ACTIVE, zeroSpeed)
+        if (!zeroSpeed) {
+            Log.d(TAG, "Sending normal duration")
+            intent.putExtra(
+                DURATION,
+                System.currentTimeMillis() - start + durationHelper
+            )
+        } else {
+            Log.d(TAG, "Sendind last duration")
+            intent.putExtra(
+                DURATION,
+                lastDuration
+            )
+        }
+
         intent.putExtra(ALTITUDE, correctedAltitude.toInt())
 
         if (ChallengeRecorderActivity.challenge || ChallengeRecorderActivity.createdChallenge)

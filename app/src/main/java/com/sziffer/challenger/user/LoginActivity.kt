@@ -9,8 +9,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
-import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -26,10 +24,10 @@ import com.google.firebase.database.FirebaseDatabase
 import com.sziffer.challenger.MainActivity
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.databinding.ActivityLoginBinding
 import com.sziffer.challenger.utils.MyNetworkCallback
 import com.sziffer.challenger.utils.NetworkStateListener
 import com.sziffer.challenger.utils.isEmailAddressValid
-import kotlinx.android.synthetic.main.activity_login.*
 
 
 class LoginActivity : AppCompatActivity(), NetworkStateListener {
@@ -45,11 +43,7 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
     private lateinit var mGoogleSignInClient: GoogleSignInClient
     private lateinit var mGoogleSignInOptions: GoogleSignInOptions
 
-    private lateinit var loginButton: Button
-    private lateinit var emailText: EditText
-    private lateinit var passwordText: EditText
-    private lateinit var registerRedirectButton: Button
-    private lateinit var skipButton: Button
+    private lateinit var binding: ActivityLoginBinding
 
     private lateinit var myNetworkCallback: MyNetworkCallback
     private lateinit var connectivityManager: ConnectivityManager
@@ -57,7 +51,8 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         mAuth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance()
@@ -71,35 +66,24 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
 
         sharedPreferences = getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)
 
-        emailText = findViewById(R.id.loginEmailText)
-        passwordText = findViewById(R.id.loginPasswordText)
-        loginButton = findViewById(R.id.loginButton)
-        registerRedirectButton = findViewById(R.id.registerRedirectButton)
-        skipButton = findViewById(R.id.skipButton)
 
-/*
-        configureGoogleSignIn()
-        googleSignInButton.setOnClickListener {
-            signIn()
-        }
- */
 
-        registerRedirectButton.setOnClickListener {
+        binding.registerRedirectButton.setOnClickListener {
             val intent = Intent(applicationContext, RegisterActivity::class.java)
             startActivity(intent)
         }
 
-        forgotPassworButton.setOnClickListener {
+        binding.forgotPassworButton.setOnClickListener {
             startActivity(
                 Intent(this, ForgotPasswordActivity::class.java),
                 ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
             )
         }
 
-        loginButton.setOnClickListener {
-            login(emailText.text.toString(), passwordText.text.toString())
+        binding.loginButton.setOnClickListener {
+            login(binding.loginEmailText.text.toString(), binding.loginPasswordText.text.toString())
         }
-        skipButton.setOnClickListener {
+        binding.skipButton.setOnClickListener {
             startMainActivity()
         }
     }
@@ -108,7 +92,7 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
 
         if (connectivityManager.allNetworks.isEmpty()) {
             connected = false
-            noInternetTextView.visibility = View.VISIBLE
+            binding.noInternetTextView.visibility = View.VISIBLE
         }
 
         myNetworkCallback.registerCallback()
@@ -123,7 +107,7 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
     private fun login(email: String, password: String) {
 
         if (!connected) {
-            noInternetTextView.startAnimation(
+            binding.noInternetTextView.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
                     R.anim.shake
@@ -141,8 +125,8 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
             ).show()
             return
         }
-        loginButton.isEnabled = false
-        loginButton.startAnimation(
+        binding.loginButton.isEnabled = false
+        binding.loginButton.startAnimation(
             AnimationUtils.loadAnimation(
                 this,
                 R.anim.fade_out
@@ -159,8 +143,8 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
                 finish()
             } else {
                 buttonShake()
-                loginButton.isEnabled = true
-                loginButton.startAnimation(
+                binding.loginButton.isEnabled = true
+                binding.loginButton.startAnimation(
                     AnimationUtils.loadAnimation(
                         this,
                         R.anim.fade_in
@@ -192,13 +176,13 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
     }
 
     private fun buttonShake() {
-        emailText.startAnimation(
+        binding.loginEmailText.startAnimation(
             AnimationUtils.loadAnimation(
                 this,
                 R.anim.shake
             )
         )
-        passwordText.startAnimation(
+        binding.loginPasswordText.startAnimation(
             AnimationUtils.loadAnimation(
                 this,
                 R.anim.shake
@@ -282,7 +266,7 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
     override fun noInternetConnection() {
         runOnUiThread {
             connected = false
-            noInternetTextView.visibility = View.VISIBLE
+            binding.noInternetTextView.visibility = View.VISIBLE
         }
 
     }
@@ -290,7 +274,7 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
     override fun connectedToInternet() {
         runOnUiThread {
             connected = true
-            noInternetTextView.visibility = View.GONE
+            binding.noInternetTextView.visibility = View.GONE
         }
 
     }

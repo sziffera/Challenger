@@ -16,10 +16,10 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.databinding.ActivityUserSettingsBinding
 import com.sziffer.challenger.utils.MyNetworkCallback
 import com.sziffer.challenger.utils.NetworkStateListener
 import com.sziffer.challenger.utils.isEmailAddressValid
-import kotlinx.android.synthetic.main.activity_user_settings.*
 
 class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
 
@@ -36,19 +36,24 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
     private lateinit var myNetworkCallback: MyNetworkCallback
     private lateinit var connectivityManager: ConnectivityManager
 
+    private lateinit var binding: ActivityUserSettingsBinding
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_user_settings)
+        binding = ActivityUserSettingsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
         userManager = UserManager(applicationContext)
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         myNetworkCallback = MyNetworkCallback(this, connectivityManager)
         getUserInfo()
-        updateProfileButton.setOnClickListener {
+        binding.updateProfileButton.setOnClickListener {
             updateUserData()
         }
 
-        calculateBodyFatButton.setOnClickListener {
+        binding.calculateBodyFatButton.setOnClickListener {
             startActivity(
                 Intent(this, BodyFatCalculatorActivity::class.java)
             )
@@ -60,7 +65,7 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
 
         if (connectivityManager.allNetworks.isEmpty()) {
             connected = false
-            noInternetTextView.visibility = View.VISIBLE
+            binding.noInternetTextView.visibility = View.VISIBLE
         }
         myNetworkCallback.registerCallback()
         super.onStart()
@@ -84,7 +89,7 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
 
             if (userManager.username != null) {
                 username = userManager.username
-                usernameEditText.setText(username)
+                binding.usernameEditText.setText(username)
             } else {
 
                 FirebaseManager.currentUserRef?.child("username")?.addValueEventListener(object :
@@ -95,12 +100,12 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
                     override fun onDataChange(p0: DataSnapshot) {
                         Log.i("FIREBASE", p0.toString())
                         username = p0.getValue(String::class.java) as String
-                        usernameEditText.setText(username)
+                        binding.usernameEditText.setText(username)
                     }
                 })
             }
             if (userManager.email != null) {
-                emailEditText.setText(userManager.email)
+                binding.emailEditText.setText(userManager.email)
             } else {
                 FirebaseManager.currentUserRef?.child("email")?.addValueEventListener(object :
                     ValueEventListener {
@@ -110,7 +115,7 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
                     override fun onDataChange(p0: DataSnapshot) {
                         Log.i("FIREBASE", p0.toString())
                         email = p0.getValue(String::class.java) as String
-                        emailEditText.setText(email)
+                        binding.emailEditText.setText(email)
                     }
                 })
             }
@@ -138,7 +143,7 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
     private fun updateUserData() {
 
         if (!connected) {
-            noInternetTextView.startAnimation(
+            binding.noInternetTextView.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
                     R.anim.shake
@@ -150,9 +155,11 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
             return
         }
         //setting the username
-        if (!username.equals(usernameEditText.text.toString()) && usernameEditText.text.isNotEmpty()) {
-            userManager.username = usernameEditText.text.toString()
-            username = usernameEditText.text.toString()
+        if (!username.equals(binding.usernameEditText.text.toString()) &&
+            binding.usernameEditText.text.isNotEmpty()
+        ) {
+            userManager.username = binding.usernameEditText.text.toString()
+            username = binding.usernameEditText.text.toString()
             FirebaseManager.mAuth.currentUser?.updateProfile(
                 UserProfileChangeRequest.Builder()
                     .setDisplayName(username).build()
@@ -160,21 +167,21 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
                 Log.i("REGISTER", "display name set successfully")
             }
             FirebaseManager.currentUserRef?.child("username")?.setValue(
-                usernameEditText.text.toString()
+                binding.usernameEditText.text.toString()
             )
         }
 
-        if (!email.equals(emailEditText.text.toString())
-            && emailEditText.text.toString().isEmailAddressValid()
+        if (!email.equals(binding.emailEditText.text.toString())
+            && binding.emailEditText.text.toString().isEmailAddressValid()
         ) {
 
             FirebaseManager.currentUserRef?.child("email")?.setValue(
-                usernameEditText.text.toString()
+                binding.usernameEditText.text.toString()
             )
-            userManager.email = emailEditText.text.toString()
-            email = emailEditText.text.toString()
+            userManager.email = binding.emailEditText.text.toString()
+            email = binding.emailEditText.text.toString()
             FirebaseManager.mAuth.currentUser?.updateEmail(
-                emailEditText.text.toString()
+                binding.emailEditText.text.toString()
             )?.addOnSuccessListener {
                 Log.i(TAG, "email update successful")
             }
@@ -189,51 +196,55 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
     override fun noInternetConnection() {
         runOnUiThread {
             connected = false
-            noInternetTextView.visibility = View.VISIBLE
+            binding.noInternetTextView.visibility = View.VISIBLE
         }
     }
 
     override fun connectedToInternet() {
         runOnUiThread {
             connected = true
-            noInternetTextView.visibility = View.INVISIBLE
+            binding.noInternetTextView.visibility = View.INVISIBLE
         }
     }
 
     private fun initSettingsSwitches() {
 
-        autoPauseSwitch.isChecked = userManager.autoPause
 
-        //autoPauseSwitchCompat.isChecked = userManager.autoPause
-        preventScreenLockSwitch.isChecked = userManager.preventScreenLock
-        differenceSwitch.isChecked = userManager.difference
-        avgSpeedSwitch.isChecked = userManager.avgSpeed
-        durationSwitch.isChecked = userManager.duration
-        distanceSwitch.isChecked = userManager.distance
-        startStopSwitch.isChecked = userManager.startStop
+        with(binding) {
+
+            autoPauseSwitch.isChecked = userManager.autoPause
+
+            //autoPauseSwitchCompat.isChecked = userManager.autoPause
+            preventScreenLockSwitch.isChecked = userManager.preventScreenLock
+            differenceSwitch.isChecked = userManager.difference
+            avgSpeedSwitch.isChecked = userManager.avgSpeed
+            durationSwitch.isChecked = userManager.duration
+            distanceSwitch.isChecked = userManager.distance
+            startStopSwitch.isChecked = userManager.startStop
 
 
-        autoPauseSwitch.setOnCheckedChangeListener { _, isChecked ->
-            userManager.autoPause = isChecked
-        }
+            autoPauseSwitch.setOnCheckedChangeListener { _, isChecked ->
+                userManager.autoPause = isChecked
+            }
 
-        preventScreenLockSwitch.setOnCheckedChangeListener { _, isChecked ->
-            userManager.preventScreenLock = isChecked
-        }
-        startStopSwitch.setOnCheckedChangeListener { _, isChecked ->
-            userManager.startStop = isChecked
-        }
-        differenceSwitch.setOnCheckedChangeListener { _, isChecked ->
-            userManager.difference = isChecked
-        }
-        distanceSwitch.setOnCheckedChangeListener { _, isChecked ->
-            userManager.distance = isChecked
-        }
-        durationSwitch.setOnCheckedChangeListener { _, isChecked ->
-            userManager.duration = isChecked
-        }
-        avgSpeedSwitch.setOnCheckedChangeListener { _, isChecked ->
-            userManager.avgSpeed = isChecked
+            preventScreenLockSwitch.setOnCheckedChangeListener { _, isChecked ->
+                userManager.preventScreenLock = isChecked
+            }
+            startStopSwitch.setOnCheckedChangeListener { _, isChecked ->
+                userManager.startStop = isChecked
+            }
+            differenceSwitch.setOnCheckedChangeListener { _, isChecked ->
+                userManager.difference = isChecked
+            }
+            distanceSwitch.setOnCheckedChangeListener { _, isChecked ->
+                userManager.distance = isChecked
+            }
+            durationSwitch.setOnCheckedChangeListener { _, isChecked ->
+                userManager.duration = isChecked
+            }
+            avgSpeedSwitch.setOnCheckedChangeListener { _, isChecked ->
+                userManager.avgSpeed = isChecked
+            }
         }
     }
 

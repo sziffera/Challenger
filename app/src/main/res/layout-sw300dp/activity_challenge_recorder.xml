@@ -264,7 +264,7 @@
 
 
             <Button
-                android:id="@+id/startChallengeRecording"
+                android:id="@+id/startStopChallengeRecording"
                 android:layout_width="0dp"
                 android:layout_height="35dp"
                 android:layout_marginVertical="5dp"

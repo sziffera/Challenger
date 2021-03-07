@@ -17,8 +17,6 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -34,6 +32,7 @@ import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
 import com.sziffer.challenger.model.Challenge
 import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.sync.KEY_UPLOAD
@@ -41,7 +40,6 @@ import com.sziffer.challenger.sync.updateSharedPrefForSync
 import com.sziffer.challenger.utils.getStringFromNumber
 import com.sziffer.challenger.utils.locationPermissionCheck
 import com.sziffer.challenger.utils.locationPermissionRequest
-import kotlinx.android.synthetic.main.activity_challenge_details.*
 import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -51,11 +49,6 @@ import kotlin.math.abs
 class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
-    private lateinit var avgSpeedTextView: TextView
-    private lateinit var distanceTextView: TextView
-    private lateinit var durationTextView: TextView
-    private lateinit var challengeNameEditText: EditText
-    private lateinit var maxSpeedTextView: TextView
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var challenge: Challenge
     private var previousChallenge: Challenge? = null
@@ -70,11 +63,15 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var avgSpeed: Double = 0.0
     private var start: Long = 0
 
-    //region lifecycle
+    private lateinit var binding: ActivityChallengeDetailsBinding
 
+    //region lifecycle
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_challenge_details)
+
+        binding = ActivityChallengeDetailsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         dbHelper = ChallengeDbHelper(this)
 
@@ -88,8 +85,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Log.i("CHALLENGE DETAILS", challenge.toString())
 
-        challengeNameEditText = findViewById(R.id.challengeDetailsNameEditText)
-        saveStartButton = findViewById(R.id.saveChallengeInDetailsButton)
 
         isItAChallenge = intent.getBooleanExtra(IS_IT_A_CHALLENGE, false).also {
             Log.i(TAG, "$IS_IT_A_CHALLENGE is $it")
@@ -98,7 +93,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.i(TAG, "$UPDATE is $it")
         }
 
-        discardButton.setOnClickListener {
+        binding.discardButton.setOnClickListener {
             showDiscardAlertDialog()
         }
 
@@ -106,7 +101,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         val previousChallengeId = intent.getLongExtra(PREVIOUS_CHALLENGE_ID, -1)
         previousChallenge = dbHelper.getChallenge(previousChallengeId.toInt())
 
-        showChartsButton.setOnClickListener {
+        binding.showChartsButton.setOnClickListener {
             if (route == null) {
                 //the Gson() conversion has not finished yet.
                 Toast.makeText(this, getString(R.string.please_wait), Toast.LENGTH_LONG).show()
@@ -124,8 +119,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         when {
             //the user chose a Challenge to do it better, and wants to start recording
             isItAChallenge -> {
-                discardButton.visibility = View.GONE
-                buttonDivSpace.visibility = View.GONE
+                binding.discardButton.visibility = View.GONE
+                binding.buttonDivSpace.visibility = View.GONE
                 saveStartButton.text = getString(R.string.challenge_this_activity)
                 saveStartButton.setOnClickListener {
                     if (locationPermissionCheck(this))
@@ -133,15 +128,19 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     else
                         locationPermissionRequest(this, this)
                 }
-                challengeNameEditText.inputType = InputType.TYPE_NULL
-                challengeNameEditText.setText(challenge.name.toUpperCase(Locale.ROOT))
+                binding.challengeDetailsNameEditText.inputType = InputType.TYPE_NULL
+                binding.challengeDetailsNameEditText.setText(challenge.name.toUpperCase(Locale.ROOT))
 
             }
             //the user finished recording a challenged activity, update data with new values
             update -> {
                 saveStartButton.text = getString(R.string.update_challenge)
-                challengeNameEditText.inputType = InputType.TYPE_NULL
-                challengeNameEditText.setText(previousChallenge?.name?.toUpperCase(Locale.ROOT))
+                binding.challengeDetailsNameEditText.inputType = InputType.TYPE_NULL
+                binding.challengeDetailsNameEditText.setText(
+                    previousChallenge?.name?.toUpperCase(
+                        Locale.ROOT
+                    )
+                )
 
                 saveStartButton.setOnClickListener {
                     updateChallenge()
@@ -157,22 +156,21 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         initVariables()
 
         //solving the Google Maps touch error caused by ScrollView
-        transparentImageView.setOnTouchListener(object : View.OnTouchListener {
-            @SuppressLint("ClickableViewAccessibility")
+        binding.transparentImageView.setOnTouchListener(object : View.OnTouchListener {
             override fun onTouch(v: View?, event: MotionEvent?): Boolean {
                 when (event?.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        challengeDetailsScrollView
+                        binding.challengeDetailsScrollView
                             .requestDisallowInterceptTouchEvent(true)
                         return false
                     }
                     MotionEvent.ACTION_UP -> {
-                        challengeDetailsScrollView
+                        binding.challengeDetailsScrollView
                             .requestDisallowInterceptTouchEvent(false)
                         return true
                     }
                     MotionEvent.ACTION_MOVE -> {
-                        challengeDetailsScrollView
+                        binding.challengeDetailsScrollView
                             .requestDisallowInterceptTouchEvent(true)
                         return false
                     }
@@ -186,7 +184,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
 
-        shareChallengeButton.setOnClickListener {
+        binding.shareChallengeButton.setOnClickListener {
             initShareImage()
         }
 
@@ -238,11 +236,11 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun saveChallenge() {
 
-        if (challengeNameEditText.text.isEmpty()) {
-            challengeNameEditText.error = getString(R.string.please_name_challenge)
+        if (binding.challengeDetailsNameEditText.text.isEmpty()) {
+            binding.challengeDetailsNameEditText.error = getString(R.string.please_name_challenge)
             return
         }
-        challenge.name = challengeNameEditText.text.toString()
+        challenge.name = binding.challengeDetailsNameEditText.text.toString()
 
         dbHelper.updateChallenge(challenge.id.toInt(), challenge)
 
@@ -261,24 +259,19 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     @SuppressLint("SetTextI18n")
     private fun initVariables() {
 
-        avgSpeedTextView = findViewById(R.id.challengeDetailsAvgSpeedTextView)
-        distanceTextView = findViewById(R.id.challengeDetailsDistanceTextView)
-        durationTextView = findViewById(R.id.challengeDetailsDurationTextView)
-
-        maxSpeedTextView = findViewById(R.id.challengeDetailsMaxSpeedTextView)
 
         with(challenge) {
 
-            durationTextView.text = DateUtils.formatElapsedTime(dur)
-            avgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
-            distanceTextView.text = getStringFromNumber(1, dst) + " km"
+            binding.challengeDetailsDurationTextView.text = DateUtils.formatElapsedTime(dur)
+            binding.challengeDetailsAvgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
+            binding.challengeDetailsDistanceTextView.text = getStringFromNumber(1, dst) + " km"
             if (type == getString(R.string.running)) {
-                challengeTypeImageView.setImageResource(R.drawable.running)
+                binding.challengeTypeImageView.setImageResource(R.drawable.running)
             }
             avgSpeed = this.avg
-            maxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
+            binding.challengeDetailsMaxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
             val avgPace = dur.div(dst)
-            avgPaceTextView.text = DateUtils.formatElapsedTime(avgPace.toLong()) + " min/km"
+            binding.avgPaceTextView.text = DateUtils.formatElapsedTime(avgPace.toLong()) + " min/km"
         }
     }
 
@@ -320,6 +313,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
      **/
     private fun runProcessThread() {
         object : Thread() {
+            @SuppressLint("SetTextI18n")
             override fun run() {
                 val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
                 route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
@@ -334,7 +328,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 if (elevationArray.size > 100) {
                     val wiener = Wiener(elevationArray, elevationArray.size / 25)
-                    val filteredElevation = wiener.wiener_filter()
+                    val filteredElevation = wiener.filter()
                     for (i in 10..filteredElevation.size - 10) {
                         if (filteredElevation[i] < filteredElevation[i + 1]) {
                             elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
@@ -359,8 +353,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     val padding = 100
                     val cu = CameraUpdateFactory.newLatLngBounds(builder.build(), padding)
                     mMap.animateCamera(cu)
-                    elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
-                    elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
+                    binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
+                    binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
                 }
 
             }

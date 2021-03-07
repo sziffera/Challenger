@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.sziffer.challenger.R
-import kotlinx.android.synthetic.main.voice_coach_item.view.*
 
 class DataAdapter(
     private val mDataSet: ArrayList<String>,
@@ -33,7 +32,7 @@ class DataAdapter(
 
     inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener {
 
-        var mTextView: TextView = v.voiceCoachItemTextView
+        var mTextView: TextView = v.findViewById(R.id.voiceCoachItemTextView)
 
         init {
             v.setOnClickListener(this)
