@@ -176,7 +176,7 @@ class UserSettingsActivity : AppCompatActivity(), NetworkStateListener {
         ) {
 
             FirebaseManager.currentUserRef?.child("email")?.setValue(
-                binding.usernameEditText.text.toString()
+                binding.emailEditText.text.toString()
             )
             userManager.email = binding.emailEditText.text.toString()
             email = binding.emailEditText.text.toString()
