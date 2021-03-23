@@ -132,13 +132,21 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
                 R.anim.fade_out
             )
         )
-        mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
-            if (it.isSuccessful) {
+        mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
                 Toast.makeText(
                     applicationContext,
                     getString(R.string.successful_login),
                     Toast.LENGTH_SHORT
                 ).show()
+
+                UserManager(this).apply {
+                    username = FirebaseManager.mAuth.currentUser?.displayName.also {
+                        Log.d("LOGIN", it.toString())
+                    }
+                }
+
+                //TODO(set username)
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
             } else {
