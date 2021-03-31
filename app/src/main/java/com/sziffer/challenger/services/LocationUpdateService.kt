@@ -2,6 +2,11 @@ package com.sziffer.challenger
 
 
 import android.app.*
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanFilter
+import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -20,10 +25,15 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.sziffer.challenger.model.MyLocation
-import com.sziffer.challenger.user.UserManager
+import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.ui.ChallengeRecorderActivity
+import com.sziffer.challenger.ui.MainActivity
+import com.sziffer.challenger.utils.bluetooth.GattHeartRateAttributes
+import com.sziffer.challenger.utils.extensions.round
 import com.sziffer.challenger.utils.getStringFromNumber
 import com.sziffer.challenger.utils.requestingLocationUpdates
 import com.sziffer.challenger.utils.setRequestingLocationUpdates
+import com.welie.blessed.*
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.absoluteValue
@@ -43,6 +53,11 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     private lateinit var audioAttributes: AudioAttributes
     private lateinit var audioFocusRequest: AudioFocusRequest
     private lateinit var userManager: UserManager
+
+    private var heartRate: Int = -1
+    private var cadence: Int = -1
+
+    val isHeartRateConnected get() = peripheral != null
 
     /** helps to restore the TTS in case of focus loss */
     private var played = true
@@ -111,12 +126,49 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     /** helper variable for saving data just in every nth new location update */
     private var saveLocationCounter = 0
 
+
+    //BLUETOOTH
+    private var peripheralCallback: BluetoothPeripheralCallback = object :
+        BluetoothPeripheralCallback() {
+        override fun onServicesDiscovered(peripheral: BluetoothPeripheral) {
+            super.onServicesDiscovered(peripheral)
+            Log.d("BLE", peripheral.services.toString())
+        }
+
+        override fun onCharacteristicUpdate(
+            peripheral: BluetoothPeripheral,
+            value: ByteArray,
+            characteristic: BluetoothGattCharacteristic,
+            status: GattStatus
+        ) {
+            processCharacteristicUpdate(value, characteristic)
+        }
+
+    }
+
+    private lateinit var bluetoothCentralManagerCallback: BluetoothCentralManagerCallback
+
+    private lateinit var central: BluetoothCentralManager
+    private var peripheral: BluetoothPeripheral? = null
+
+    private val filter = ScanFilter.Builder().setServiceUuid(
+        ParcelUuid.fromString(GattHeartRateAttributes.UUID_HEART_RATE_SERVICE)
+    ).build()
+
+    private val bluetoothAdapter: BluetoothAdapter by lazy {
+        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        bluetoothManager.adapter
+    }
+
+
     //region service lifecycle
     override fun onCreate() {
 
         initTextToSpeech()
 
-        userManager = com.sziffer.challenger.user.UserManager(this)
+        initBluetooth()
+
+        userManager = UserManager(this)
 
         distanceForVoiceCoach = ChallengeRecorderActivity.numberForVoiceCoach.toFloat()
 
@@ -181,6 +233,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         setRequestingLocationUpdates(this, false)
         mServiceHandler!!.removeCallbacksAndMessages(null)
         serviceIsRunningInForeground = false
+        disconnect()
         textToSpeech.stop()
         textToSpeech.shutdown()
     }
@@ -224,6 +277,97 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     }
     //endregion
 
+
+    //region Bluetooth
+
+    private fun initBluetooth() {
+        bluetoothCentralManagerCallback =
+            object : BluetoothCentralManagerCallback() {
+                override fun onDiscoveredPeripheral(
+                    peripheral: BluetoothPeripheral,
+                    scanResult: ScanResult
+                ) {
+                    central.stopScan()
+                    central.connectPeripheral(peripheral, peripheralCallback)
+                }
+
+                override fun onConnectedPeripheral(peripheral: BluetoothPeripheral) {
+                    val characteristic = peripheral.getCharacteristic(
+                        UUID.fromString(GattHeartRateAttributes.UUID_HEART_RATE_SERVICE),
+                        UUID.fromString(GattHeartRateAttributes.UUID_HEART_RATE_MEASUREMENT)
+                    )
+                    this@LocationUpdatesService.peripheral = peripheral
+                    if (characteristic != null) {
+                        peripheral.setNotify(characteristic, true)
+                    }
+                    sendConnectedBroadcast()
+                }
+
+                override fun onDisconnectedPeripheral(
+                    peripheral: BluetoothPeripheral,
+                    status: HciStatus
+                ) {
+                    this@LocationUpdatesService.peripheral = null
+                }
+            }
+
+        try {
+            central = BluetoothCentralManager(
+                this,
+                bluetoothCentralManagerCallback,
+                Handler(Looper.myLooper()!!)
+            )
+        } catch (e: NullPointerException) {
+            e.printStackTrace()
+            //todo(send not supported broadcast)
+        }
+
+    }
+
+    private fun sendConnectedBroadcast() {
+        val intent = Intent(ACTION_BROADCAST_HEART_RATE_CONNECTION).apply {
+            putExtra(HEART_RATE, true)
+        }
+        LocalBroadcastManager.getInstance(applicationContext)
+            .sendBroadcast(intent)
+    }
+
+    fun startHeartRateScan() {
+        central.scanForPeripheralsUsingFilters(mutableListOf(filter))
+    }
+
+    private fun processCharacteristicUpdate(
+        value: ByteArray,
+        characteristic: BluetoothGattCharacteristic
+    ) {
+        //if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.uuid)) {
+        val flag: Int = characteristic.properties
+        val format: Int
+        if (flag and 0x01 != 0) {
+            format = BluetoothGattCharacteristic.FORMAT_UINT16
+            Log.d(TAG, "Heart rate format UINT16.")
+        } else {
+            format = BluetoothGattCharacteristic.FORMAT_UINT8
+            Log.d(TAG, "Heart rate format UINT8.")
+        }
+        val hr: Int = characteristic.getIntValue(format, 1)
+        this.heartRate = hr
+        Log.d(TAG, "Received heart rate: $heartRate")
+        //}
+    }
+
+    fun disconnect() {
+        //todo(leaking receiver)
+        try {
+            peripheral?.cancelConnection()
+            central.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+    }
+
+    //endregion Bluetooth
 
     //region location handling
 
@@ -372,11 +516,14 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                         route.add(LatLng(location.latitude, location.longitude))
 
                         myRoute.add(
+                            //rounding values to save storage, no need for too many decimals,
+                            //the accuracy won't change
                             MyLocation(
-                                distance,
+                                distance.round(1),
+                                heartRate,
                                 System.currentTimeMillis() - start + durationHelper,
-                                location.speed,
-                                correctedAltitude,
+                                location.speed.round(1),
+                                correctedAltitude.round(1),
                                 LatLng(location.latitude, location.longitude)
                             )
                         )
@@ -393,6 +540,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     fun finishAndSaveRoute() {
         if (userManager.startStop)
             startSpeaking("Recording finished")
+        disconnect() //disconnecting BLE sensor
         stopSelf()
         removeLocationUpdates()
     }
@@ -759,11 +907,12 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
      * */
     private fun updateUI() {
 
-        val intent = Intent(ACTION_BROADCAST)
+        val intent = Intent(ACTION_BROADCAST_UI_UPDATE)
 
         intent.putExtra(DISTANCE, distance)
         intent.putExtra(EXTRA_LOCATION, mLocation)
         intent.putExtra(AUTO_PAUSE_ACTIVE, zeroSpeed)
+        intent.putExtra(HEART_RATE, heartRate)
         if (!zeroSpeed) {
             Log.d(TAG, "Sending normal duration")
             intent.putExtra(
@@ -771,7 +920,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                 System.currentTimeMillis() - start + durationHelper
             )
         } else {
-            Log.d(TAG, "Sendind last duration")
+            Log.d(TAG, "Sending last duration")
             intent.putExtra(
                 DURATION,
                 lastDuration
@@ -867,11 +1016,13 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         private val TAG = LocationUpdatesService::class.java.simpleName
 
         private const val CHANNEL_ID = "channel_01"
-        const val ACTION_BROADCAST =
+        const val ACTION_BROADCAST_UI_UPDATE =
             "$PACKAGE_NAME.broadcast"
+        const val ACTION_BROADCAST_HEART_RATE_CONNECTION = "$PACKAGE_NAME.broadcastHrConnection"
         const val DIFFERENCE = "difference"
         const val EXTRA_LOCATION =
             "$PACKAGE_NAME.location"
+        const val HEART_RATE = "$PACKAGE_NAME.heartRate"
         const val DISTANCE = "$PACKAGE_NAME.distance"
         const val DURATION = "$PACKAGE_NAME.duration"
         const val ELEVATION_GAINED = "$PACKAGE_NAME.elevationGained"
@@ -893,6 +1044,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         const val NOTIFICATION_ID = 12345678
         var previousChallenge: ArrayList<MyLocation> = ArrayList()
         private const val TTS_ID = "VoiceCoach"
-        private const val LOCATION_SAVE_NUMBER = 5
+        private const val LOCATION_SAVE_NUMBER = 3
     }
 }
