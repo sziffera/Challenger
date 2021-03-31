@@ -26,7 +26,7 @@
     <string name="_00_00" translatable="false">00:00</string>
     <string name="running">running</string>
     <string name="name">Name</string>
-    <string name="distance">distance</string>
+    <string name="distance">Distance</string>
     <string name="avgspeed">avg Speed</string>
     <string name="duration">duration</string>
     <string name="max_speed">max Speed</string>
@@ -52,7 +52,7 @@
     <string name="reset_password">Reset password</string>
     <string name="sign_out">Sign-out</string>
     <string name="settings_icon" translatable="false">settings icon</string>
-    <string name="update_your_profile">Update your profile</string>
+    <string name="update_your_profile">Settings</string>
     <string name="update_profile">Update profile</string>
     <string name="avg_pace">avg pace</string>
     <string name="_0_00_min_km" translatable="false">0:00 min/km</string>
@@ -147,7 +147,7 @@
     <string name="ride_settings">Ride settings</string>
     <string name="start_stop_pause">Start, Stop, Pause</string>
     <string name="difference">Difference</string>
-    <string name="last_update_warning">The last update was not long ago</string>
+    <string name="last_update_warning">Your feed is up-to-date</string>
     <string name="altitude">Altitude</string>
     <string name="_0m" translatable="false">0m</string>
     <string name="create">Create</string>
@@ -172,7 +172,7 @@
     <string name="acceptable">Acceptable</string>
     <string name="please_wait">Please wait a second, your data is being fetched</string>
     <string name="save_ok">Challenge saved successfully!</string>
-    <string name="cant_save">Can\'t save challenge, somethin happened</string>
+    <string name="cant_save">Can\'t save challenge, something happened</string>
     <string name="please_name_challenge">Please name the challenge!</string>
     <string name="back_to_recording">Back to recording</string>
     <string name="neck">Neck</string>
@@ -189,4 +189,47 @@
     <string name="height_in_cm">height in cm</string>
     <string name="weight_in_kg">Weight in kg</string>
     <string name="this_year">This year</string>
+    <string name="title_activity_main2" translatable="false">MainActivity</string>
+    <string name="hello_blank_fragment" translatable="false">Hello blank fragment</string>
+    <string name="feed">Feed</string>
+    <string name="profile">Profile</string>
+    <string name="training">Training</string>
+    <string name="weather">Weather</string>
+    <string name="set_your_goal">Set your goal!</string>
+    <string name="avgspeed_2">Avg speed:</string>
+    <string name="duration_hh_mm">Duration - HH:MM</string>
+    <string name="distance_km">Distance - km</string>
+    <string name="current_weather">Current weather</string>
+    <string name="feels_like">Feels like</string>
+    <string name="_4_day_weather_forecast">4-day weather forecast</string>
+    <string name="few_clouds">Few clouds</string>
+    <string name="connect_to_heart_rate_sensor">Connect Heart Rate sensor</string>
+    <string name="this_month">This month</string>
+    <string name="this_week">This week</string>
+    <string name="all_time">All time</string>
+    <string name="statistics">Statistics</string>
+    <string name="save_email_and_username">Update email and username</string>
+    <string name="weather_alerts">Weather alerts</string>
+    <string name="weather_alert_description">If you turn weather alerts on, you will be warned in case of high UV and strong wind before starting your activities</string>
+    <string name="voice_coach_settings_description">Here, you can personalize the Voice Coach.  If you turn on an item, the Voice Coach will inform you about it during your activities</string>
+    <string name="strong_wind_alert">The wind is strong, take care of yourself, especially on your bike!</string>
+    <string name="weather_alert">Weather alert</string>
+    <string name="high_uv_alert">The UV index is dangerous, you can get sunburned within a few minutes! Wear something light to protect your skin and use suncream! Please notice that on your bike, you can underestimate the power of sun.</string>
+    <string name="uv_alert">UV alert</string>
+    <string name="wind_alert">Wind alert</string>
+    <string name="settings">Settings</string>
+    <string name="_48_hour_forecast">48 hour forecast</string>
+    <string name="humidity">Humidity</string>
+    <string name="next_48_hours">Next 48 hours</string>
+    <string name="next_7_days">Next 7 days</string>
+    <string name="connected">Heart Rate sensor connected</string>
+    <string name="connecting">Connecting…</string>
+    <string name="heart_rate">Heart rate</string>
+    <string name="backup_data_to_cloud">Backup data to cloud</string>
+    <string name="longest_run">Longest run</string>
+    <string name="total_time">Total time</string>
+    <string name="runs">Runs</string>
+    <string name="longest_ride">Longest ride</string>
+    <string name="rides">Rides</string>
+    <string name="share_challenge">Share with</string>
 </resources>

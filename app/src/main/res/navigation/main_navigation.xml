@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_navigation"
+    app:startDestination="@id/navigation_feed">
+
+    <fragment
+        android:id="@+id/navigation_feed"
+        android:name="com.sziffer.challenger.ui.FeedFragment"
+        android:label="@string/feed"
+        tools:layout="@layout/fragment_feed" />
+
+    <fragment
+        android:id="@+id/navigation_weather"
+        android:name="com.sziffer.challenger.ui.WeatherFragment"
+        android:label="@string/weather"
+        tools:layout="@layout/fragment_weather" />
+
+    <fragment
+        android:id="@+id/navigation_create"
+        android:name="com.sziffer.challenger.ui.CreateFragment"
+        android:label="@string/create_a_challenge"
+        tools:layout="@layout/fragment_create" />
+
+    <activity
+        android:id="@+id/navigation_record"
+        android:name="com.sziffer.challenger.ui.ChallengeRecorderActivity"
+        android:label="@string/record_activity"
+        tools:layout="@layout/activity_challenge_recorder" />
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.sziffer.challenger.ui.ProfileFragment"
+        android:label="@string/profile"
+        tools:layout="@layout/fragment_profile" />
+
+
+</navigation>

@@ -16,7 +16,7 @@
         android:layout_height="0dp"
         android:layout_marginBottom="5dp"
         android:layout_weight="1"
-        tools:context=".ChallengeRecorderActivity" />
+        tools:context=".ui.ChallengeRecorderActivity" />
 
 
     <LinearLayout
@@ -378,7 +378,7 @@
             android:textSize="14sp" />
 
         <Button
-            android:id="@+id/setUpCadenceSensorButton"
+            android:id="@+id/setUpHeartRateSensor"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"

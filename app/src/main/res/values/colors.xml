@@ -13,4 +13,6 @@
     <color name="colorGreen">#00E676</color>
     <color name="colorPrimaryDarkLightOpacity">#993C93B4</color>
     <color name="colorWindYellow">#FDD835</color>
+    <color name="colorDarkBlueLightOpacity">#4D006584</color>
+    <color name="colorDarkBlue">#006584</color>
 </resources>

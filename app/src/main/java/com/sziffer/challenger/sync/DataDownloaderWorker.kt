@@ -10,7 +10,7 @@ import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.model.Challenge
-import com.sziffer.challenger.user.UserManager
+import com.sziffer.challenger.model.UserManager
 import java.util.concurrent.CountDownLatch
 
 class DataDownloaderWorker(

@@ -69,7 +69,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth:20.0.3'
     implementation 'com.firebaseui:firebase-ui-auth:6.2.0'
     implementation 'com.firebaseui:firebase-ui-database:6.2.1'
-    implementation 'com.google.firebase:firebase-database:19.6.0'
+    implementation 'com.google.firebase:firebase-database:19.7.0'
     implementation 'com.google.android.gms:play-services-maps:17.0.0'
     implementation 'com.google.android.gms:play-services-location:18.0.0'
     implementation 'com.google.maps.android:android-maps-utils:2.2.0'
@@ -85,7 +85,7 @@ dependencies {
     implementation 'androidx.gridlayout:gridlayout:1.0.0'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation 'com.google.firebase:firebase-analytics:18.0.2'
-    implementation 'com.google.firebase:firebase-crashlytics:17.3.1'
+    implementation 'com.google.firebase:firebase-crashlytics:17.4.0'
     implementation "android.arch.lifecycle:extensions:1.1.1"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
 
@@ -97,6 +97,27 @@ dependencies {
     implementation ('com.github.psambit9791:jdsp:0.6.0') {
         exclude group: 'org.apache.maven.surefire', module: 'common-java5'
     }
+
+    def lifecycle_version = "2.2.0-rc03"
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-common-java8:2.3.0"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.0"
+
+    def nav_version = "2.3.4"
+    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
+    implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.3.4'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.3.4'
+
+
+    //BLE
+    implementation 'com.github.weliem:blessed-android:2.0.3'
+
+    //Blurred view
+    implementation 'jp.wasabeef:blurry:4.0.0'
+
     /*
     //Switcher
     implementation 'com.bitvale:switcher:1.1.0'

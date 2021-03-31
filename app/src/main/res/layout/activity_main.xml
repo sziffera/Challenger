@@ -6,217 +6,74 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background"
-    tools:context=".MainActivity">
+    tools:context=".ui.MainActivity">
 
-    <TextView
-        android:id="@+id/chooseChallenge"
-        android:layout_width="0dp"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="74dp"
-        android:layout_marginEnd="32dp"
-        android:gravity="center"
-        android:text="@string/choose_a_challenge"
-        android:textAllCaps="true"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipeRefreshLayout"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:titleTextColor="@android:color/white">
+
+            </androidx.appcompat.widget.Toolbar>
+
+            <ImageView
+                android:id="@+id/settingsImageButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:src="@drawable/settings_gear"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@android:color/white" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp"
+        android:background="#FC1B4251"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintRight_toRightOf="parent"
+        app:itemIconTint="@color/bottom_nav_bar_selector"
+        app:itemTextColor="@color/bottom_nav_bar_selector"
+        app:menu="@menu/main_bottom_nav_menu" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="5dp"
-        app:layout_constraintBottom_toTopOf="@+id/showMoreButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/chooseChallenge">
+        app:defaultNavHost="true"
+        app:layout_constraintBottom_toTopOf="@id/nav_view"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
+        app:navGraph="@navigation/main_navigation" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@color/colorLightOpacity"
-            android:padding="5dp"
-            android:visibility="visible">
-
-        </androidx.recyclerview.widget.RecyclerView>
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
-    <Button
-        android:id="@+id/showMoreButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/show_more"
-
-        android:background="@android:color/transparent"
-        app:layout_constraintBottom_toTopOf="@id/createChallengeButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="20dp"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/createChallengeButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:shadowColor="@color/colorLightOpacity"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/round_edittext"
-        android:text="@string/create_a_challenge"
-        android:textColor="@color/colorAccent"
-        android:textSize="17sp"
-        app:layout_constraintBottom_toTopOf="@+id/recordActivityButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/recordActivityButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="20dp"
-        android:background="@drawable/round_edittext"
-        android:shadowColor="@color/colorLightOpacity"
-        android:text="@string/record_activity"
-        android:textColor="@color/colorAccent"
-        android:textSize="17sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <ImageButton
-        android:id="@+id/userProfileimageButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:background="#00FFFFFF"
-        android:contentDescription="@string/profile_icon"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_account_circle_24px" />
-
-    <ImageView
-        android:id="@+id/emptyImageView"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:visibility="gone"
-        android:layout_marginBottom="50dp"
-        app:layout_constraintBottom_toTopOf="@+id/showMoreButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/bikerwithmountain" />
-
-    <TextView
-        android:id="@+id/takeATourTextView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="45dp"
-        android:layout_marginTop="45dp"
-        android:gravity="center"
-        android:visibility="gone"
-        android:textAllCaps="true"
-        android:textSize="20sp"
-        android:layout_marginEnd="32dp"
-        android:text="@string/or_take_a_tour_inside_the_app_at_first"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/emptyImageView" />
-
-    <Button
-        android:id="@+id/takeATourButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/round_edittext"
-        android:paddingHorizontal="10dp"
-        android:text="@string/take_a_tour"
-        android:backgroundTint="#DCDCDC"
-        android:textColor="@color/colorAccent"
-        android:textSize="17sp"
-
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/takeATourTextView" />
-
-    <TextView
-        android:id="@+id/heyUserTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:textAllCaps="true"
-        android:textSize="17sp"
-        android:layout_marginBottom="24dp"
-        android:text=""
-        app:layout_constraintBottom_toTopOf="@+id/chooseChallenge"
-        app:layout_constraintStart_toEndOf="@+id/userProfileimageButton" />
-
-    <TextView
-        android:id="@+id/weatherDegreesTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:visibility="invisible"
-        android:layout_marginEnd="16dp"
-        android:text="20°C"
-        android:textAllCaps="true"
-        android:textSize="25sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/windDirectionImageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
-        android:layout_marginEnd="15dp"
-        android:visibility="invisible"
-        app:layout_constraintEnd_toStartOf="@+id/weatherDegreesTextView"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_outline_keyboard_return_24" />
-
-    <TextView
-        android:id="@+id/windSpeedTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="5dp"
-        android:visibility="invisible"
-        android:text="5km/h"
-        app:layout_constraintEnd_toStartOf="@id/weatherDegreesTextView"
-        app:layout_constraintTop_toBottomOf="@+id/windDirectionImageView" />
-
-    <LinearLayout
-        android:id="@+id/uvLinearLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="10dp"
-        android:orientation="vertical"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="@id/windSpeedTextView"
-        app:layout_constraintEnd_toStartOf="@+id/windSpeedTextView">
-
-        <TextView
-            android:id="@+id/textView21"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="UV" />
-
-        <TextView
-            android:id="@+id/uvIndexTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="7.8" />
-
-    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

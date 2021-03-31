@@ -4,7 +4,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".ChallengeDetailsActivity"
+    tools:context=".ui.ChallengeDetailsActivity"
     android:background="@drawable/gradient_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -22,6 +22,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <Button
+                android:visibility="gone"
+                android:layout_gravity="center"
+                android:id="@+id/writeToFileButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="write to file" />
+
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="450dp">
@@ -32,7 +40,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_marginHorizontal="12dp"
-                    tools:context=".ChallengeDetailsActivity" />
+                    tools:context=".ui.ChallengeDetailsActivity" />
 
                 <ImageView
                     android:id="@+id/transparentImageView"
@@ -75,7 +83,8 @@
                     android:layout_weight="1"
                     android:layout_height="25dp"
                     android:layout_gravity="center"
-                    app:srcCompat="@drawable/cycling" />
+                    app:srcCompat="@drawable/cycling"
+                    app:tint="@android:color/white" />
 
                 <Space
                     android:layout_width="100dp"

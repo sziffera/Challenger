@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="12dp"
-    android:background="#4D000000">
+    android:backgroundTint="#4D000000"
+    android:background="@drawable/round_edittext">
 
 
     <TextView

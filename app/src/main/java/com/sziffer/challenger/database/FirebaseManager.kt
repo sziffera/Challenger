@@ -22,6 +22,7 @@ object FirebaseManager {
                 null
         }
 
+
     val currentUsersChallenges: DatabaseReference? = currentUserRef?.child("challenges")
 
     /** returns whether the user is logged in or not */

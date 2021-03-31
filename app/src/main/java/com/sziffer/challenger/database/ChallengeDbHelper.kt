@@ -120,9 +120,7 @@ class ChallengeDbHelper(context: Context) :
                 )
             }
         }
-
         cursor.close()
-
         return null
     }
 
@@ -226,5 +224,7 @@ class ChallengeDbHelper(context: Context) :
         const val KEY_DATE = "date"
         const val KEY_FIREBASE_ID = "firebaseId"
         const val KEY_TYPE = "type"
+        const val KEY_HEART_RATE = "heartRate"
+        const val KEY_CADENCE = "cadence"
     }
 }

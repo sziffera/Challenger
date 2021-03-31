@@ -16,7 +16,7 @@ class CustomListDialog(
 ) :
     Dialog(activity) {
 
-    private var recyclerView: RecyclerView? = null
+    private lateinit var recyclerView: RecyclerView
     private var mLayoutManager: RecyclerView.LayoutManager? = null
 
 
@@ -25,16 +25,16 @@ class CustomListDialog(
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(R.layout.list_dialog_layout)
 
-        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView = findViewById(R.id.recycler_view)
         mLayoutManager = LinearLayoutManager(activity)
-        recyclerView?.layoutManager = mLayoutManager
-        recyclerView?.addItemDecoration(
+        recyclerView.layoutManager = mLayoutManager
+        recyclerView.addItemDecoration(
             DividerItemDecoration(
                 activity.applicationContext,
                 DividerItemDecoration.VERTICAL
             )
         )
-        recyclerView?.adapter = adapter
+        recyclerView.adapter = adapter
 
     }
 

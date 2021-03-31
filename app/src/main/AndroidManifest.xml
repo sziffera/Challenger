@@ -21,7 +21,7 @@
 
     <uses-feature
         android:name="android.hardware.bluetooth_le"
-        android:required="true" />
+        android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -33,16 +33,20 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".user.BodyFatCalculatorActivity"
+            android:name=".bluetooth.BluetoothConnectionActivity"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ui.user.BodyFatCalculatorActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ChartsActivity"
+            android:name=".ui.ChartsActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".user.UserSettingsActivity"
+            android:name=".ui.user.UserSettingsActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".user.ForgotPasswordActivity"
+            android:name=".ui.user.ForgotPasswordActivity"
             android:screenOrientation="portrait" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
@@ -62,33 +66,33 @@
             android:foregroundServiceType="location" />
 
         <activity
-            android:name=".ChallengeRecorderActivity"
+            android:name=".ui.ChallengeRecorderActivity"
+            android:exported="true"
             android:label="@string/title_activity_challenge_recorder"
             android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.ChallengeDetailsActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.CreateChallengeActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ChallengeDetailsActivity"
+            android:name=".ui.AllChallengeActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".CreateChallengeActivity"
-            android:exported="true"
+            android:name=".ui.user.UserProfileActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".AllChallengeActivity"
+            android:name=".ui.user.LoginActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".user.UserProfileActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".user.LoginActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".SplashScreenActivity"
+            android:name=".ui.SplashScreenActivity"
             android:theme="@style/AppTheme.Launcher">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
@@ -97,15 +101,12 @@
                 android:resource="@xml/shortcuts" />
         </activity>
         <activity
-            android:name=".user.RegisterActivity"
+            android:name=".ui.user.RegisterActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait" />
-
-
-        <!--File Provider-->
+            android:screenOrientation="portrait" /> <!-- File Provider -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -115,7 +116,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
-
     </application>
 
 </manifest>

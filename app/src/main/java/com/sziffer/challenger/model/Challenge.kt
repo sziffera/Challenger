@@ -14,5 +14,9 @@ data class Challenge(
     var mS: Double = 0.0,
     var avg: Double = 0.0,
     var dur: Long = 0,
-    var routeAsString: String = ""
+    var routeAsString: String = "",
+    var cadenceConnected: Boolean = false,
+    var hearRateConnected: Boolean = false,
+    var elevGain: Int = 0,
+    var elevLoss: Int = 0
 ) : Parcelable

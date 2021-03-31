@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background"
     android:orientation="vertical"
-    tools:context=".ChallengeDetailsActivity">
+    tools:context=".ui.ChallengeDetailsActivity">
 
     <TextView
         android:id="@+id/noInternetTextView"
@@ -27,7 +27,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:background="@drawable/gradient_background"
-        tools:context=".user.UserSettingsActivity">
+        tools:context=".ui.user.UserSettingsActivity">
 
         <LinearLayout
             android:id="@+id/linearLayout"

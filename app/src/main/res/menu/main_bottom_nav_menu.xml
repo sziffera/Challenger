@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_feed"
+        android:icon="@drawable/feed"
+        android:title="@string/feed" />
+
+    <item
+        android:id="@+id/navigation_weather"
+        android:icon="@drawable/weather"
+        android:title="@string/weather" />
+
+    <item
+        android:id="@+id/navigation_create"
+        android:icon="@drawable/heart"
+        android:title="@string/training" />
+
+    <item
+        android:id="@+id/navigation_record"
+        android:icon="@drawable/ic_record"
+        android:title="@string/record" />
+
+    <item
+        android:id="@+id/navigation_profile"
+        android:icon="@drawable/person"
+        android:title="@string/profile" />
+
+</menu>

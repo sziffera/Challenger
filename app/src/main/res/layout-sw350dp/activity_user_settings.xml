@@ -1,103 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background"
     android:orientation="vertical"
-    tools:context=".ChallengeDetailsActivity">
+    tools:context=".ui.ChallengeDetailsActivity">
 
-    <TextView
-        android:id="@+id/noInternetTextView"
-        android:layout_width="wrap_content"
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="8dp"
-        android:background="@drawable/round_edittext"
-        android:backgroundTint="@color/colorPlus"
-        android:paddingHorizontal="20dp"
-        android:layout_gravity="center"
-        android:text="@string/no_internet_connection"
-        android:textAllCaps="true"
-        android:textSize="15sp"
-        android:visibility="invisible" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:title="@string/settings"
+                app:layout_constraintStart_toEndOf="@id/backImageButton"
+                app:layout_constraintTop_toTopOf="parent"
+                app:titleTextColor="@android:color/white">
+
+            </androidx.appcompat.widget.Toolbar>
+
+            <ImageView
+                android:id="@+id/backImageButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="16dp"
+                android:src="@drawable/ic_outline_arrow_back_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@android:color/white" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_weight="1"
         android:background="@drawable/gradient_background"
-        tools:context=".user.UserSettingsActivity">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
+        tools:context=".ui.user.UserSettingsActivity">
 
         <LinearLayout
             android:id="@+id/linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="20dp"
+            android:layout_marginHorizontal="16dp"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/textView13"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginBottom="12dp"
-                android:layout_marginTop="35dp"
-                android:text="@string/update_your_profile"
-                android:textAllCaps="true"
-                android:textSize="25sp" />
-
-
-            <EditText
-                android:id="@+id/usernameEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="5dp"
-                android:autofillHints="none"
-                android:background="@drawable/round_edittext"
-                android:backgroundTint="@color/colorLightOpacity"
-                android:drawableStart="@drawable/ic_account_white"
-                android:ems="10"
-                android:gravity="center"
-                android:inputType="textPersonName"
-                android:padding="10dp"
-                android:text="@string/username"
-                android:textColor="@android:color/white"
-                android:textSize="17sp" />
-
-            <EditText
-                android:id="@+id/emailEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="5dp"
-                android:background="@drawable/round_edittext"
-                android:backgroundTint="@color/colorLightOpacity"
-                android:drawableStart="@drawable/ic_email_white"
-                android:ems="10"
-                android:gravity="center"
-                android:inputType="textEmailAddress"
-                android:padding="10dp"
-                android:text="@string/email_address"
-                android:textColor="@android:color/white"
-                android:textSize="17sp" />
-
-
-            <Button
-                android:id="@+id/calculateBodyFatButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:textColor="@color/colorAccent"
-                android:backgroundTint="@android:color/white"
-                android:background="@drawable/round_edittext"
-                android:textSize="17sp"
-                android:text="@string/body_fat_calculator" />
-
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginVertical="15dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="15dp"
                 android:gravity="center"
                 android:text="@string/ride_settings"
                 android:textAllCaps="true" />
@@ -114,8 +89,8 @@
                 android:id="@+id/preventScreenLockSwitch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/prevent_screen_lock"
                 android:layout_marginBottom="15dp"
+                android:text="@string/prevent_screen_lock"
                 android:textAllCaps="true"
                 android:textColor="@android:color/white" />
 
@@ -129,69 +104,167 @@
                 android:id="@+id/textView16"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginVertical="15dp"
+                android:layout_marginTop="15dp"
                 android:gravity="center"
                 android:text="@string/voice_coach_settings"
                 android:textAllCaps="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="2dp"
+                android:text="@string/voice_coach_settings_description"
+                android:textAllCaps="false" />
+
 
             <Switch
                 android:id="@+id/startStopSwitch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="@string/start_stop_pause"
                 android:textAllCaps="true"
-                android:textColor="@android:color/white"
-                android:text="@string/start_stop_pause" />
+                android:textColor="@android:color/white" />
 
             <Switch
                 android:id="@+id/distanceSwitch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="@string/distance"
                 android:textAllCaps="true"
-                android:textColor="@android:color/white"
-                android:text="@string/distance" />
+                android:textColor="@android:color/white" />
 
             <Switch
                 android:id="@+id/durationSwitch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="@string/duration"
                 android:textAllCaps="true"
-                android:textColor="@android:color/white"
-                android:text="@string/duration" />
+                android:textColor="@android:color/white" />
 
             <Switch
                 android:id="@+id/avgSpeedSwitch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="@string/average_speed"
                 android:textAllCaps="true"
-                android:textColor="@android:color/white"
-                android:text="@string/average_speed" />
+                android:textColor="@android:color/white" />
 
             <Switch
                 android:id="@+id/differenceSwitch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAllCaps="true"
-                android:textColor="@android:color/white"
                 android:layout_marginBottom="15dp"
-                android:text="@string/difference" />
+                android:text="@string/difference"
+                android:textAllCaps="true"
+                android:textColor="@android:color/white" />
+
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="15dp"
+                android:gravity="center"
+                android:text="@string/weather_alerts"
+                android:textAllCaps="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="2dp"
+                android:text="@string/weather_alert_description"
+                android:textAllCaps="false" />
+
+            <Switch
+                android:id="@+id/uvAlert"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="@string/uv_alert"
+                android:textAllCaps="true"
+                android:textColor="@android:color/white" />
+
+            <Switch
+                android:id="@+id/windAlert"
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dp"
+                android:text="@string/wind_alert"
+                android:textAllCaps="true"
+                android:textColor="@android:color/white" />
+
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider" />
+
+
+            <EditText
+                android:id="@+id/usernameEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="5dp"
+                android:autofillHints="none"
+                android:background="@drawable/round_edittext"
+                android:backgroundTint="@color/colorLightOpacity"
+                android:drawableStart="@drawable/ic_account_white"
+                android:ems="10"
+                android:gravity="center"
+                android:padding="10dp"
+                android:text="@string/username"
+                android:textColor="@android:color/white"
+                android:textSize="17sp"
+                android:visibility="gone" />
+
+            <EditText
+                android:id="@+id/emailEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="5dp"
+                android:autofillHints="@string/email_address"
+                android:background="@drawable/round_edittext"
+                android:backgroundTint="@color/colorLightOpacity"
+                android:drawableStart="@drawable/ic_email_white"
+                android:ems="10"
+                android:gravity="center"
+                android:padding="10dp"
+                android:text="@string/email_address"
+                android:textColor="@android:color/white"
+                android:textSize="17sp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/updateProfileButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/round_edittext"
+                android:text="@string/save_email_and_username"
+                android:textColor="@color/colorAccent"
+                android:textSize="17sp"
+                android:visibility="gone">
+
+            </Button>
+
 
         </LinearLayout>
 
 
     </ScrollView>
 
-    <Button
-        android:id="@+id/updateProfileButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="20dp"
-        android:background="@drawable/round_edittext"
-        android:text="@string/update_profile"
-        android:textColor="@color/colorAccent"
-        android:textSize="17sp">
 
-    </Button>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

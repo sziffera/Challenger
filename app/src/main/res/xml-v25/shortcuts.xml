@@ -10,12 +10,12 @@
         android:shortcutShortLabel="@string/record_activity">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetClass="com.sziffer.challenger.MainActivity"
+            android:targetClass="com.sziffer.challenger.ui.MainActivity"
             android:targetPackage="com.sziffer.challenger" />
         <intent
             android:action="RANDOM"
             android:targetPackage="com.sziffer.challenger"
-            android:targetClass="com.sziffer.challenger.ChallengeRecorderActivity" />
+            android:targetClass="com.sziffer.challenger.ui.ChallengeRecorderActivity" />
 
     </shortcut>
 

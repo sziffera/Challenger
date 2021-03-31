@@ -5,7 +5,7 @@
     android:background="@drawable/gradient_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".CreateChallengeActivity">
+    tools:context=".ui.CreateChallengeActivity">
 
     <TextView
         android:id="@+id/textView9"

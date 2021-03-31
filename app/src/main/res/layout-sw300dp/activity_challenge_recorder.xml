@@ -16,7 +16,7 @@
         android:layout_height="0dp"
         android:layout_marginBottom="5dp"
         android:layout_weight="1"
-        tools:context=".ChallengeRecorderActivity" />
+        tools:context=".ui.ChallengeRecorderActivity" />
 
 
     <LinearLayout
@@ -42,7 +42,7 @@
                 android:gravity="center"
                 android:letterSpacing="0.1"
                 android:text="@string/_00_00"
-                android:textSize="50sp" />
+                android:textSize="40sp" />
 
             <View
                 android:id="@+id/divider5"
@@ -72,7 +72,7 @@
                 <ImageButton
                     android:id="@+id/muteVoiceCoachButton"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="30dp"
                     android:layout_weight="1"
                     android:backgroundTint="@android:color/transparent"
                     android:tint="@android:color/white"
@@ -81,11 +81,12 @@
                 <ImageView
                     android:id="@+id/activityTypeImageView"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="30dp"
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1"
                     android:contentDescription="@string/activity_type"
-                    app:srcCompat="@drawable/cycling" />
+                    app:srcCompat="@drawable/cycling"
+                    app:tint="@android:color/white" />
             </LinearLayout>
 
             <View
@@ -116,7 +117,7 @@
                 android:text="@string/speed"
                 android:textAllCaps="true"
                 android:textColor="@android:color/white"
-                android:textSize="12sp" />
+                android:textSize="8sp" />
 
             <View
                 android:id="@+id/divider8"
@@ -135,7 +136,7 @@
                 android:gravity="center"
                 android:text="@string/_0_0_km"
                 android:textColor="@android:color/white"
-                android:textSize="35sp" />
+                android:textSize="30sp" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -145,7 +146,7 @@
                 android:text="@string/distance"
                 android:textAllCaps="true"
                 android:textColor="@android:color/white"
-                android:textSize="12sp" />
+                android:textSize="8sp" />
 
             <View
                 android:id="@+id/divider9"
@@ -172,7 +173,7 @@
                     android:gravity="center"
                     android:text="@string/_0_0_km_h"
                     android:textColor="@android:color/white"
-                    android:textSize="25sp" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:id="@+id/maxSpeedTextView"
@@ -183,7 +184,7 @@
                     android:gravity="center"
                     android:text="@string/_0_0_km_h"
                     android:textColor="@android:color/white"
-                    android:textSize="25sp" />
+                    android:textSize="18sp" />
 
             </LinearLayout>
 
@@ -204,7 +205,7 @@
                     android:text="@string/average_speed"
                     android:textAllCaps="true"
                     android:textColor="@android:color/white"
-                    android:textSize="12sp" />
+                    android:textSize="8sp" />
 
                 <TextView
                     android:layout_width="0dp"
@@ -215,7 +216,7 @@
                     android:text="@string/max_speed"
                     android:textAllCaps="true"
                     android:textColor="@android:color/white"
-                    android:textSize="12sp" />
+                    android:textSize="8sp" />
             </LinearLayout>
 
 
@@ -227,31 +228,72 @@
                 android:layout_weight="1"
                 android:background="?android:attr/listDivider" />
 
-            <TextView
-                android:id="@+id/altitudeTextView"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center|center_horizontal"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="@string/_0m"
-                android:textAllCaps="true"
-                android:textColor="@android:color/white"
-                android:textSize="25sp"
-                android:visibility="gone" />
+                android:baselineAligned="false">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center|center_horizontal"
-                android:layout_marginTop="7dp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="@string/altitude"
-                android:textAllCaps="true"
-                android:textColor="@android:color/white"
-                android:textSize="15sp"
-                android:visibility="gone" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/heartRateTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center|center_horizontal"
+                        android:gravity="center"
+                        android:text="-"
+                        android:textAllCaps="true"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center|center_horizontal"
+                        android:layout_marginTop="7dp"
+                        android:gravity="center"
+                        android:text="@string/heart_rate"
+                        android:textAllCaps="true"
+                        android:textColor="@android:color/white"
+                        android:textSize="8sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/altitudeTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center|center_horizontal"
+                        android:gravity="center"
+                        android:text="@string/_0m"
+                        android:textAllCaps="true"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center|center_horizontal"
+                        android:layout_marginTop="7dp"
+                        android:gravity="center"
+                        android:text="@string/altitude"
+                        android:textAllCaps="true"
+                        android:textColor="@android:color/white"
+                        android:textSize="8sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
 
@@ -260,7 +302,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="12dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:visibility="visible">
 
 
             <Button
@@ -338,7 +381,8 @@
                 android:textSize="15sp"
                 app:chipBackgroundColor="@color/bg_chip_state_list"
                 app:chipIcon="@drawable/cycling"
-                app:chipIconEnabled="true" />
+                app:chipIconEnabled="true"
+                app:chipIconTint="@android:color/white" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/runningChip"
@@ -379,15 +423,15 @@
             android:textSize="14sp" />
 
         <Button
-            android:id="@+id/setUpCadenceSensorButton"
+            android:id="@+id/setUpHeartRateSensor"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:background="@android:color/transparent"
             android:drawableStart="@drawable/ic_baseline_settings_bluetooth_24"
             android:paddingHorizontal="10dp"
-            android:text="@string/set_up_cadence_sensor"
-            android:visibility="gone" />
+            android:text="@string/connect_to_heart_rate_sensor"
+            android:visibility="visible" />
 
         <Button
             android:id="@+id/firstStartButton"
