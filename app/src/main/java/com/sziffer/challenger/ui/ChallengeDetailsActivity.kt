@@ -68,6 +68,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var update: Boolean = false
     private var isItAChallenge: Boolean = false
     private var avgSpeed: Double = 0.0
+    private var maxHr = -1
+    private var avgHr = -1
     private var start: Long = 0
 
     private lateinit var binding: ActivityChallengeDetailsBinding
@@ -120,6 +122,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     .putExtra(ChartsActivity.AVG_SPEED, challenge.avg)
                     .putExtra(ChartsActivity.ELEVATION_GAIN, elevGain)
                     .putExtra(ChartsActivity.ELEVATION_LOSS, elevLoss)
+                    .putExtra(ChartsActivity.SHOW_HR, maxHr > 0)
             )
         }
 
@@ -368,11 +371,26 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
                 val polylineOptions = PolylineOptions()
                 val elevationArray = DoubleArray(route!!.size)
-                for ((index, i) in route!!.withIndex()) {
+                var hrSum = 0
+                var hr = false
+                if (route?.get(0)?.hr == -1) {
+                    for ((index, i) in route!!.withIndex()) {
 
-                    builder.include(i.latLng)
-                    elevationArray[index] = i.altitude
-                    polylineOptions.add(i.latLng)
+                        builder.include(i.latLng)
+                        elevationArray[index] = i.altitude
+                        polylineOptions.add(i.latLng)
+                    }
+                } else {
+                    hr = true
+                    for ((index, i) in route!!.withIndex()) {
+                        hrSum += i.hr
+                        if (i.hr > maxHr)
+                            maxHr = i.hr
+                        builder.include(i.latLng)
+                        elevationArray[index] = i.altitude
+                        polylineOptions.add(i.latLng)
+                    }
+                    avgHr = hrSum.div(route!!.size)
                 }
 
                 if (elevationArray.size > 100) {
@@ -403,6 +421,12 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     mMap.animateCamera(cu)
                     binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
                     binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
+                    if (hr) {
+                        binding.apply {
+                            maxHeartRateTextView?.text = "$maxHr bpm"
+                            avgHeartRateTextView?.text = "$avgHr bpm"
+                        }
+                    }
                 }
 
             }

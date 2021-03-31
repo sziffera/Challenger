@@ -27,7 +27,7 @@
     <string name="running">running</string>
     <string name="name">Name</string>
     <string name="distance">Distance</string>
-    <string name="avgspeed">avg Speed</string>
+    <string name="avgspeed">Avg speed</string>
     <string name="duration">duration</string>
     <string name="max_speed">max Speed</string>
     <string name="show_more">show more</string>
@@ -232,4 +232,7 @@
     <string name="longest_ride">Longest ride</string>
     <string name="rides">Rides</string>
     <string name="share_challenge">Share with</string>
+    <string name="avg_heart_rate">Avg heart rate</string>
+    <string name="max_heart_rate">Max heart rate</string>
+    <string name="altitude_in_metres">Altitude in metres</string>
 </resources>

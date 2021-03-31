@@ -199,4 +199,7 @@
     <string name="longest_ride">Leghosszabb út</string>
     <string name="rides">Kerékpározások száma</string>
     <string name="share_challenge">Megosztás</string>
+    <string name="avg_heart_rate">Átlagos pulzus</string>
+    <string name="max_heart_rate">Max pulzus</string>
+    <string name="altitude_in_metres">Magasság (méterben)</string>
 </resources>

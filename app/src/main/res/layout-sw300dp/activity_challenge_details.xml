@@ -80,9 +80,9 @@
                 <ImageView
                     android:id="@+id/challengeTypeImageView"
                     android:layout_width="20dp"
-                    android:layout_weight="1"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
+                    app:tint="@android:color/white"
                     app:srcCompat="@drawable/cycling" />
 
                 <Space
@@ -91,9 +91,8 @@
 
                 <Button
                     android:id="@+id/shareChallengeButton"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="35dp"
-                    android:layout_weight="1"
                     android:layout_gravity="end"
                     android:background="@android:color/transparent"
                     android:textColor="@android:color/white"
@@ -109,7 +108,7 @@
                 android:background="@color/colorLightOpacity"
                 android:padding="10dp"
                 app:columnCount="2"
-                app:rowCount="7">
+                app:rowCount="9">
 
 
                 <TextView
@@ -323,6 +322,69 @@
                     app:layout_columnWeight="1"
                     app:layout_gravity="center|left"
                     app:layout_row="6"
+                    app:layout_rowWeight="1" />
+
+
+                <TextView
+
+                    android:id="@+id/avgHeartRateTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:gravity="fill"
+                    android:text="-"
+                    android:textAllCaps="true"
+                    android:textSize="13sp"
+                    app:layout_column="1"
+                    app:layout_columnWeight="1"
+                    app:layout_gravity="right"
+                    app:layout_row="7"
+                    app:layout_rowWeight="1" />
+
+                <TextView
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:gravity="fill"
+                    android:text="@string/avg_heart_rate"
+                    android:textAllCaps="true"
+                    android:textSize="13sp"
+                    app:layout_column="0"
+                    app:layout_columnWeight="1"
+                    app:layout_gravity="center|left"
+                    app:layout_row="7"
+                    app:layout_rowWeight="1" />
+
+                <TextView
+
+                    android:id="@+id/maxHeartRateTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:gravity="fill"
+                    android:text="-"
+                    android:textAllCaps="true"
+                    android:textSize="13sp"
+                    app:layout_column="1"
+                    app:layout_columnWeight="1"
+                    app:layout_gravity="right"
+                    app:layout_row="8"
+                    app:layout_rowWeight="1" />
+
+                <TextView
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:gravity="fill"
+                    android:text="@string/max_heart_rate"
+                    android:textAllCaps="true"
+                    android:textSize="13sp"
+                    app:layout_column="0"
+                    app:layout_columnWeight="1"
+                    app:layout_gravity="center|left"
+                    app:layout_row="8"
                     app:layout_rowWeight="1" />
 
 

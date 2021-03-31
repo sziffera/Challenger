@@ -85,8 +85,11 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
         supportActionBar?.title = if (userManager.username == null)
             "Challenger"
-        else
-            "${getString(R.string.hey)}, ${userManager.username}!"
+        else {
+            if (userManager.username == "Biliczki Judit")
+                "Hajrá Cukim!"
+            else "${getString(R.string.hey)}, ${userManager.username}!"
+        }
 
         binding.settingsImageButton.setOnClickListener {
             startActivity(

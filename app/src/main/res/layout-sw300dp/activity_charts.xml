@@ -77,5 +77,22 @@
 
         </LinearLayout>
 
+
+        <TextView
+            android:id="@+id/hrChartTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/heart_rate"
+            android:gravity="center"
+            android:layout_marginVertical="12dp"
+            android:textSize="17sp"
+            android:textAllCaps="true" />
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/heartRateLineChart"
+            android:layout_width="match_parent"
+            android:layout_marginBottom="20dp"
+            android:layout_height="300dp" />
+
     </LinearLayout>
 </ScrollView>
