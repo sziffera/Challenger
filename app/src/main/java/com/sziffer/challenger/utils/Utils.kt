@@ -147,9 +147,8 @@ fun sameWeek(date: Date): Boolean {
     val cal2 = Calendar.getInstance(Locale.GERMANY)
     cal1.time = Date()
     cal2.time = date
-    return cal1[Calendar.WEEK_OF_MONTH] == cal2[Calendar.WEEK_OF_MONTH] &&
+    return cal1[Calendar.WEEK_OF_YEAR] == cal2[Calendar.WEEK_OF_YEAR] &&
             cal1[Calendar.YEAR] == cal2[Calendar.YEAR]
-            && cal1[Calendar.MONTH] == cal2[Calendar.MONTH]
 }
 
 fun sameYear(date: Date): Boolean {
