@@ -21,7 +21,7 @@
     <string name="title_activity_maps">Térkép</string>
     <string name="pause">Szünet</string>
     <string name="save">Mentés</string>
-    <string name="add_a_name">Adj meg egy nevet</string>
+    <string name="add_a_name">Nevezd el a sportolást</string>
     <string name="running">Futás</string>
     <string name="name">Név</string>
     <string name="distance">Távolság</string>
@@ -157,7 +157,7 @@
     <string name="please_fill_required_fields">Kérlek tölts ki minden mezőt!</string>
     <string name="height_in_cm">Magasság (cm)</string>
     <string name="weight_in_kg">Súly (kg)</string>
-    <string name="this_year">Ebben az évben</string>
+    <string name="this_year">Idén</string>
     <string name="feed">Kezdőlap</string>
     <string name="profile">Profil</string>
     <string name="training">Edzés</string>
@@ -171,8 +171,8 @@
     <string name="_4_day_weather_forecast">4 napos előrejelzés</string>
     <string name="few_clouds">Elszórtan felhős</string>
     <string name="connect_to_heart_rate_sensor">Pulzusmérő csatlakoztatása</string>
-    <string name="this_month">Ebben a hónapban</string>
-    <string name="this_week">Ezen a héten</string>
+    <string name="this_month">Hónapban</string>
+    <string name="this_week">Héten</string>
     <string name="all_time">Összesen</string>
     <string name="statistics">Statisztikák</string>
     <string name="save_email_and_username">Email cím és felhasznónév frissítése</string>
@@ -193,13 +193,16 @@
     <string name="connecting">Kapcsolódás...</string>
     <string name="heart_rate">Pulzus</string>
     <string name="backup_data_to_cloud">Biztonsági mentés</string>
-    <string name="longest_run">Leghosszabb futás</string>
+    <string name="longest_run">Max táv</string>
     <string name="total_time">Össz idő</string>
-    <string name="runs">Futások száma</string>
-    <string name="longest_ride">Leghosszabb út</string>
-    <string name="rides">Kerékpározások száma</string>
+    <string name="runs">Aktivitások</string>
+    <string name="longest_ride">Max táv</string>
+    <string name="rides">Aktivitások</string>
     <string name="share_challenge">Megosztás</string>
     <string name="avg_heart_rate">Átlagos pulzus</string>
     <string name="max_heart_rate">Max pulzus</string>
     <string name="altitude_in_metres">Magasság (méterben)</string>
+    <string name="enable_bluetooth">Kérlek kapcsold be a Bluetooth-t!</string>
+    <string name="no_gps_text_weather">Úgy tűnik ki van kapcsolva a GPS. Ahhoz, hogy pontos időjárásadatokat tudjunk szolgáltatni, kérlek kapcsold be.</string>
+    <string name="avg">Átlag:</string>
 </resources>

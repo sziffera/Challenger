@@ -212,19 +212,19 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Rides" />
+                                android:text="@string/rides" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="6dp"
-                                android:text="Total time" />
+                                android:text="@string/total_time" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="6dp"
-                                android:text="Longest ride" />
+                                android:text="@string/longest_ride" />
 
 
                         </LinearLayout>
@@ -462,7 +462,7 @@
 
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Runs"
+                                android:text="@string/runs"
                                 android:textAllCaps="false" />
 
                             <TextView
@@ -471,7 +471,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="6dp"
-                                android:text="Total time"
+                                android:text="@string/total_time"
                                 android:textAllCaps="false" />
 
                             <TextView
@@ -480,7 +480,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="6dp"
-                                android:text="Longest run"
+                                android:text="@string/longest_run"
                                 android:textAllCaps="false" />
 
                         </LinearLayout>

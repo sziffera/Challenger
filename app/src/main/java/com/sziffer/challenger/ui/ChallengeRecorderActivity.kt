@@ -173,7 +173,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 }
             } else {
                 //TODO(show normal alert with open action)
-                Toast.makeText(this, "Please turn on Bluetooth!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.enable_bluetooth), Toast.LENGTH_SHORT)
+                    .show()
             }
         }
 

@@ -9,6 +9,19 @@
     tools:context=".ui.WeatherFragment">
 
 
+    <TextView
+        android:id="@+id/noInternetTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/no_internet_connection"
+        android:gravity="center"
+        android:visibility="invisible"
+        android:background="@color/colorPlus"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
     <ImageView
         android:id="@+id/weatherBackgroundImageView"
         android:layout_width="0dp"
@@ -47,14 +60,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/noInternetTextView">
 
         <TextView
             android:id="@+id/textView10"
             android:layout_width="wrap_content"
             android:layout_marginHorizontal="12dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="5dp"
             android:gravity="center"
             android:layout_gravity="center"
             android:text="@string/current_weather"

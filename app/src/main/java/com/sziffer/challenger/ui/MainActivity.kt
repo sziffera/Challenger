@@ -1,13 +1,24 @@
 package com.sziffer.challenger.ui
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
+import android.view.Gravity
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import androidx.lifecycle.LifecycleObserver
@@ -71,11 +82,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         fusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(this)
 
-        if (!locationPermissionCheck(this)) {
-            locationPermissionRequest(this, this)
-        } else {
-            checkLastLocation()
-        }
 
         //if the recorder activity crashed, restores the bool for recording (important for ui init)
         val buttonSharedPreferences = getSharedPreferences("button", 0)
@@ -83,10 +89,17 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
         setSupportActionBar(binding.toolbar)
 
+
+        val manager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            buildAlertMessageNoGps()
+            return
+        }
+
         supportActionBar?.title = if (userManager.username == null)
             "Challenger"
         else {
-            if (userManager.username == "Biliczki Judit")
+            if (userManager.username!!.contains("Biliczki Judit"))
                 "Hajrá Cukim!"
             else "${getString(R.string.hey)}, ${userManager.username}!"
         }
@@ -106,6 +119,17 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     }
 
 
+    override fun onStart() {
+        super.onStart()
+        if (!locationPermissionCheck(this)) {
+            locationPermissionRequest(this, this)
+        } else {
+            checkLastLocation()
+        }
+
+    }
+
+
     override fun onSupportNavigateUp() =
         navSectionsStateKeeper.onSupportNavigateUp()
 
@@ -115,8 +139,42 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     }
 
 
-    //region weather
+    private fun buildAlertMessageNoGps() {
 
+        Log.d("UTILS", "Dialog called")
+        val dialogBuilder = AlertDialog.Builder(this, R.style.AlertDialog)
+        val layoutView = layoutInflater.inflate(R.layout.alert_dialog_base, null).apply {
+            findViewById<TextView>(R.id.dialogTitleTextView).text = getString(R.string.no_gps)
+            findViewById<TextView>(R.id.dialogDescriptionTextView).text =
+                getString(R.string.no_gps_text_weather)
+            findViewById<ImageView>(R.id.dialogImageView).setImageDrawable(
+                ContextCompat.getDrawable(
+                    this@MainActivity,
+                    R.drawable.location_off
+                )
+            )
+        }
+        dialogBuilder.setView(layoutView)
+        val alertDialog = dialogBuilder.create().apply {
+            window?.setGravity(Gravity.BOTTOM)
+            window?.attributes?.windowAnimations = R.style.DialogAnimation
+            setCancelable(false)
+            setCanceledOnTouchOutside(false)
+            window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            show()
+        }
+
+        layoutView.findViewById<Button>(R.id.dialogCancelButton).setOnClickListener {
+            alertDialog.dismiss()
+        }
+        layoutView.findViewById<Button>(R.id.dialogOkButton).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            alertDialog.dismiss()
+        }
+    }
+
+    //region weather
+    //TODO(check gps enabled)
     @SuppressLint("MissingPermission") //already checked
     private fun checkLastLocation() {
         fusedLocationProviderClient.lastLocation.addOnCompleteListener {

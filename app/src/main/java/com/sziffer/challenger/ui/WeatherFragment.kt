@@ -1,6 +1,8 @@
 package com.sziffer.challenger.ui
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -18,22 +20,33 @@ import com.sziffer.challenger.model.ActivityMainViewModel
 import com.sziffer.challenger.model.weather.MinuteData
 import com.sziffer.challenger.model.weather.OneCallWeather
 import com.sziffer.challenger.ui.weather.WeatherForecastRecyclerViewAdapter
-import com.sziffer.challenger.utils.getStringFromNumber
-import com.sziffer.challenger.utils.setBeaufortWindColor
-import com.sziffer.challenger.utils.setUvIndexColor
+import com.sziffer.challenger.utils.*
 import java.text.SimpleDateFormat
 import java.util.*
 
 
-class WeatherFragment : Fragment() {
+class WeatherFragment : Fragment(), NetworkStateListener {
 
     private var _binding: FragmentWeatherBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: ActivityMainViewModel by activityViewModels()
 
+
+    private lateinit var myNetworkCallback: MyNetworkCallback
+    private lateinit var connectivityManager: ConnectivityManager
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
+        connectivityManager = requireActivity().getSystemService(Context.CONNECTIVITY_SERVICE)
+                as ConnectivityManager
+        myNetworkCallback = MyNetworkCallback(
+            this, connectivityManager
+        )
+
 
         Log.d("WEATHER", "oncreate")
 
@@ -51,6 +64,21 @@ class WeatherFragment : Fragment() {
         binding.weatherForecastLinearLayout.alpha = 0f
         return binding.root
     }
+
+
+    override fun onStart() {
+        if (connectivityManager.allNetworks.isEmpty()) {
+            binding.noInternetTextView?.visibility = View.VISIBLE
+        }
+        myNetworkCallback.registerCallback()
+        super.onStart()
+    }
+
+    override fun onPause() {
+        myNetworkCallback.unregisterCallback()
+        super.onPause()
+    }
+
 
     @SuppressLint("SetTextI18n")
     private fun setWeather(weatherData: OneCallWeather) {
@@ -124,5 +152,13 @@ class WeatherFragment : Fragment() {
         if (!shouldShowForecast)
             return
 
+    }
+
+    override fun noInternetConnection() {
+        binding.noInternetTextView?.visibility = View.VISIBLE
+    }
+
+    override fun connectedToInternet() {
+        binding.noInternetTextView?.visibility = View.INVISIBLE
     }
 }

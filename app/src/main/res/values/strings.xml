@@ -71,7 +71,7 @@
     <string name="table">Table</string>
     <string name="chart">Chart</string>
     <string name="auto_pause">Auto pause</string>
-    <string name="add_a_name">Add a name</string>
+    <string name="add_a_name">Name your activity</string>
     <string name="it_s_empty_here_let_s_do_some_sports">It\'s empty here, let\'s do some sports!</string>
     <string name="no_date_added">No date added</string>
     <string name="or_take_a_tour_inside_the_app_at_first">Or take a tour inside the app at first</string>
@@ -117,6 +117,7 @@
     <string name="airplane_mode_text">Unfortunately, you can\'t record an activity, if Airplane mode is turned on</string>
     <string name="airplane_is_on">Airplane mode is turned on</string>
     <string name="no_gps">No GPS</string>
+    <string name="no_gps_text_weather">Your GPS seems to be disabled, please enable it to let Challenger fetching weather data</string>
     <string name="no_gps_text">Your GPS seems to be disabled, please enable it</string>
     <string name="ok">Ok</string>
     <string name="record_activity_showcase_text">Here, you can start recording a new activity.
@@ -235,4 +236,6 @@
     <string name="avg_heart_rate">Avg heart rate</string>
     <string name="max_heart_rate">Max heart rate</string>
     <string name="altitude_in_metres">Altitude in metres</string>
+    <string name="enable_bluetooth">Please enable bluetooth</string>
+    <string name="avg">Avg:</string>
 </resources>

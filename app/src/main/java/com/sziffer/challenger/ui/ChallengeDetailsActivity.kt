@@ -272,10 +272,11 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun saveChallenge() {
 
         if (binding.challengeDetailsNameEditText.text.isEmpty()) {
-            binding.challengeDetailsNameEditText.error = getString(R.string.please_name_challenge)
-            return
-        }
-        challenge.name = binding.challengeDetailsNameEditText.text.toString()
+            //binding.challengeDetailsNameEditText.error = getString(R.string.please_name_challenge)
+            //return
+            challenge.name = challenge.type
+        } else
+            challenge.name = binding.challengeDetailsNameEditText.text.toString()
 
         dbHelper.updateChallenge(challenge.id.toInt(), challenge)
 
@@ -497,7 +498,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 )
             } else {
                 canvas.drawText(
-                    "${getStringFromNumber(1, challenge.avg)} km/h",
+                    "${getString(R.string.avg)} ${getStringFromNumber(1, challenge.avg)} km/h",
                     (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
                 )
             }

@@ -118,35 +118,39 @@
                             <TextView
                                 android:id="@+id/cyclingAllTimeTextView"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="end"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:gravity="center|center_vertical|end"
                                 android:text="@string/all_time"
                                 android:textAllCaps="false" />
 
                             <TextView
                                 android:id="@+id/cyclingThisYearTextView"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
                                 android:layout_marginTop="6dp"
-                                android:gravity="end"
+                                android:layout_weight="1"
+                                android:gravity="center|center_vertical|end"
                                 android:text="@string/this_year"
                                 android:textAllCaps="false" />
 
                             <TextView
                                 android:id="@+id/cyclingThisMonthTextView"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
                                 android:layout_marginTop="6dp"
-                                android:gravity="end"
+                                android:layout_weight="1"
+                                android:gravity="center|center_vertical|end"
                                 android:text="@string/this_month"
                                 android:textAllCaps="false" />
 
                             <TextView
                                 android:id="@+id/cyclingThisWeekTextView"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
                                 android:layout_marginTop="6dp"
-                                android:gravity="end"
+                                android:layout_weight="1"
+                                android:gravity="center|center_vertical|end"
                                 android:text="@string/this_week"
                                 android:textAllCaps="false" />
 
@@ -211,21 +215,24 @@
 
                             <TextView
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
                                 android:text="@string/rides"
                                 android:textAllCaps="false" />
 
                             <TextView
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
                                 android:layout_marginTop="6dp"
+                                android:layout_weight="1"
                                 android:text="@string/total_time"
                                 android:textAllCaps="false" />
 
                             <TextView
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
                                 android:layout_marginTop="6dp"
+                                android:layout_weight="1"
                                 android:text="@string/longest_ride"
                                 android:textAllCaps="false" />
 
@@ -243,7 +250,8 @@
 
                                 android:id="@+id/numberOfRides"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
                                 android:gravity="end"
                                 android:text="Rides"
                                 android:textAllCaps="false" />
@@ -252,8 +260,9 @@
 
                                 android:id="@+id/totalRideTime"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
                                 android:layout_marginTop="6dp"
+                                android:layout_weight="1"
                                 android:gravity="end"
                                 android:text="Total time"
                                 android:textAllCaps="false" />
@@ -262,8 +271,9 @@
 
                                 android:id="@+id/longestRide"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="0dp"
                                 android:layout_marginTop="6dp"
+                                android:layout_weight="1"
                                 android:gravity="end"
                                 android:text="Longest ride"
                                 android:textAllCaps="false" />
@@ -550,6 +560,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/backup_data_to_cloud"
                 android:layout_marginTop="16dp"
+                android:visibility="gone"
                 android:layout_marginHorizontal="16dp"
                 android:background="@android:color/transparent"
                 android:textAllCaps="true" />
