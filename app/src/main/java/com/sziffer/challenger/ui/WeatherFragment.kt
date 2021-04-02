@@ -155,10 +155,15 @@ class WeatherFragment : Fragment(), NetworkStateListener {
     }
 
     override fun noInternetConnection() {
-        binding.noInternetTextView?.visibility = View.VISIBLE
+        requireActivity().runOnUiThread {
+            binding.noInternetTextView?.visibility = View.VISIBLE
+        }
+
     }
 
     override fun connectedToInternet() {
-        binding.noInternetTextView?.visibility = View.INVISIBLE
+        requireActivity().runOnUiThread {
+            binding.noInternetTextView?.visibility = View.INVISIBLE
+        }
     }
 }
