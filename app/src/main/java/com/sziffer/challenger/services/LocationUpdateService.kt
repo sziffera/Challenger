@@ -357,7 +357,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     }
 
     fun disconnect() {
-        //todo(leaking receiver)
         try {
             peripheral?.cancelConnection()
             central.close()
@@ -994,7 +993,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     /** Notification helper: creates text for the notification with time and duration */
     private fun getNotificationText(): String {
         return getString(R.string.distance) + ": " + getStringFromNumber(
-            1,
+            2,
             distance / 1000
         ) + getString(R.string.km) + ", " + getString(
             R.string.duration
