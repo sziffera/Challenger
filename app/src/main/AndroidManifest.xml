@@ -33,10 +33,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".bluetooth.BluetoothConnectionActivity"
-            android:screenOrientation="portrait" />
-
-        <activity
             android:name=".ui.user.BodyFatCalculatorActivity"
             android:screenOrientation="portrait" />
         <activity
