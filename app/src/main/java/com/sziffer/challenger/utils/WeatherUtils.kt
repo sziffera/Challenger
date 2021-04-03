@@ -2,10 +2,13 @@ package com.sziffer.challenger.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import com.sziffer.challenger.R
+import com.sziffer.challenger.utils.extensions.round
 
 fun setWeatherIcon(id: Int, weatherImageView: ImageView, context: Context, background: Boolean) {
     var imageName: String = when (id) {
@@ -72,10 +75,11 @@ fun setBeaufortWindColor(windSpeed: Int, imageView: ImageView) {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.M)
 @SuppressLint("ResourceAsColor")
 //api level
 fun setUvIndexColor(uvIndex: Double, textView: TextView, context: Context) {
-    when (uvIndex) {
+    when (uvIndex.round(1)) {
         in 0.0..2.9 -> {
             textView.backgroundTintList = context.resources.getColorStateList(
                 R.color.colorGreen,
