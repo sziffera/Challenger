@@ -628,6 +628,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     R.drawable.wind_red_alert
                 )
             )
+            findViewById<ImageView>(R.id.dialogImageView).imageTintList = null
             findViewById<Button>(R.id.dialogCancelButton).visibility = View.GONE
             findViewById<Space>(R.id.dialogButtonSpace).visibility = View.GONE
         }
