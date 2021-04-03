@@ -142,8 +142,6 @@ class ActivityMainViewModel : ViewModel(), WeatherResultListener {
     //region weather
 
     fun fetchWeatherData(location: Location, context: Context) {
-        if (_weatherData.value != null)
-            return //no need to fetch
 
         val storedWeather = getWeatherFromSharedPreferences(context)
 
@@ -168,11 +166,11 @@ class ActivityMainViewModel : ViewModel(), WeatherResultListener {
     }
 
     private fun setWeatherData(weatherData: OneCallWeather) {
+        checkNeedOfAlerts(weatherData)
         _weatherData.postValue(weatherData)
     }
 
     override fun weatherFetched(oneCallWeather: OneCallWeather) {
-        checkNeedOfAlerts(oneCallWeather)
         setWeatherData(oneCallWeather)
     }
 
