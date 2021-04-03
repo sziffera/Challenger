@@ -99,8 +99,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         supportActionBar?.title = if (userManager.username == null)
             "Challenger"
         else {
-            if (userManager.username!!.contains("Biliczki Judit"))
-                "Hajrá Cukim!"
+            if (FirebaseManager.mAuth.currentUser?.email == "juditbiliczki@gmail.com")
+                "Hajrá Cukika!"
             else "${getString(R.string.hey)}, ${userManager.username}!"
         }
 
