@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -28,6 +29,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.sziffer.challenger.R
 import com.sziffer.challenger.model.MyLocation
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -249,6 +253,21 @@ fun showDialog(
     layoutView.findViewById<Button>(R.id.dialogOkButton).setOnClickListener {
         alertDialog.dismiss()
     }
+}
+
+fun getColorForBPM(hr: Int) {
+
+}
+
+fun getMapBitmapFromInternalStorage(firebaseId: String, context: Context): Bitmap? {
+    return try {
+        val file = File(context.filesDir, firebaseId)
+        BitmapFactory.decodeStream(FileInputStream(file))
+    } catch (e: FileNotFoundException) {
+        e.printStackTrace()
+        null
+    }
+
 }
 
 private const val LAST_REFRESH = "Utils.LastRefresh"

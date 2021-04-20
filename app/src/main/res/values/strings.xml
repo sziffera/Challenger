@@ -215,7 +215,7 @@
     <string name="voice_coach_settings_description">Here, you can personalize the Voice Coach.  If you turn on an item, the Voice Coach will inform you about it during your activities</string>
     <string name="strong_wind_alert">The wind is strong, take care of yourself, especially on your bike!</string>
     <string name="weather_alert">Weather alert</string>
-    <string name="high_uv_alert">The UV index is dangerous, you can get sunburned within a few minutes! Wear something light to protect your skin and use suncream! Please notice that on your bike, you can underestimate the power of sun.</string>
+    <string name="high_uv_alert">The UV index is dangerous, you can get sunburned within a few minutes! Wear something light to protect your skin and use suncream! Please notice that on your bike you can underestimate the power of sun.</string>
     <string name="uv_alert">UV alert</string>
     <string name="wind_alert">Wind alert</string>
     <string name="settings">Settings</string>
@@ -238,4 +238,17 @@
     <string name="altitude_in_metres">Altitude in metres</string>
     <string name="enable_bluetooth">Please enable bluetooth</string>
     <string name="avg">Avg:</string>
+    <string name="cadence">Cadence</string>
+    <string name="remaining">Remaining</string>
+    <string name="effort_level">Effort level</string>
+    <string name="heart_rate_zones">Heart Rate Zones</string>
+    <string name="relaxed">Relaxed</string>
+    <string name="moderate">Moderate</string>
+    <string name="weight_control">Weight control</string>
+    <string name="aerobic">Aerobic</string>
+    <string name="anaerobic">Anaerobic</string>
+    <string name="vomax">VO2Max</string>
+    <string name="challenge">Challenge</string>
+    <string name="processing">Processing...</string>
+    <string name="export_as_gpx">Export as GPX</string>
 </resources>

@@ -1,97 +1,163 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@drawable/gradient_background"
     tools:context=".ui.ChartsActivity">
 
-
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:title="@string/challenge"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:titleTextColor="@android:color/white">
+
+            </androidx.appcompat.widget.Toolbar>
+
+            <ImageView
+                android:id="@+id/shareImageButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:src="@drawable/ic_outline_share_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@android:color/white" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:id="@+id/challengeDetailsScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/textView14"
-
-            android:layout_marginVertical="25dp"
-            android:textSize="25sp"
-            android:textAllCaps="true"
-            android:gravity="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/details" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="17sp"
-            android:layout_marginBottom="12dp"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:text="@string/speed"
-            android:textAllCaps="true" />
-
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/speedLineChart"
-            android:layout_width="match_parent"
-            android:layout_height="300dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/elevation"
-            android:gravity="center"
-            android:layout_marginVertical="12dp"
-            android:textSize="17sp"
-            android:textAllCaps="true" />
-
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/elevationLineChart"
-            android:layout_width="match_parent"
-            android:layout_marginBottom="20dp"
-            android:layout_height="300dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="12dp"
-            android:layout_marginBottom="20dp"
-            android:orientation="horizontal">
+            android:layout_marginHorizontal="16dp"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/elevationGainedTextView"
-                android:layout_width="wrap_content"
+                android:id="@+id/textView14"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:text="@string/elevation_gained" />
+                android:layout_marginVertical="25dp"
+                android:gravity="center"
+                android:text="@string/details"
+                android:textAllCaps="true"
+                android:textSize="25sp"
+                android:visibility="gone" />
 
             <TextView
-                android:id="@+id/elevationLossTextView"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/elevation_lost" />
+                android:layout_gravity="center"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="12dp"
+                android:gravity="center"
+                android:text="@string/speed"
+                android:textAllCaps="true"
+                android:textSize="17sp" />
 
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/speedLineChart"
+                android:layout_width="match_parent"
+                android:layout_height="300dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="12dp"
+                android:gravity="center"
+                android:text="@string/elevation"
+                android:textAllCaps="true"
+                android:textSize="17sp" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/elevationLineChart"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:layout_marginBottom="20dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginBottom="20dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/elevationGainedTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:text="@string/elevation_gained" />
+
+                <TextView
+                    android:id="@+id/elevationLossTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/elevation_lost" />
+
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/hrChartTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="12dp"
+                android:gravity="center"
+                android:text="@string/heart_rate"
+                android:textAllCaps="true"
+                android:textSize="17sp" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/heartRateLineChart"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:layout_marginBottom="20dp" />
+
+            <TextView
+                android:id="@+id/hrPieChartTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="12dp"
+                android:gravity="center"
+                android:text="@string/heart_rate_zones"
+                android:textAllCaps="true"
+                android:textSize="17sp" />
+
+            <com.github.mikephil.charting.charts.PieChart
+                android:id="@+id/heartRatePieChart"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:layout_marginBottom="20dp" />
 
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/hrChartTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/heart_rate"
-            android:gravity="center"
-            android:layout_marginVertical="12dp"
-            android:textSize="17sp"
-            android:textAllCaps="true" />
-
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/heartRateLineChart"
-            android:layout_width="match_parent"
-            android:layout_marginBottom="20dp"
-            android:layout_height="300dp" />
-
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</LinearLayout>

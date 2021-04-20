@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:background="@android:color/white"
+    android:layout_height="match_parent"
+    tools:context=".ui.user.IndoorTrainingActivity">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/textView22"
+            android:layout_width="match_parent"
+            android:textSize="75sp"
+            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorDarkBlue"
+            android:text="00:00:00" />
+
+        <TextView
+            android:id="@+id/textView24"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorDarkBlue"
+            android:text="@string/remaining" />
+
+        <View
+            android:id="@+id/divider11"
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider"
+            android:backgroundTint="@color/colorDarkBlue" />
+
+        <TextView
+            android:layout_width="85dp"
+            android:textSize="55sp"
+            android:layout_marginTop="16dp"
+            android:padding="5dp"
+            android:background="@drawable/shape_oval"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:backgroundTint="@color/colorWindYellow"
+            android:layout_height="85dp"
+            android:textColor="@color/colorDarkBlue"
+            android:text="05" />
+
+        <TextView
+
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:textAllCaps="true"
+            android:textSize="25sp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/colorDarkBlue"
+            android:text="@string/effort_level" />
+
+
+        <TextView
+
+            android:layout_width="match_parent"
+            android:textSize="75sp"
+            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorDarkBlue"
+            android:text="00:00" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorDarkBlue"
+            android:layout_marginBottom="16dp"
+            android:text="@string/remaining" />
+
+        <View
+            android:id="@+id/divider12"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider"
+            android:backgroundTint="@color/colorDarkBlue" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textView25"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="--"
+                    android:textColor="@color/colorDarkBlue"
+                    android:textSize="36sp" />
+
+                <TextView
+                    android:id="@+id/textView26"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/heart_rate"
+                    android:textColor="@color/colorDarkBlue" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textView28"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="--"
+                    android:textColor="@color/colorDarkBlue"
+                    android:textSize="36sp" />
+
+                <TextView
+                    android:id="@+id/textView27"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/cadence"
+                    android:textColor="@color/colorDarkBlue" />
+            </LinearLayout>
+        </LinearLayout>
+
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,16 +4,10 @@ import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.graphics.drawable.ColorDrawable
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.text.InputType
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.Gravity
@@ -26,8 +20,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
-import com.github.psambit9791.jdsp.filter.Wiener
+import com.github.psambit9791.jdsp.signal.Smooth
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -40,16 +33,16 @@ import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
 import com.sziffer.challenger.model.Challenge
+import com.sziffer.challenger.model.HeartRateZones
 import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
+import com.sziffer.challenger.utils.Constants
 import com.sziffer.challenger.utils.getStringFromNumber
 import com.sziffer.challenger.utils.locationPermissionCheck
 import com.sziffer.challenger.utils.locationPermissionRequest
 import java.io.*
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.math.abs
 
@@ -72,6 +65,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var avgHr = -1
     private var start: Long = 0
 
+    private var heartRateZones: HeartRateZones? = null
+
     private lateinit var binding: ActivityChallengeDetailsBinding
 
     //region lifecycle
@@ -81,6 +76,8 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         binding = ActivityChallengeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        setSupportActionBar(binding.challengeDetailsToolbar)
 
         dbHelper = ChallengeDbHelper(this)
 
@@ -112,8 +109,11 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         binding.showChartsButton.setOnClickListener {
             if (route == null) {
-                //the Gson() conversion has not finished yet.
-                Toast.makeText(this, getString(R.string.please_wait), Toast.LENGTH_LONG).show()
+                //the Gson() conversion has not finished yet - not too possible to happen.
+                Toast.makeText(
+                    this, getString(R.string.please_wait),
+                    Toast.LENGTH_LONG
+                ).show()
                 return@setOnClickListener
             }
             startActivity(
@@ -123,32 +123,33 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     .putExtra(ChartsActivity.ELEVATION_GAIN, elevGain)
                     .putExtra(ChartsActivity.ELEVATION_LOSS, elevLoss)
                     .putExtra(ChartsActivity.SHOW_HR, maxHr > 0)
+                    .putExtra(ChartsActivity.HEART_RATE_ZONES, heartRateZones)
             )
         }
 
         binding.writeToFileButton?.setOnClickListener {
             //route?.let { it1 -> writeToFile(it1,"saab") }
 
-            val challengeCopy = challenge
-            val currentDate: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val current = LocalDateTime.now()
-                val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
-                current.format(formatter)
+//            val challengeCopy = challenge
+//            val currentDate: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                val current = LocalDateTime.now()
+//                val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
+//                current.format(formatter)
+//
+//            } else {
+//                val date = Date()
+//                val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
+//                formatter.format(date)
+//            }
+//            challengeCopy.date = currentDate
+//            challengeCopy.firebaseId = UUID.randomUUID().toString()
+//
+//            updateSharedPrefForSync(applicationContext, challengeCopy.firebaseId, KEY_UPLOAD)
+//
+//            dbHelper.addChallenge(challengeCopy)
 
-            } else {
-                val date = Date()
-                val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
-                formatter.format(date)
-            }
-            challengeCopy.date = currentDate
-            challengeCopy.firebaseId = UUID.randomUUID().toString()
 
-            updateSharedPrefForSync(applicationContext, challengeCopy.firebaseId, KEY_UPLOAD)
-
-            dbHelper.addChallenge(challengeCopy)
-
-
-        }
+        } //just for testing and car analysis for my brother
 
         when {
             //the user chose a Challenge to do it better, and wants to start recording
@@ -163,19 +164,15 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     else
                         locationPermissionRequest(this, this)
                 }
-                binding.challengeDetailsNameEditText.inputType = InputType.TYPE_NULL
-                binding.challengeDetailsNameEditText.setText(challenge.name.toUpperCase(Locale.ROOT))
+                binding.challengeDetailsNameEditText.visibility = View.GONE
+                supportActionBar?.title = challenge.name.capitalize(Locale.ROOT)
 
             }
             //the user finished recording a challenged activity, update data with new values
             update -> {
                 binding.saveChallengeInDetailsButton.text = getString(R.string.update_challenge)
-                binding.challengeDetailsNameEditText.inputType = InputType.TYPE_NULL
-                binding.challengeDetailsNameEditText.setText(
-                    previousChallenge?.name?.toUpperCase(
-                        Locale.ROOT
-                    )
-                )
+                binding.challengeDetailsNameEditText.visibility = View.GONE
+                supportActionBar?.title = previousChallenge?.name?.capitalize(Locale.ROOT)
 
                 binding.saveChallengeInDetailsButton.setOnClickListener {
                     updateChallenge()
@@ -218,11 +215,16 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             .findFragmentById(R.id.challengeDetailsMap) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        binding.shareImageButton.setOnClickListener {
 
-        binding.shareChallengeButton.setOnClickListener {
-            initShareImage()
+            startActivity(
+                Intent(
+                    this, ShareActivity::class.java
+                ).apply {
+                    putExtra(CHALLENGE_ID, challenge.id)
+                }
+            )
         }
-
 
     }
 
@@ -234,8 +236,14 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Log.i(TAG, "onMapReady ${System.currentTimeMillis() - start}ms")
         mMap = p0
+        mMap.setOnMapLoadedCallback {
+            Thread {
+                initShareImage()
+            }.start()
+        }
         runProcessThread()
     }
+
 
     private fun startChallenge() {
 
@@ -249,7 +257,7 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     /**
      * updating the previous challenge
      * this is just a normal saving, but with the previous challenge's name.
-     * In this way, the previous challenge's data is not lost, later I the user
+     * In this way, the previous challenge's data is not lost, later the user
      * can see the improvement. I think this is a better approach, than overriding data.
      */
     private fun updateChallenge() {
@@ -272,8 +280,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun saveChallenge() {
 
         if (binding.challengeDetailsNameEditText.text.isEmpty()) {
-            //binding.challengeDetailsNameEditText.error = getString(R.string.please_name_challenge)
-            //return
             challenge.name = challenge.type
         } else
             challenge.name = binding.challengeDetailsNameEditText.text.toString()
@@ -382,22 +388,56 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                         polylineOptions.add(i.latLng)
                     }
                 } else {
+                    heartRateZones = HeartRateZones()
                     hr = true
-                    for ((index, i) in route!!.withIndex()) {
-                        hrSum += i.hr
-                        if (i.hr > maxHr)
-                            maxHr = i.hr
-                        builder.include(i.latLng)
-                        elevationArray[index] = i.altitude
-                        polylineOptions.add(i.latLng)
+                    for ((index, myLocation) in route!!.withIndex()) {
+
+                        when (myLocation.hr) {
+                            in 0..97 -> heartRateZones!!.relaxed++
+                            in 98..116 -> heartRateZones!!.moderate++
+                            in 117..136 -> heartRateZones!!.weightControl++
+                            in 137..155 -> heartRateZones!!.aerobic++
+                            in 156..175 -> heartRateZones!!.anaerobic++
+                            else -> heartRateZones!!.vo2Max++
+                        }
+
+
+                        //hrSum += myLocation.hr
+//                        if (myLocation.hr > maxHr)
+//                            maxHr = myLocation.hr
+                        builder.include(myLocation.latLng)
+                        elevationArray[index] = myLocation.altitude
+                        polylineOptions.add(myLocation.latLng)
                     }
+
+                    heartRateZones!!.apply {
+                        relaxed /= route!!.size.toDouble()
+                        moderate /= route!!.size.toDouble()
+                        weightControl /= route!!.size.toDouble()
+                        aerobic /= route!!.size.toDouble()
+                        anaerobic /= route!!.size.toDouble()
+                        vo2Max /= route!!.size.toDouble()
+                    }
+
+                    hrSum = route!!.sumOf { it.hr }
+                    maxHr = route!!.maxOf { it.hr }
+
+                    Log.d("HEART_RATE", heartRateZones.toString())
+
                     avgHr = hrSum.div(route!!.size)
                 }
 
-                if (elevationArray.size > 100) {
-                    val wiener = Wiener(elevationArray, elevationArray.size / 25)
-                    val filteredElevation = wiener.filter()
-                    for (i in 10..filteredElevation.size - 10) {
+                if (elevationArray.size > Constants.MIN_ROUTE_SIZE) {
+
+
+                    var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
+                    if (windowSize > Constants.MAX_WINDOW_SIZE)
+                        windowSize = Constants.MAX_WINDOW_SIZE
+                    Log.d("ELEVATION", "the calculated window size is: $windowSize")
+                    val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
+                    val filteredElevation = s1.smoothSignal()
+
+                    for (i in 0..filteredElevation.size - 2) {
                         if (filteredElevation[i] < filteredElevation[i + 1]) {
                             elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
                         } else {
@@ -426,6 +466,11 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                         binding.apply {
                             maxHeartRateTextView?.text = "$maxHr bpm"
                             avgHeartRateTextView?.text = "$avgHr bpm"
+                        }
+                    } else {
+                        binding.apply {
+                            maxHeartRateTextView?.text = "--"
+                            avgHeartRateTextView?.text = "--"
                         }
                     }
                 }
@@ -461,10 +506,12 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             val drawable = ContextCompat.getDrawable(this, R.drawable.sharing_logo)
+
             drawable?.setBounds(
                 (it.width * 0.83).toInt(),
-                (it.height * 0.1).toInt(), (it.width * 0.98).toInt(), (it.height * 0.16).toInt()
+                (it.height * 0.1).toInt(), (it.width * 0.98).toInt(), (it.height * 0.18).toInt()
             )
+
             drawable?.draw(canvas)
 
             canvas.drawRect(
@@ -498,51 +545,34 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                 )
             } else {
                 canvas.drawText(
-                    "${getString(R.string.avg)} ${getStringFromNumber(1, challenge.avg)} km/h",
+                    "${getStringFromNumber(1, challenge.avg)} km/h",
                     (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
                 )
             }
 
             sharingImageBitmap = it
-            shareBitmap(it, challenge.date)
+            saveSharingBitmap(it, "challenge")
 
         }
         mMap.snapshot(callback)
     }
 
     /** Saves bitmap */
-    private fun shareBitmap(bitmap: Bitmap, name: String) {
+    private fun saveSharingBitmap(bitmap: Bitmap, name: String) {
 
-        //get cache directory
-        val cachePath = File(externalCacheDir, "challenger_images/")
-        cachePath.mkdirs()
-
-        //create png file
-        val file = File(cachePath, "$name.png")
-        val fileOutputStream: FileOutputStream
         try {
-            fileOutputStream = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
-            fileOutputStream.flush()
-            fileOutputStream.close()
+            val bytes = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes)
+            val fo = openFileOutput(name, MODE_PRIVATE)
+            fo.write(bytes.toByteArray())
+            fo.close()
+
         } catch (e: FileNotFoundException) {
             e.printStackTrace()
         } catch (e: IOException) {
             e.printStackTrace()
         }
-
-        //---Share File---//
-        //get file uri
-        val myImageFileUri: Uri =
-            FileProvider.getUriForFile(this, applicationContext.packageName + ".provider", file)
-
-        //create a intent
-        val intent = Intent(Intent.ACTION_SEND)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        intent.putExtra(Intent.EXTRA_STREAM, myImageFileUri)
-        intent.type = "image/png"
-        startActivity(Intent.createChooser(intent, getString(R.string.share_challenge)))
+        Log.d(TAG, "The sharing image was saved")
     }
 
     //endregion sharing
@@ -575,19 +605,21 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     //endregion GPX
 
     //region for testing
-    private fun writeToFile(testArray: ArrayList<MyLocation>, name: String) {
+    private fun writeToFile(testArray: DoubleArray) {
         val outputStreamWriter =
-            OutputStreamWriter(openFileOutput("terror.txt", Context.MODE_PRIVATE))
+            OutputStreamWriter(openFileOutput("altitude_original.txt", Context.MODE_PRIVATE))
 
-        outputStreamWriter.write("time,speed\n")
 
-        Toast.makeText(this, testArray.size.toString() + " items", Toast.LENGTH_LONG).show()
-        for (myLocation in testArray) {
-            outputStreamWriter.write("${myLocation.time / 1000};${myLocation.speed}\n")
 
+        outputStreamWriter.write("distance (in metres),altitude (in metres)\n")
+
+        //Toast.makeText(this, testArray.size.toString() + " items", Toast.LENGTH_LONG).show()
+        for ((index, altitude) in testArray.withIndex()) {
+            outputStreamWriter.write("${route!![index].distance};${route!![index].altitude}\n")
         }
         outputStreamWriter.flush()
         outputStreamWriter.close()
+
     }
 
 

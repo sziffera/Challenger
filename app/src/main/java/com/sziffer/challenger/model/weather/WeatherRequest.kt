@@ -108,9 +108,6 @@ class WeatherRequest(
             "https://api.openweathermap.org/data/2.5/onecall?" +
                     "appid=$WEATHER_KEY&units=metric&"
 
-        private const val LAST_REFRESH = "${SHOWCASE_ID}.LastRefresh"
-        private const val LAST_REFRESH_TIME_SYNC = "time"
-        private const val LAST_REFRESH_TIME_WEATHER = "weatherTime"
     }
 
 }
