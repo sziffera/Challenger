@@ -42,7 +42,6 @@ import com.sziffer.challenger.utils.getStringFromNumber
 import com.sziffer.challenger.utils.locationPermissionCheck
 import com.sziffer.challenger.utils.locationPermissionRequest
 import java.io.*
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
 
@@ -401,10 +400,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                             else -> heartRateZones!!.vo2Max++
                         }
 
-
-                        //hrSum += myLocation.hr
-//                        if (myLocation.hr > maxHr)
-//                            maxHr = myLocation.hr
                         builder.include(myLocation.latLng)
                         elevationArray[index] = myLocation.altitude
                         polylineOptions.add(myLocation.latLng)
@@ -576,33 +571,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     //endregion sharing
-
-    //region GPX
-
-    private fun createAndSaveGpx(name: String) {
-
-        if (route == null) return
-
-        val header =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?><gpx xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"MapSource 6.15.5\" version=\"1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"  xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\"><trk>\n"
-        val name = """
-            <name>${name}</name><trkseg>
-            
-            """.trimIndent()
-
-        var segments = ""
-        val challengeDateFormat = SimpleDateFormat("dd-MM-yyyy. HH:mm")
-        val date = challengeDateFormat.parse(challenge.date)
-        val gpxDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-        for (location in route!!) {
-
-            segments += "<trkpt lat=\"" + location.latLng.latitude + "\" lon=\"" + location.latLng.longitude + "\"><time>" + "</time></trkpt>\n";
-        }
-        val footer = "</trkseg></trk></gpx>"
-
-    }
-
-    //endregion GPX
 
     //region for testing
     private fun writeToFile(testArray: DoubleArray) {

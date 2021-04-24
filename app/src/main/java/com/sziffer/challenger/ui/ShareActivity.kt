@@ -42,16 +42,20 @@ class ShareActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        val bitmap = BitmapFactory.decodeStream(openFileInput("challenge"))
+        try {
+            val bitmap = BitmapFactory.decodeStream(openFileInput("challenge"))
 
-        val image = intent.getParcelableExtra<Bitmap>(URI)
-        binding.sharingImageView.setImageBitmap(
-            bitmap
-        )
+            binding.sharingImageView.setImageBitmap(
+                bitmap
+            )
 
-        binding.shareImageButton.setOnClickListener {
-            saveSharingBitmap(bitmap)
+            binding.shareImageButton.setOnClickListener {
+                saveSharingBitmap(bitmap)
+            }
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
         }
+
 
         binding.cancelImageButton.setOnClickListener {
             onBackPressed()

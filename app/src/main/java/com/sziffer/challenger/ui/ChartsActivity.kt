@@ -66,8 +66,7 @@ class ChartsActivity : AppCompatActivity() {
         challengeData =
             challengeData!!.filterIndexed { index, _ ->
                 (index % filterIndex.toInt()) == 0 || index == challengeData!!.size - 1
-            }
-                    as ArrayList<MyLocation>
+            } as ArrayList<MyLocation>
 
         Log.d("CHARTS", "the size of reduced challengeData: ${challengeData!!.size}")
 

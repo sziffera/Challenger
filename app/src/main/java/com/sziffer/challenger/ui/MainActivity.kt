@@ -75,6 +75,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         userManager = UserManager(this)
 
 
+
+
         if (userManager.username == null) {
             setUserName()
         }
@@ -89,12 +91,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
         setSupportActionBar(binding.toolbar)
 
-
-        val manager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            buildAlertMessageNoGps()
-            return
-        }
 
         supportActionBar?.title = if (userManager.username == null)
             "Challenger"
@@ -113,6 +109,14 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
             )
         }
 
+        binding.mapImageButton.setOnClickListener {
+            startActivity(
+                Intent(
+                    this, MapboxActivity::class.java
+                )
+            )
+        }
+
         //navSectionsStateKeeper.onCreate(savedInstanceState)
 
         setUpBottomNavBar()
@@ -121,6 +125,13 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
     override fun onStart() {
         super.onStart()
+
+        val manager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            buildAlertMessageNoGps()
+            return
+        }
+
         if (!locationPermissionCheck(this)) {
             locationPermissionRequest(this, this)
         } else {

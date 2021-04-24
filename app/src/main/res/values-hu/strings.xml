@@ -205,4 +205,15 @@
     <string name="enable_bluetooth">Kérlek kapcsold be a Bluetooth-t!</string>
     <string name="no_gps_text_weather">Úgy tűnik ki van kapcsolva a GPS. Ahhoz, hogy pontos időjárásadatokat tudjunk szolgáltatni, kérlek kapcsold be.</string>
     <string name="avg">Átlag:</string>
+    <string name="cadence">Pedálfordulat</string>
+    <string name="remaining">Hátralévő idő</string>
+    <string name="heart_rate_zones">Pulzus zónák</string>
+    <string name="relaxed">Nyugodt</string>
+    <string name="moderate">Mérsékelt</string>
+    <string name="weight_control">Zsírégető</string>
+    <string name="aerobic">Aerob</string>
+    <string name="anaerobic">Anaerob</string>
+    <string name="challenge">Kihívás</string>
+    <string name="processing">Feldolgozás...</string>
+    <string name="export_as_gpx">GPX  file exportálás</string>
 </resources>

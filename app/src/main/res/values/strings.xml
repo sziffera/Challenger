@@ -240,15 +240,18 @@
     <string name="avg">Avg:</string>
     <string name="cadence">Cadence</string>
     <string name="remaining">Remaining</string>
-    <string name="effort_level">Effort level</string>
+    <string name="effort_level" translatable="false">Effort level</string>
     <string name="heart_rate_zones">Heart Rate Zones</string>
     <string name="relaxed">Relaxed</string>
     <string name="moderate">Moderate</string>
     <string name="weight_control">Weight control</string>
     <string name="aerobic">Aerobic</string>
     <string name="anaerobic">Anaerobic</string>
-    <string name="vomax">VO2Max</string>
+    <string name="vomax" translatable="false">VO2Max</string>
     <string name="challenge">Challenge</string>
     <string name="processing">Processing...</string>
     <string name="export_as_gpx">Export as GPX</string>
+
+    <string name="mapbox_access_token" translatable="false">pk.eyJ1Ijoic3ppZmZlcmEiLCJhIjoiY2tubHd6a3dlMG13dDJvbjB1cDk0Z3lqciJ9.pFSPVz4-icft9PBQpIG6pw</string>
+
 </resources>
