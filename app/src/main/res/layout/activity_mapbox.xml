@@ -1,8 +1,4 @@
-<com.mapbox.maps.MapView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:mapbox="http://schemas.android.com/apk/res-auto"
+<com.mapbox.mapboxsdk.maps.MapView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/mapView"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    mapbox:mapbox_cameraTargetLat="47.4979"
-    mapbox:mapbox_cameraTargetLng="19.0402"
-    mapbox:mapbox_cameraZoom="9.0" />
+    android:layout_height="match_parent" />

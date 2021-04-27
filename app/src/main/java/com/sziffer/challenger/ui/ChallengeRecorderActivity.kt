@@ -22,16 +22,25 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.material.chip.Chip
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.mapbox.geojson.Feature
+import com.mapbox.geojson.LineString
+import com.mapbox.geojson.Point
+import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.location.LocationComponent
+import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
+import com.mapbox.mapboxsdk.location.OnCameraTrackingChangedListener
+import com.mapbox.mapboxsdk.location.modes.CameraMode
+import com.mapbox.mapboxsdk.location.modes.RenderMode
+import com.mapbox.mapboxsdk.maps.MapboxMap
+import com.mapbox.mapboxsdk.maps.Style
+import com.mapbox.mapboxsdk.style.layers.LineLayer
+import com.mapbox.mapboxsdk.style.layers.Property
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.sziffer.challenger.LocationUpdatesService
 import com.sziffer.challenger.LocationUpdatesService.LocalBinder
 import com.sziffer.challenger.R
@@ -53,11 +62,11 @@ import kotlin.collections.ArrayList
 import kotlin.math.absoluteValue
 
 
-class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
+class ChallengeRecorderActivity : AppCompatActivity(),
     SharedPreferences.OnSharedPreferenceChangeListener,
     DataAdapter.RecyclerViewItemClickListener {
 
-    private lateinit var mMap: GoogleMap
+
     private var recordedChallenge: Challenge? = null
     private var gpsService: LocationUpdatesService? = null
     private lateinit var buttonSharedPreferences: SharedPreferences
@@ -65,7 +74,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     private var mBound = false
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var userManager: UserManager
-    private lateinit var mapFragment: SupportMapFragment
+
+    private var mapBox: MapboxMap? = null
 
 
     private lateinit var binding: ActivityChallengeRecorderBinding
@@ -96,17 +106,23 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
+
         binding = ActivityChallengeRecorderBinding.inflate(layoutInflater)
+
+
 
         setContentView(binding.root)
 
         this.actionBar?.hide()
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-
-        mapFragment = supportFragmentManager
-            .findFragmentById(id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+        binding.map.onCreate(savedInstanceState)
+        binding.map.getMapAsync { mapBox ->
+            this.mapBox = mapBox
+            mapBox.setStyle(Style.OUTDOORS) {
+                styleLoaded(it)
+            }
+        }
 
 
         //setting user preferences based on settings
@@ -127,13 +143,13 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
             when (it.itemId) {
                 R.id.action_details -> {
                     Log.i("MENU", "DETAILS")
-                    mapFragment.view?.visibility = View.GONE
+                    binding.map.visibility = View.GONE
                     binding.detailsLinearLayout.visibility = View.VISIBLE
                     true
                 }
                 R.id.action_map -> {
                     binding.detailsLinearLayout.visibility = View.GONE
-                    mapFragment.view?.visibility = View.VISIBLE
+                    binding.map.visibility = View.VISIBLE
                     Log.i("MENU", "MAP")
                     true
                 }
@@ -240,11 +256,12 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
         PreferenceManager.getDefaultSharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(this)
         super.onStop()
+        binding.map.onStop()
     }
 
     override fun onStart() {
         super.onStart()
-
+        binding.map.onStart()
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)
 
@@ -285,7 +302,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
     override fun onResume() {
         super.onResume()
-
+        binding.map.onResume()
         LocalBroadcastManager.getInstance(this).registerReceiver(
             activityDataReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST_UI_UPDATE)
@@ -299,48 +316,131 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
     override fun onPause() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(activityDataReceiver)
         super.onPause()
+        binding.map.onPause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        binding.map.onDestroy()
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        binding.map.onLowMemory()
     }
 
     //endregion activity lifecycle
 
 
     //region map
-    @SuppressLint("MissingPermission")
-    override fun onMapReady(googleMap: GoogleMap) {
 
-        mMap = googleMap
-
+    @SuppressLint("MissingPermission") //checked
+    private fun styleLoaded(style: Style) {
         if (locationPermissionCheck(this)) {
-            with(mMap) {
-                isMyLocationEnabled = true
-                uiSettings.isCompassEnabled = true
-                uiSettings.isZoomControlsEnabled = true
+            val locationComponent: LocationComponent = mapBox!!.locationComponent
+            // Activate with a built LocationComponentActivationOptions object
+
+            // Activate with a built LocationComponentActivationOptions object
+            locationComponent.activateLocationComponent(
+                LocationComponentActivationOptions.builder(
+                    this,
+                    style
+                ).build()
+            )
+
+
+
+            locationComponent.apply {
+                isLocationComponentEnabled = true
+                cameraMode = CameraMode.TRACKING_GPS
+                renderMode = RenderMode.GPS
+                addOnCameraTrackingChangedListener(object : OnCameraTrackingChangedListener {
+                    override fun onCameraTrackingDismissed() {
+                        Log.d(TAG, "changed")
+                    }
+
+                    override fun onCameraTrackingChanged(currentMode: Int) {
+
+                    }
+
+                })
+                zoomWhileTracking(15.0, 2000)
             }
-            val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-            fusedLocationClient.lastLocation.addOnSuccessListener {
-                if (it != null) {
-                    val latLng = LatLng(it.latitude, it.longitude)
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14.0f))
-                }
-            }
+
+
         }
 
-        //if it is a recorded activity challenge, draws the route onto the map
         if (challenge) {
-
             val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
             val route =
                 Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
-            val mapPair = zoomAndRouteCreator(route)
 
-            mMap.setOnMapLoadedCallback {
-                mMap.addPolyline(PolylineOptions().addAll(mapPair.second))
-                val padding = 50
-                val cu = CameraUpdateFactory.newLatLngBounds(mapPair.first, padding)
-                mMap.animateCamera(cu)
-            }
+            val points = route.map {
+                Point.fromLngLat(
+                    it.latLng.longitude,
+                    it.latLng.latitude,
+                    it.altitude
+                )
+            } as ArrayList<Point>
+
+            val lineString: LineString = LineString.fromLngLats(points)
+            val feature = Feature.fromGeometry(lineString)
+            val geoJsonSource = GeoJsonSource("geojson-source", feature)
+            style.addSource(geoJsonSource)
+            style.addLayer(
+                LineLayer("linelayer", "geojson-source").withProperties(
+                    PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
+                    PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
+                    PropertyFactory.lineOpacity(1f),
+                    PropertyFactory.lineWidth(4f),
+                    PropertyFactory.lineColor(
+                        resources.getColor(
+                            R.color.colorAccent,
+                            null
+                        )
+                    )
+                )
+            )
+
         }
     }
+
+//    @SuppressLint("MissingPermission")
+//    override fun onMapReady(googleMap: GoogleMap) {
+//
+//        mMap = googleMap
+//
+//        if (locationPermissionCheck(this)) {
+//            with(mMap) {
+//                isMyLocationEnabled = true
+//                uiSettings.isCompassEnabled = true
+//                uiSettings.isZoomControlsEnabled = true
+//            }
+//            val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+//            fusedLocationClient.lastLocation.addOnSuccessListener {
+//                if (it != null) {
+//                    val latLng = LatLng(it.latitude, it.longitude)
+//                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14.0f))
+//                }
+//            }
+//        }
+//
+//        //if it is a recorded activity challenge, draws the route onto the map
+//        if (challenge) {
+//
+//            val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+//            val route =
+//                Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
+//            val mapPair = zoomAndRouteCreator(route)
+//
+//            mMap.setOnMapLoadedCallback {
+//                mMap.addPolyline(PolylineOptions().addAll(mapPair.second))
+//                val padding = 50
+//                val cu = CameraUpdateFactory.newLatLngBounds(mapPair.first, padding)
+//                mMap.animateCamera(cu)
+//            }
+//        }
+//    }
     //endregion map
 
     //region recording actions
@@ -487,7 +587,7 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                     binding.muteVoiceCoachButton.visibility = View.GONE
 
                 binding.recorderBottomNavigationView.visibility = View.VISIBLE
-                mapFragment.view?.visibility = View.GONE
+                binding.map.visibility = View.GONE
 
                 gpsService?.requestLocationUpdates()
                 with(buttonSharedPreferences.edit()) {
@@ -903,12 +1003,12 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
                 val hr = intent.getIntExtra(LocationUpdatesService.HEART_RATE, -1)
                 binding.heartRateTextView?.text = if (hr == -1) "-" else hr.toString()
 
-                mMap.addPolyline(
-                    PolylineOptions()
-                        .color(R.color.colorPrimaryDark)
-                        .addAll(gpsService?.route)
-
-                )
+//                mMap.addPolyline(
+//                    PolylineOptions()
+//                        .color(R.color.colorPrimaryDark)
+//                        .addAll(gpsService?.route)
+//
+//                )
 
                 if (challenge || createdChallenge) {
 
@@ -988,7 +1088,8 @@ class ChallengeRecorderActivity : AppCompatActivity(), OnMapReadyCallback,
 
                 if (location != null) {
                     val latLng = LatLng(location.latitude, location.longitude)
-                    mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
+                    //mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
+
                     if (autoPauseActive) {
                         binding.challengeRecorderSpeedTextView.text = "0 km/h"
                         Log.d(TAG, "setting the speed to zero")
