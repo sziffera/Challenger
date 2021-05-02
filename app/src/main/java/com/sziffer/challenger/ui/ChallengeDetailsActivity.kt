@@ -7,6 +7,8 @@ import android.content.Intent
 import android.graphics.*
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.text.format.DateUtils
 import android.util.Log
@@ -21,14 +23,21 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.github.psambit9791.jdsp.signal.Smooth
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.mapbox.geojson.Feature
+import com.mapbox.geojson.LineString
+import com.mapbox.geojson.Point
+import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.geometry.LatLng
+import com.mapbox.mapboxsdk.geometry.LatLngBounds
+import com.mapbox.mapboxsdk.maps.MapboxMap
+import com.mapbox.mapboxsdk.maps.Style
+import com.mapbox.mapboxsdk.snapshotter.MapSnapshotter
+import com.mapbox.mapboxsdk.style.layers.LineLayer
+import com.mapbox.mapboxsdk.style.layers.Property
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
@@ -43,16 +52,22 @@ import com.sziffer.challenger.utils.locationPermissionCheck
 import com.sziffer.challenger.utils.locationPermissionRequest
 import java.io.*
 import java.util.*
+import java.util.concurrent.Executors
+import kotlin.collections.ArrayList
 import kotlin.math.abs
 
 
-class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
+class ChallengeDetailsActivity : AppCompatActivity() {
 
-    private lateinit var mMap: GoogleMap
+    //private lateinit var mMap: GoogleMap
+
+    private var mapBox: MapboxMap? = null
+    private var snapshotter: MapSnapshotter? = null
+
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var challenge: Challenge
     private var previousChallenge: Challenge? = null
-    private lateinit var builder: LatLngBounds.Builder
+
     private var route: ArrayList<MyLocation>? = null
     private var elevGain = 0.0
     private var elevLoss = 0.0
@@ -73,8 +88,18 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
+
         binding = ActivityChallengeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.challengeDetailsMap.onCreate(savedInstanceState)
+        binding.challengeDetailsMap.getMapAsync { mapboxMap ->
+            this.mapBox = mapboxMap
+            mapBox!!.setStyle(Style.OUTDOORS) {
+                runProcessThread(it)
+            }
+        }
 
         setSupportActionBar(binding.challengeDetailsToolbar)
 
@@ -86,7 +111,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
         //id for the challenge from the intent
         val id = intent.getLongExtra(CHALLENGE_ID, 0)
         challenge = dbHelper.getChallenge(id.toInt())!!
-        builder = LatLngBounds.builder()
 
         Log.i("CHALLENGE DETAILS", challenge.toString())
 
@@ -123,29 +147,31 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
                     .putExtra(ChartsActivity.ELEVATION_LOSS, elevLoss)
                     .putExtra(ChartsActivity.SHOW_HR, maxHr > 0)
                     .putExtra(ChartsActivity.HEART_RATE_ZONES, heartRateZones)
+                    .putExtra(ChartsActivity.MAX_HR, maxHr)
+                    .putExtra(ChartsActivity.AVG_HR, avgHr)
             )
         }
 
-        binding.writeToFileButton?.setOnClickListener {
+        binding.writeToFileButton.setOnClickListener {
             //route?.let { it1 -> writeToFile(it1,"saab") }
 
-//            val challengeCopy = challenge
-//            val currentDate: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                val current = LocalDateTime.now()
-//                val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
-//                current.format(formatter)
-//
-//            } else {
-//                val date = Date()
-//                val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
-//                formatter.format(date)
-//            }
-//            challengeCopy.date = currentDate
-//            challengeCopy.firebaseId = UUID.randomUUID().toString()
-//
-//            updateSharedPrefForSync(applicationContext, challengeCopy.firebaseId, KEY_UPLOAD)
-//
-//            dbHelper.addChallenge(challengeCopy)
+            //            val challengeCopy = challenge
+            //            val currentDate: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            //                val current = LocalDateTime.now()
+            //                val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
+            //                current.format(formatter)
+            //
+            //            } else {
+            //                val date = Date()
+            //                val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
+            //                formatter.format(date)
+            //            }
+            //            challengeCopy.date = currentDate
+            //            challengeCopy.firebaseId = UUID.randomUUID().toString()
+            //
+            //            updateSharedPrefForSync(applicationContext, challengeCopy.firebaseId, KEY_UPLOAD)
+            //
+            //            dbHelper.addChallenge(challengeCopy)
 
 
         } //just for testing and car analysis for my brother
@@ -210,9 +236,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         })
 
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.challengeDetailsMap) as SupportMapFragment
-        mapFragment.getMapAsync(this)
 
         binding.shareImageButton.setOnClickListener {
 
@@ -227,25 +250,37 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+    override fun onStart() {
+        super.onStart()
+        binding.challengeDetailsMap.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        binding.challengeDetailsMap.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        binding.challengeDetailsMap.onPause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        binding.challengeDetailsMap.onDestroy()
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        binding.challengeDetailsMap.onLowMemory()
+    }
+
+
     //endregion lifecycle
 
     //region helper methods
 
-    override fun onMapReady(p0: GoogleMap) {
-
-        Log.i(TAG, "onMapReady ${System.currentTimeMillis() - start}ms")
-        mMap = p0
-        mMap.setOnMapLoadedCallback {
-            Thread {
-                initShareImage()
-            }.start()
-        }
-        runProcessThread()
-    }
-
-
     private fun startChallenge() {
-
         val intent = Intent(this, ChallengeRecorderActivity::class.java)
         intent.putExtra(ChallengeRecorderActivity.CHALLENGE, true)
         intent.putExtra(ChallengeRecorderActivity.RECORDED_CHALLENGE_ID, challenge.id.toInt())
@@ -317,7 +352,6 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun showDiscardAlertDialog() {
-
         val dialogBuilder = AlertDialog.Builder(this, R.style.AlertDialog)
         val layoutView = layoutInflater.inflate(R.layout.alert_dialog_base, null).apply {
             findViewById<TextView>(R.id.dialogTitleTextView).text =
@@ -363,193 +397,256 @@ class ChallengeDetailsActivity : AppCompatActivity(), OnMapReadyCallback {
     //endregion helper methods
 
     //region processing
-
     /**
      * Starts a thread that converts the string data to MyLocation array and
      * calculates the LatLngBound for zooming on Map
-     * and calculates the elevation data
+     * alos filter calculates the elevation data
+     * - the filtering will be remooved as soon as the method is final, will be moved to the saving part
      **/
-    private fun runProcessThread() {
-        object : Thread() {
-            @SuppressLint("SetTextI18n")
-            override fun run() {
-                val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
-                route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
-                val polylineOptions = PolylineOptions()
-                val elevationArray = DoubleArray(route!!.size)
-                var hrSum = 0
-                var hr = false
-                if (route?.get(0)?.hr == -1) {
-                    for ((index, i) in route!!.withIndex()) {
+    private fun runProcessThread(style: Style) {
+        val executor = Executors.newSingleThreadExecutor()
+        val handler = Handler(Looper.getMainLooper())
 
-                        builder.include(i.latLng)
-                        elevationArray[index] = i.altitude
-                        polylineOptions.add(i.latLng)
-                    }
-                } else {
-                    heartRateZones = HeartRateZones()
-                    hr = true
-                    for ((index, myLocation) in route!!.withIndex()) {
+        executor.execute {
 
-                        when (myLocation.hr) {
-                            in 0..97 -> heartRateZones!!.relaxed++
-                            in 98..116 -> heartRateZones!!.moderate++
-                            in 117..136 -> heartRateZones!!.weightControl++
-                            in 137..155 -> heartRateZones!!.aerobic++
-                            in 156..175 -> heartRateZones!!.anaerobic++
-                            else -> heartRateZones!!.vo2Max++
-                        }
+            val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+            route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
+            val elevationArray = DoubleArray(route!!.size)
+            val points = ArrayList<Point>()
+            val latLngBoundsBuilder = com.mapbox.mapboxsdk.geometry.LatLngBounds.Builder()
 
-                        builder.include(myLocation.latLng)
-                        elevationArray[index] = myLocation.altitude
-                        polylineOptions.add(myLocation.latLng)
-                    }
-
-                    heartRateZones!!.apply {
-                        relaxed /= route!!.size.toDouble()
-                        moderate /= route!!.size.toDouble()
-                        weightControl /= route!!.size.toDouble()
-                        aerobic /= route!!.size.toDouble()
-                        anaerobic /= route!!.size.toDouble()
-                        vo2Max /= route!!.size.toDouble()
-                    }
-
-                    hrSum = route!!.sumOf { it.hr }
-                    maxHr = route!!.maxOf { it.hr }
-
-                    Log.d("HEART_RATE", heartRateZones.toString())
-
-                    avgHr = hrSum.div(route!!.size)
-                }
-
-                if (elevationArray.size > Constants.MIN_ROUTE_SIZE) {
-
-
-                    var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
-                    if (windowSize > Constants.MAX_WINDOW_SIZE)
-                        windowSize = Constants.MAX_WINDOW_SIZE
-                    Log.d("ELEVATION", "the calculated window size is: $windowSize")
-                    val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
-                    val filteredElevation = s1.smoothSignal()
-
-                    for (i in 0..filteredElevation.size - 2) {
-                        if (filteredElevation[i] < filteredElevation[i + 1]) {
-                            elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
-                        } else {
-                            elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
-                        }
-                    }
-                }
-
-
-                runOnUiThread {
-
-                    mMap.addPolyline(
-                        polylineOptions.color(
-                            ContextCompat.getColor(
-                                this@ChallengeDetailsActivity,
-                                R.color.colorAccent
-                            )
+            var hrSum = 0
+            var hr = false
+            if (route?.get(0)?.hr == -1) {
+                for ((index, i) in route!!.withIndex()) {
+                    elevationArray[index] = i.altitude
+                    points.add(
+                        Point.fromLngLat(
+                            i.latLng.longitude, i.latLng.latitude, i.altitude
                         )
                     )
-                    val padding = 100
-                    val cu = CameraUpdateFactory.newLatLngBounds(builder.build(), padding)
-                    mMap.animateCamera(cu)
-                    binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
-                    binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
-                    if (hr) {
-                        binding.apply {
-                            maxHeartRateTextView?.text = "$maxHr bpm"
-                            avgHeartRateTextView?.text = "$avgHr bpm"
-                        }
-                    } else {
-                        binding.apply {
-                            maxHeartRateTextView?.text = "--"
-                            avgHeartRateTextView?.text = "--"
-                        }
+                    latLngBoundsBuilder.include(
+                        LatLng(
+                            i.latLng.latitude,
+                            i.latLng.longitude,
+                            i.altitude
+                        )
+                    )
+                }
+            } else {
+                heartRateZones = HeartRateZones()
+                hr = true
+                for ((index, myLocation) in route!!.withIndex()) {
+
+                    when (myLocation.hr) {
+                        in 0..97 -> heartRateZones!!.relaxed++
+                        in 98..116 -> heartRateZones!!.moderate++
+                        in 117..136 -> heartRateZones!!.weightControl++
+                        in 137..155 -> heartRateZones!!.aerobic++
+                        in 156..175 -> heartRateZones!!.anaerobic++
+                        else -> heartRateZones!!.vo2Max++
                     }
+
+                    latLngBoundsBuilder.include(
+                        LatLng(
+                            myLocation.latLng.latitude,
+                            myLocation.latLng.longitude,
+                            myLocation.altitude
+                        )
+                    )
+                    points.add(
+                        Point.fromLngLat(
+                            myLocation.latLng.longitude,
+                            myLocation.latLng.latitude,
+                            myLocation.altitude
+                        )
+                    )
+                    elevationArray[index] = myLocation.altitude
                 }
 
+                heartRateZones!!.apply {
+                    relaxed /= route!!.size.toDouble()
+                    moderate /= route!!.size.toDouble()
+                    weightControl /= route!!.size.toDouble()
+                    aerobic /= route!!.size.toDouble()
+                    anaerobic /= route!!.size.toDouble()
+                    vo2Max /= route!!.size.toDouble()
+                }
+
+                hrSum = route!!.sumOf { it.hr }
+                maxHr = route!!.maxOf { it.hr }
+
+                Log.d("HEART_RATE", heartRateZones.toString())
+
+                avgHr = hrSum.div(route!!.size)
             }
-        }.start()
+
+            if (elevationArray.size > Constants.MIN_ROUTE_SIZE) {
+
+
+                var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
+                if (windowSize > Constants.MAX_WINDOW_SIZE)
+                    windowSize = Constants.MAX_WINDOW_SIZE
+                Log.d("ELEVATION", "the calculated window size is: $windowSize")
+                val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
+                val filteredElevation = s1.smoothSignal()
+
+                for (i in 0..filteredElevation.size - 2) {
+                    if (filteredElevation[i] < filteredElevation[i + 1]) {
+                        elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
+                    } else {
+                        elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+                    }
+                }
+            }
+            handler.post {
+                val lineString: LineString = LineString.fromLngLats(points)
+                val feature = Feature.fromGeometry(lineString)
+                val geoJsonSource = GeoJsonSource("geojson-source", feature)
+                val lineLayer = LineLayer("linelayer", "geojson-source").withProperties(
+                    PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
+                    PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
+                    PropertyFactory.lineOpacity(1f),
+                    PropertyFactory.lineWidth(4f),
+                    PropertyFactory.lineColor(
+                        resources.getColor(
+                            R.color.colorAccent,
+                            null
+                        )
+                    )
+                )
+                style.addSource(geoJsonSource)
+                style.addLayer(lineLayer)
+
+                mapBox?.animateCamera(
+                    com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(
+                        latLngBoundsBuilder.build(),
+                        100
+                    ), 2000, object : MapboxMap.CancelableCallback {
+                        override fun onCancel() {
+                            //no need
+                        }
+
+                        override fun onFinish() {
+                            createSnapshot(latLngBoundsBuilder.build(), lineLayer, geoJsonSource)
+                        }
+
+                    }
+                )
+
+                //TODO(create snapshot when animation is ready)
+
+                binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
+                binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
+                if (hr) {
+                    binding.apply {
+                        maxHeartRateTextView.text = "$maxHr bpm"
+                        avgHeartRateTextView.text = "$avgHr bpm"
+                    }
+                } else {
+                    binding.apply {
+                        maxHeartRateTextView.text = "--"
+                        avgHeartRateTextView.text = "--"
+                    }
+                }
+            }
+        }
     }
 
     //endregion processing
 
     //region sharing
 
-    /** takes a screenshot of map and adds text to image */
-    private fun initShareImage() {
-
-        val callback: GoogleMap.SnapshotReadyCallback = GoogleMap.SnapshotReadyCallback {
-            val canvas = Canvas(it)
-            val scale = resources.displayMetrics.density
-            val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = ContextCompat.getColor(
-                    this@ChallengeDetailsActivity,
-                    android.R.color.white
+    private fun createSnapshot(
+        latLngBounds: LatLngBounds,
+        lineLayer: LineLayer,
+        source: GeoJsonSource
+    ) {
+        if (snapshotter == null) {
+            val options = MapSnapshotter.Options(1000, 1000)
+                .withRegion(latLngBounds)
+                .withCameraPosition(mapBox?.cameraPosition)
+                .withStyleBuilder(
+                    Style.Builder()
+                        .fromUri(mapBox?.style?.uri!!)
+                    //.withLayer(lineLayer)
                 )
-                textSize = 16 * scale
-                textAlign = Paint.Align.CENTER
-                setShadowLayer(1f, 0f, 1f, Color.DKGRAY)
+            snapshotter = MapSnapshotter(this, options)
+            snapshotter!!.start {
+                initShareImage(it.bitmap)
             }
-            val background = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = ContextCompat.getColor(
-                    this@ChallengeDetailsActivity,
-                    R.color.colorPrimaryDark
-                )
-            }
-
-            val drawable = ContextCompat.getDrawable(this, R.drawable.sharing_logo)
-
-            drawable?.setBounds(
-                (it.width * 0.83).toInt(),
-                (it.height * 0.1).toInt(), (it.width * 0.98).toInt(), (it.height * 0.18).toInt()
-            )
-
-            drawable?.draw(canvas)
-
-            canvas.drawRect(
-                0f, 0f, it.width.toFloat(),
-                it.height * 0.07f, background
-            )
-
-            canvas.drawText("CHALLENGER", it.width * 0.5f, it.height * 0.05f, textPaint)
-
-            canvas.drawRect(
-                0f, it.height * 0.93f, it.width.toFloat(),
-                it.height.toFloat(), background
-            )
-            canvas.drawText(
-                DateUtils.formatElapsedTime(challenge.dur),
-                0.5f * it.width, 0.98f * it.height, textPaint
-            )
-            textPaint.textAlign = Paint.Align.LEFT
-            canvas.drawText(
-                "${getStringFromNumber(1, challenge.dst)} km",
-                (0.05f * it.width), it.height.toFloat() * 0.98f, textPaint
-            )
-            textPaint.textAlign = Paint.Align.RIGHT
-
-            //if it is running, the user needs avg pace not speed
-            if (challenge.type == getString(R.string.running)) {
-                val avgPace = challenge.dur.div(challenge.dst)
-                canvas.drawText(
-                    "${DateUtils.formatElapsedTime(avgPace.toLong())} /km",
-                    (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
-                )
-            } else {
-                canvas.drawText(
-                    "${getStringFromNumber(1, challenge.avg)} km/h",
-                    (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
-                )
-            }
-
-            sharingImageBitmap = it
-            saveSharingBitmap(it, "challenge")
 
         }
-        mMap.snapshot(callback)
+    }
+
+    /** takes a screenshot of map and adds text to image */
+    private fun initShareImage(it: Bitmap) {
+
+        val canvas = Canvas(it)
+        val scale = resources.displayMetrics.density
+        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ContextCompat.getColor(
+                this@ChallengeDetailsActivity,
+                android.R.color.white
+            )
+            textSize = 16 * scale
+            textAlign = Paint.Align.CENTER
+            setShadowLayer(1f, 0f, 1f, Color.DKGRAY)
+        }
+        val background = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ContextCompat.getColor(
+                this@ChallengeDetailsActivity,
+                R.color.colorPrimaryDark
+            )
+        }
+
+        val drawable = ContextCompat.getDrawable(this, R.drawable.sharing_logo)
+
+        drawable?.setBounds(
+            (it.width * 0.83).toInt(),
+            (it.height * 0.1).toInt(), (it.width * 0.98).toInt(), (it.height * 0.18).toInt()
+        )
+
+        drawable?.draw(canvas)
+
+        canvas.drawRect(
+            0f, 0f, it.width.toFloat(),
+            it.height * 0.07f, background
+        )
+
+        canvas.drawText("CHALLENGER", it.width * 0.5f, it.height * 0.05f, textPaint)
+
+        canvas.drawRect(
+            0f, it.height * 0.93f, it.width.toFloat(),
+            it.height.toFloat(), background
+        )
+        canvas.drawText(
+            DateUtils.formatElapsedTime(challenge.dur),
+            0.5f * it.width, 0.98f * it.height, textPaint
+        )
+        textPaint.textAlign = Paint.Align.LEFT
+        canvas.drawText(
+            "${getStringFromNumber(1, challenge.dst)} km",
+            (0.05f * it.width), it.height.toFloat() * 0.98f, textPaint
+        )
+        textPaint.textAlign = Paint.Align.RIGHT
+
+        //if it is running, the user needs avg pace not speed
+        if (challenge.type == getString(R.string.running)) {
+            val avgPace = challenge.dur.div(challenge.dst)
+            canvas.drawText(
+                "${DateUtils.formatElapsedTime(avgPace.toLong())} /km",
+                (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
+            )
+        } else {
+            canvas.drawText(
+                "${getStringFromNumber(1, challenge.avg)} km/h",
+                (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
+            )
+        }
+
+        sharingImageBitmap = it
+        saveSharingBitmap(it, "challenge")
     }
 
     /** Saves bitmap */

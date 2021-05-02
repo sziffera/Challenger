@@ -1,6 +1,5 @@
 package com.sziffer.challenger.ui
 
-import android.animation.ValueAnimator
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +13,7 @@ import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
 import com.mapbox.mapboxsdk.maps.MapView
+import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.Style
 import com.mapbox.mapboxsdk.style.layers.LineLayer
 import com.mapbox.mapboxsdk.style.layers.Property
@@ -29,7 +29,7 @@ class MapboxActivity : AppCompatActivity() {
     private var mapView: MapView? = null
     private lateinit var points: ArrayList<Point>
 
-    private var animator: ValueAnimator? = null
+    private var mapBox: MapboxMap? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

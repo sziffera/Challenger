@@ -5,12 +5,16 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.LimitLine
+import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.IFillFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
@@ -23,17 +27,21 @@ import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChartsBinding
 import com.sziffer.challenger.model.HeartRateZones
 import com.sziffer.challenger.model.MyLocation
-import com.sziffer.challenger.utils.extensions.round
+import com.sziffer.challenger.utils.extensions.dp
+import com.sziffer.challenger.utils.extensions.toPace
 import com.sziffer.challenger.utils.getStringFromNumber
 import java.util.*
+import java.util.concurrent.Executors
 import kotlin.collections.ArrayList
+
 
 class ChartsActivity : AppCompatActivity() {
 
-    private var challengeData: ArrayList<MyLocation>? = null
-
     private var elevationGain = 0.0
     private var elevationLoss = 0.0
+
+    private var maxHr = 0
+    private var avgHr = 0
 
     private var avgSpeed: Double = 0.0
 
@@ -54,39 +62,47 @@ class ChartsActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.title = challenge?.name?.capitalize(Locale.ROOT)
 
-        challengeData = Gson().fromJson<ArrayList<MyLocation>>(challenge?.routeAsString, typeJson)
+        var challengeData =
+            Gson().fromJson<ArrayList<MyLocation>>(challenge?.routeAsString, typeJson)
 
         val dataPoints = resources.displayMetrics.widthPixels
         val filterIndex: Double = if (challengeData!!.size < dataPoints)
             1.0
         else {
-            challengeData!!.size.toDouble() / dataPoints
+            challengeData.size.toDouble() / dataPoints
         }
-
         challengeData =
-            challengeData!!.filterIndexed { index, _ ->
+            challengeData.filterIndexed { index, _ ->
                 (index % filterIndex.toInt()) == 0 || index == challengeData!!.size - 1
             } as ArrayList<MyLocation>
 
-        Log.d("CHARTS", "the size of reduced challengeData: ${challengeData!!.size}")
+        Log.d("CHARTS", "the size of reduced challengeData: ${challengeData.size}")
 
         val showHr = intent.getBooleanExtra(SHOW_HR, false)
-
-        if (!showHr) {
-            binding.heartRateLineChart.visibility = View.GONE
-            binding.hrChartTitle.visibility = View.GONE
-            binding.hrPieChartTitle.visibility = View.GONE
-            binding.heartRatePieChart.visibility = View.GONE
-        }
 
         avgSpeed = intent.getDoubleExtra(AVG_SPEED, 0.0)
 
         elevationGain = intent.getDoubleExtra(ELEVATION_GAIN, 0.0)
         elevationLoss = intent.getDoubleExtra(ELEVATION_LOSS, 0.0)
 
+        avgHr = intent.getIntExtra(AVG_HR, 0)
+        maxHr = intent.getIntExtra(MAX_HR, 0)
 
         heartRateZones = intent.getParcelableExtra(HEART_RATE_ZONES)
 
+        if (!showHr) {
+            binding.heartRateLineChart.visibility = View.GONE
+            binding.hrChartTitle.visibility = View.GONE
+            binding.hrPieChartTitle.visibility = View.GONE
+            binding.heartRatePieChart.visibility = View.GONE
+            binding.maxHeartRateTextView.visibility = View.GONE
+            binding.avgHeartRateTextView.visibility = View.GONE
+        } else {
+            binding.apply {
+                maxHeartRateTextView.text = "${getString(R.string.max)}: $maxHr BPM"
+                avgHeartRateTextView.text = "${getString(R.string.avg)} $avgHr BPM"
+            }
+        }
 
         binding.shareImageButton.setOnClickListener {
             startActivity(
@@ -101,9 +117,10 @@ class ChartsActivity : AppCompatActivity() {
         binding.elevationLossTextView.text = "${getString(R.string.elevation_lost)}: " +
                 "${getStringFromNumber(0, elevationLoss)} m"
 
-        initLineCharts(binding.speedLineChart)
-        initLineCharts(binding.heartRateLineChart)
-        initLineCharts(binding.elevationLineChart)
+        val distance = challengeData.last().distance
+        initLineCharts(binding.speedLineChart, distance)
+        initLineCharts(binding.heartRateLineChart, distance)
+        initLineCharts(binding.elevationLineChart, distance)
 
         val limitLine =
             LimitLine(
@@ -117,23 +134,18 @@ class ChartsActivity : AppCompatActivity() {
         binding.speedLineChart.axisLeft.addLimitLine(limitLine)
 
         if (showHr) {
-            setHeartRateZonesData()
+            setHeartRateZonesData(challengeData)
         }
-        setUpLineCharts(showHr)
-
+        setUpLineCharts(showHr, challengeData)
     }
+
 
     override fun onBackPressed() {
         super.onBackPressed()
         finish()
     }
 
-    override fun onLowMemory() {
-        super.onLowMemory()
-        challengeData = null
-    }
-
-    private fun initLineCharts(lineChart: LineChart) {
+    private fun initLineCharts(lineChart: LineChart, distance: Float) {
         with(lineChart) {
             isDragEnabled = true
             setPinchZoom(true)
@@ -145,9 +157,10 @@ class ChartsActivity : AppCompatActivity() {
                 enableAxisLineDashedLine(10f, 10f, 0f)
                 axisMinimum = 0f
                 textColor = ContextCompat.getColor(applicationContext, android.R.color.white)
-                mAxisMaximum = challengeData!![challengeData!!.size - 1].distance
+                mAxisMaximum = distance
             }
             axisRight.isEnabled = false
+            animateX(2000)
         }
     }
 
@@ -160,11 +173,8 @@ class ChartsActivity : AppCompatActivity() {
         startActivity(Intent.createChooser(intent, getString(R.string.share_challenge)))
     }
 
+    private fun setHeartRateZonesData(challengeData: ArrayList<MyLocation>) {
 
-    private fun setHeartRateZonesData() {
-
-        if (challengeData == null)
-            return
 
         val data = ArrayList<PieEntry>().apply {
             addAll(
@@ -195,13 +205,16 @@ class ChartsActivity : AppCompatActivity() {
             setColors(colors)
             valueFormatter = object : ValueFormatter() {
                 override fun getPieLabel(value: Float, pieEntry: PieEntry?): String {
-                    return value.round(0).toString()
+                    return if (value > 7) "${value.toInt()}%" else ""
                 }
             }
             setDrawValues(false)
         }
 
-        val pieData = PieData(dataSet)
+        val pieData = PieData(dataSet).apply {
+            setValueTextSize(12f)
+            setValueTextColor(Color.WHITE)
+        }
         binding.heartRatePieChart.apply {
             invalidate()
             setUsePercentValues(true)
@@ -209,78 +222,163 @@ class ChartsActivity : AppCompatActivity() {
             description.text = getString(R.string.heart_rate_zones)
             description.textColor = Color.WHITE
             legend.isWordWrapEnabled = true
-            this.data.setDrawValues(false)
+            this.data.setDrawValues(true)
             setDrawEntryLabels(false)
             setDrawSliceText(false)
             holeRadius = 0f
             transparentCircleRadius = 0f
             legend.textColor = Color.WHITE
             setEntryLabelColor(Color.WHITE)
-            setTouchEnabled(true)
+            setTouchEnabled(false)
         }
-
     }
 
+    private fun setUpLineCharts(hr: Boolean, challengeData: ArrayList<MyLocation>) {
 
-    private fun setUpLineCharts(hr: Boolean) {
+        val executor = Executors.newSingleThreadExecutor()
+        val handler = Handler(Looper.getMainLooper())
 
-        val elevationData = challengeData!!.map { it.altitude }.toDoubleArray()
-        val mode = "triangular"
-        val windowSize = 11
-        val s1 = Smooth(elevationData, windowSize, mode)
-        val filteredElevation = s1.smoothSignal()
-
-        val elevationEntries = ArrayList<Entry>()
-        val speedEntries = ArrayList<Entry>()
-        val hrEntries = ArrayList<Entry>()
+        executor.execute {
 
 
-        for (i in filteredElevation!!.indices) {
-            elevationEntries.add(
-                Entry(
-                    challengeData!![i].distance,
-                    filteredElevation[i].toFloat()
-                )
-            )
-            speedEntries.add(
-                Entry(
-                    challengeData!![i].distance,
-                    challengeData!![i].speed.times(3.6f)
-                )
-            )
-            if (hr)
-                hrEntries.add(
+            val elevationData = challengeData.map { it.altitude }.toDoubleArray()
+            val mode = "triangular"
+            val windowSize = 11
+            val s1 = Smooth(elevationData, windowSize, mode)
+            val filteredElevation = s1.smoothSignal()
+
+            val elevationEntries = ArrayList<Entry>()
+            val speedEntries = ArrayList<Entry>()
+            val hrEntries = ArrayList<Entry>()
+
+            var kmCounter = 0.0
+            var tempDuration: Long = 0
+            var lastSavedMetres: Float = 0f
+            val paces = ArrayList<BarEntry>()
+
+            val paceChartLabels = ArrayList<String>(paces.size)
+
+            for (i in filteredElevation!!.indices) {
+
+                if (challengeData[i].distance - lastSavedMetres > 1000) {
+                    kmCounter++
+                    val duration = (challengeData[i].time - tempDuration) / 1000.0
+                    lastSavedMetres = challengeData[i].distance
+                    tempDuration = challengeData[i].time
+                    paceChartLabels.add("$kmCounter km - ${duration.toPace()}")
+                    paces.add(BarEntry(kmCounter.toFloat(), duration.toFloat()))
+                }
+
+                elevationEntries.add(
                     Entry(
-                        challengeData!![i].distance,
-                        challengeData!![i].hr.toFloat()
+                        challengeData[i].distance,
+                        filteredElevation[i].toFloat()
                     )
                 )
+                speedEntries.add(
+                    Entry(
+                        challengeData[i].distance,
+                        challengeData[i].speed.times(3.6f)
+                    )
+                )
+                if (hr)
+                    hrEntries.add(
+                        Entry(
+                            challengeData[i].distance,
+                            challengeData[i].hr.toFloat()
+                        )
+                    )
+            }
+
+            handler.post {
+
+                setUpPaceBarChart(paces, paceChartLabels)
+
+
+                addDataToChart(
+                    elevationEntries,
+                    binding.elevationLineChart,
+                    getString(R.string.altitude_in_metres),
+                    ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus),
+                    ContextCompat.getColor(this@ChartsActivity, R.color.colorMinus)
+                )
+                addDataToChart(
+                    speedEntries,
+                    binding.speedLineChart,
+                    getString(R.string.speed) + " km/h",
+                    ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus),
+                    ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus)
+                )
+                if (hr) {
+                    addDataToChart(
+                        hrEntries,
+                        binding.heartRateLineChart,
+                        getString(R.string.heart_rate),
+                        ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus),
+                        ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus)
+                    )
+                }
+                //challengeData = null
+            }
+        }
+    }
+
+    private fun setUpPaceBarChart(paces: ArrayList<BarEntry>, paceLabels: ArrayList<String>) {
+
+        binding.paceHorizontalBarChart.apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, (18 * paces.size).dp
+            )
+            setDrawBarShadow(false)
+            legend.isEnabled = false
+            setPinchZoom(false)
+
+            description.isEnabled = false
+            setTouchEnabled(false)
+            setDrawValueAboveBar(false)
+            setFitBars(true)
+            legend.textColor = Color.WHITE
+            axisLeft.apply {
+                isEnabled = false
+                axisMinimum = 0f
+            }
+            axisRight.apply {
+                isEnabled = false
+                axisMaximum = 0f
+            }
+
+            xAxis.apply {
+                setDrawGridLines(false)
+                position = XAxis.XAxisPosition.BOTTOM
+                isEnabled = true
+                textColor = Color.WHITE
+                setDrawAxisLine(true)
+                setLabelCount(paces.size, true)
+                valueFormatter = object : ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String {
+                        return "${value.toInt()} km"
+                    }
+                }
+            }
         }
 
-        addDataToChart(
-            elevationEntries,
-            binding.elevationLineChart,
-            getString(R.string.altitude_in_metres),
-            ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus),
-            ContextCompat.getColor(this@ChartsActivity, R.color.colorMinus)
-        )
-        addDataToChart(
-            speedEntries,
-            binding.speedLineChart,
-            getString(R.string.speed) + " km/h",
-            ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus),
-            ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus)
-        )
-        if (hr) {
-            addDataToChart(
-                hrEntries,
-                binding.heartRateLineChart,
-                getString(R.string.heart_rate),
-                ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus),
-                ContextCompat.getColor(this@ChartsActivity, R.color.colorPlus)
-            )
+
+        val barDataSet = BarDataSet(paces, getString(R.string.pace)).apply {
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    return value.toPace()
+                }
+            }
         }
-        challengeData = null
+
+
+        val data = BarData(barDataSet).apply {
+            barWidth = 0.9f
+        }
+
+        binding.paceHorizontalBarChart.animateY(2000)
+        binding.paceHorizontalBarChart.data = data
+        binding.paceHorizontalBarChart.invalidate()
     }
 
     private fun addDataToChart(
@@ -327,9 +425,9 @@ class ChartsActivity : AppCompatActivity() {
             val data = LineData(dataSets)
             lineChart.data = data
         }
-
-
     }
+
+
 
     companion object {
         const val AVG_SPEED = "avgSpeed"
@@ -338,5 +436,8 @@ class ChartsActivity : AppCompatActivity() {
         const val ELEVATION_LOSS = "elevationLoss"
         const val HEART_RATE_ZONES = "hrZones"
         const val SHOW_HR = "showHr"
+        const val MAX_SPEED = "maxSpeed"
+        const val AVG_HR = "avgHr"
+        const val MAX_HR = "maxHr"
     }
 }
