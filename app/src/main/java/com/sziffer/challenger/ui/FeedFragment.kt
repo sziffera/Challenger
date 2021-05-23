@@ -59,8 +59,6 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
 
         viewModel.fetchChallenges(requireContext())
 
-
-        //TODO(examine this flow, maybe the WorkManager cannot be found before starting - NOT WORKING)
         viewModel.callObserveWork.observe(viewLifecycleOwner, {
             Log.d("OBSERVE", it.toString())
             if (it) {
@@ -72,8 +70,8 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
 
         viewModel.challengesLiveData.observe(viewLifecycleOwner, {
             with(binding) {
-                recyclerView.visibility = View.VISIBLE
-                emptyImageView.visibility = View.GONE
+                swipeRefreshLayout.visibility = View.VISIBLE
+                emptyViewLinearLayout.visibility = View.GONE
                 with(recyclerView) {
                     adapter =
                         ChallengeRecyclerViewAdapter(
@@ -89,6 +87,12 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
                 }
             }
         })
+
+        binding.apply {
+            swipeRefreshLayout.visibility = View.GONE
+            emptyViewLinearLayout.visibility = View.GONE
+        }
+
         return binding.root
     }
 

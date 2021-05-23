@@ -8,12 +8,32 @@
     android:background="@drawable/gradient_background"
     android:orientation="vertical">
 
-    <com.mapbox.mapboxsdk.maps.MapView
-        android:id="@+id/map"
+    <FrameLayout
+        android:id="@+id/mapHolderFrameLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginBottom="5dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:layout_marginBottom="5dp">
+
+        <com.mapbox.mapboxsdk.maps.MapView
+            android:id="@+id/mapbox"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <Button
+            android:id="@+id/recenterButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/round_edittext"
+            android:textColor="@color/colorDarkBlue"
+            android:paddingEnd="7dp"
+            android:drawableStart="@drawable/ic_baseline_navigation_24"
+            android:drawableTint="@color/colorDarkBlue"
+            android:text="Recenter"
+            android:layout_marginBottom="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_gravity="end|bottom" />
+    </FrameLayout>
 
 
     <LinearLayout
@@ -74,8 +94,8 @@
                     android:layout_height="30dp"
                     android:layout_marginEnd="15dp"
                     android:backgroundTint="@android:color/transparent"
-                    android:tint="@android:color/white"
-                    app:srcCompat="@drawable/ic_settings_voice_24dp" />
+                    app:srcCompat="@drawable/ic_settings_voice_24dp"
+                    app:tint="@android:color/white" />
 
                 <ImageView
                     android:id="@+id/activityTypeImageView"

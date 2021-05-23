@@ -2,9 +2,7 @@ package com.sziffer.challenger
 
 
 import android.app.*
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothGattCharacteristic
-import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.content.Context
@@ -141,7 +139,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             characteristic: BluetoothGattCharacteristic,
             status: GattStatus
         ) {
-            processCharacteristicUpdate(value, characteristic)
+            processCharacteristicUpdate(characteristic)
         }
 
     }
@@ -154,12 +152,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     private val filter = ScanFilter.Builder().setServiceUuid(
         ParcelUuid.fromString(GattHeartRateAttributes.UUID_HEART_RATE_SERVICE)
     ).build()
-
-    private val bluetoothAdapter: BluetoothAdapter by lazy {
-        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        bluetoothManager.adapter
-    }
-
 
     //region service lifecycle
     override fun onCreate() {
@@ -337,10 +329,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     }
 
     private fun processCharacteristicUpdate(
-        value: ByteArray,
         characteristic: BluetoothGattCharacteristic
     ) {
-        //if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.uuid)) {
         val flag: Int = characteristic.properties
         val format: Int
         if (flag and 0x01 != 0) {
@@ -353,7 +343,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         val hr: Int = characteristic.getIntValue(format, 1)
         this.heartRate = hr
         Log.d(TAG, "Received heart rate: $heartRate")
-        //}
     }
 
     fun disconnect() {

@@ -80,7 +80,7 @@ class ChallengeDbHelper(context: Context) :
     }
 
     fun getChallenge(id: Int): Challenge? {
-        val db: SQLiteDatabase = this.writableDatabase
+        val db: SQLiteDatabase = this.readableDatabase
         val cursor = db.query(
             DATABASE_NAME,
             arrayOf(
@@ -143,7 +143,7 @@ class ChallengeDbHelper(context: Context) :
 
     fun getChallengeByFirebaseId(firebaseId: String): Challenge? {
 
-        val db: SQLiteDatabase = this.writableDatabase
+        val db: SQLiteDatabase = this.readableDatabase
         val cursor = db.query(
             DATABASE_NAME,
             arrayOf(

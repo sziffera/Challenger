@@ -46,10 +46,7 @@ import com.sziffer.challenger.model.HeartRateZones
 import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
-import com.sziffer.challenger.utils.Constants
-import com.sziffer.challenger.utils.getStringFromNumber
-import com.sziffer.challenger.utils.locationPermissionCheck
-import com.sziffer.challenger.utils.locationPermissionRequest
+import com.sziffer.challenger.utils.*
 import java.io.*
 import java.util.*
 import java.util.concurrent.Executors
@@ -341,9 +338,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             binding.challengeDetailsDurationTextView.text = DateUtils.formatElapsedTime(dur)
             binding.challengeDetailsAvgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
             binding.challengeDetailsDistanceTextView.text = getStringFromNumber(1, dst) + " km"
-            if (type == getString(R.string.running)) {
-                binding.challengeTypeImageView.setImageResource(R.drawable.running)
-            }
+
             avgSpeed = this.avg
             binding.challengeDetailsMaxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
             val avgPace = dur.div(dst)
@@ -413,7 +408,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
             val elevationArray = DoubleArray(route!!.size)
             val points = ArrayList<Point>()
-            val latLngBoundsBuilder = com.mapbox.mapboxsdk.geometry.LatLngBounds.Builder()
+            val latLngBoundsBuilder = LatLngBounds.Builder()
+
 
             var hrSum = 0
             var hr = false
@@ -499,6 +495,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                     }
                 }
             }
+
+
             handler.post {
                 val lineString: LineString = LineString.fromLngLats(points)
                 val feature = Feature.fromGeometry(lineString)
@@ -515,6 +513,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                         )
                     )
                 )
+
+
                 style.addSource(geoJsonSource)
                 style.addLayer(lineLayer)
 
@@ -522,19 +522,9 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                     com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(
                         latLngBoundsBuilder.build(),
                         100
-                    ), 2000, object : MapboxMap.CancelableCallback {
-                        override fun onCancel() {
-                            //no need
-                        }
-
-                        override fun onFinish() {
-                            createSnapshot(latLngBoundsBuilder.build(), lineLayer, geoJsonSource)
-                        }
-
-                    }
+                    ), 2000
                 )
 
-                //TODO(create snapshot when animation is ready)
 
                 binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
                 binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
@@ -555,119 +545,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
     //endregion processing
 
-    //region sharing
 
-    private fun createSnapshot(
-        latLngBounds: LatLngBounds,
-        lineLayer: LineLayer,
-        source: GeoJsonSource
-    ) {
-        if (snapshotter == null) {
-            val options = MapSnapshotter.Options(1000, 1000)
-                .withRegion(latLngBounds)
-                .withCameraPosition(mapBox?.cameraPosition)
-                .withStyleBuilder(
-                    Style.Builder()
-                        .fromUri(mapBox?.style?.uri!!)
-                    //.withLayer(lineLayer)
-                )
-            snapshotter = MapSnapshotter(this, options)
-            snapshotter!!.start {
-                initShareImage(it.bitmap)
-            }
-
-        }
-    }
-
-    /** takes a screenshot of map and adds text to image */
-    private fun initShareImage(it: Bitmap) {
-
-        val canvas = Canvas(it)
-        val scale = resources.displayMetrics.density
-        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = ContextCompat.getColor(
-                this@ChallengeDetailsActivity,
-                android.R.color.white
-            )
-            textSize = 16 * scale
-            textAlign = Paint.Align.CENTER
-            setShadowLayer(1f, 0f, 1f, Color.DKGRAY)
-        }
-        val background = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = ContextCompat.getColor(
-                this@ChallengeDetailsActivity,
-                R.color.colorPrimaryDark
-            )
-        }
-
-        val drawable = ContextCompat.getDrawable(this, R.drawable.sharing_logo)
-
-        drawable?.setBounds(
-            (it.width * 0.83).toInt(),
-            (it.height * 0.1).toInt(), (it.width * 0.98).toInt(), (it.height * 0.18).toInt()
-        )
-
-        drawable?.draw(canvas)
-
-        canvas.drawRect(
-            0f, 0f, it.width.toFloat(),
-            it.height * 0.07f, background
-        )
-
-        canvas.drawText("CHALLENGER", it.width * 0.5f, it.height * 0.05f, textPaint)
-
-        canvas.drawRect(
-            0f, it.height * 0.93f, it.width.toFloat(),
-            it.height.toFloat(), background
-        )
-        canvas.drawText(
-            DateUtils.formatElapsedTime(challenge.dur),
-            0.5f * it.width, 0.98f * it.height, textPaint
-        )
-        textPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText(
-            "${getStringFromNumber(1, challenge.dst)} km",
-            (0.05f * it.width), it.height.toFloat() * 0.98f, textPaint
-        )
-        textPaint.textAlign = Paint.Align.RIGHT
-
-        //if it is running, the user needs avg pace not speed
-        if (challenge.type == getString(R.string.running)) {
-            val avgPace = challenge.dur.div(challenge.dst)
-            canvas.drawText(
-                "${DateUtils.formatElapsedTime(avgPace.toLong())} /km",
-                (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
-            )
-        } else {
-            canvas.drawText(
-                "${getStringFromNumber(1, challenge.avg)} km/h",
-                (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
-            )
-        }
-
-        sharingImageBitmap = it
-        saveSharingBitmap(it, "challenge")
-    }
-
-    /** Saves bitmap */
-    private fun saveSharingBitmap(bitmap: Bitmap, name: String) {
-
-        try {
-            val bytes = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes)
-            val fo = openFileOutput(name, MODE_PRIVATE)
-            fo.write(bytes.toByteArray())
-            fo.close()
-
-        } catch (e: FileNotFoundException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        Log.d(TAG, "The sharing image was saved")
-    }
-
-    //endregion sharing
 
     //region for testing
     private fun writeToFile(testArray: DoubleArray) {

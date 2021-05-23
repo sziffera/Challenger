@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:drawable="@drawable/gpx_symbol"
+        android:width="24dp"
+        android:start="4dp"
+        android:end="4dp"
+        android:height="24dp" />
+
+</layer-list>

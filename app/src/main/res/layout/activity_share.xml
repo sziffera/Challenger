@@ -38,7 +38,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toEndOf="@id/cancelImageButton"
                 app:layout_constraintTop_toTopOf="parent"
-                app:titleTextColor="@android:color/white"></androidx.appcompat.widget.Toolbar>
+                app:titleTextColor="@android:color/white" />
 
             <Button
                 android:id="@+id/shareImageButton"
@@ -47,7 +47,8 @@
                 android:layout_height="wrap_content"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-
+                android:layout_marginEnd="16dp"
+                android:drawableEnd="@drawable/ic_outline_share_24"
                 android:text="@string/share"
                 app:layout_constraintBottom_toBottomOf="parent" />
 
@@ -56,12 +57,33 @@
     </com.google.android.material.appbar.AppBarLayout>
 
 
+    <TextView
+        android:id="@+id/noInternetTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:paddingVertical="5dp"
+        android:layout_marginHorizontal="24dp"
+        android:paddingHorizontal="16dp"
+        android:textSize="15sp"
+        android:textAllCaps="true"
+        android:text="@string/can_t_load_sharing_image"
+        android:background="@drawable/round_edittext"
+        android:backgroundTint="@color/colorPlus"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout" />
+
+
     <ImageView
         android:id="@+id/sharingImageView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:scaleType="fitCenter"
+        android:layout_marginHorizontal="16dp"
         app:layout_constraintTop_toBottomOf="@id/appBarLayout"
+        app:layout_constraintBottom_toTopOf="@id/exportGPXButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -70,7 +92,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
-        android:background="@android:color/transparent"
+        android:background="@drawable/round_edittext"
+        android:textColor="@android:color/white"
+        android:backgroundTint="@android:color/transparent"
+        style="?android:attr/borderlessButtonStyle"
+        android:paddingHorizontal="10dp"
+        android:drawableStart="@drawable/gpx_icon"
+        android:drawableTint="@android:color/white"
         android:text="@string/export_as_gpx"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

@@ -57,7 +57,9 @@ class ChartsActivity : AppCompatActivity() {
 
         val id = intent.getLongExtra(CHALLENGE_ID, 0)
         val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
-        val challenge = ChallengeDbHelper(this).getChallenge(id.toInt())
+        val dbHelper = ChallengeDbHelper(this)
+        val challenge = dbHelper.getChallenge(id.toInt())
+        dbHelper.close()
 
         setSupportActionBar(binding.toolbar)
         supportActionBar?.title = challenge?.name?.capitalize(Locale.ROOT)
@@ -266,7 +268,12 @@ class ChartsActivity : AppCompatActivity() {
                     lastSavedMetres = challengeData[i].distance
                     tempDuration = challengeData[i].time
                     paceChartLabels.add("$kmCounter km - ${duration.toPace()}")
-                    paces.add(BarEntry(kmCounter.toFloat(), duration.toFloat()))
+                    paces.add(
+                        BarEntry(
+                            kmCounter.toFloat(),
+                            duration.toFloat()
+                        )
+                    )
                 }
 
                 elevationEntries.add(
@@ -327,7 +334,7 @@ class ChartsActivity : AppCompatActivity() {
 
         binding.paceHorizontalBarChart.apply {
             layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, (18 * paces.size).dp
+                LinearLayout.LayoutParams.MATCH_PARENT, (PACE_ITEM_HEIGHT * paces.size).dp
             )
             setDrawBarShadow(false)
             legend.isEnabled = false
@@ -428,7 +435,6 @@ class ChartsActivity : AppCompatActivity() {
     }
 
 
-
     companion object {
         const val AVG_SPEED = "avgSpeed"
         const val CHALLENGE_ID = "challengeId"
@@ -439,5 +445,7 @@ class ChartsActivity : AppCompatActivity() {
         const val MAX_SPEED = "maxSpeed"
         const val AVG_HR = "avgHr"
         const val MAX_HR = "maxHr"
+
+        private const val PACE_ITEM_HEIGHT = 18
     }
 }

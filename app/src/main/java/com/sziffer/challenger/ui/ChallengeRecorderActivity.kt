@@ -76,7 +76,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     private lateinit var userManager: UserManager
 
     private var mapBox: MapboxMap? = null
-
+    private var style: Style? = null
 
     private lateinit var binding: ActivityChallengeRecorderBinding
 
@@ -110,14 +110,20 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
         binding = ActivityChallengeRecorderBinding.inflate(layoutInflater)
 
+        binding.recenterButton.visibility = View.INVISIBLE
 
+
+        binding.recenterButton.setOnClickListener {
+            binding.recenterButton.visibility = View.INVISIBLE
+            startLocationTracking()
+        }
 
         setContentView(binding.root)
 
         this.actionBar?.hide()
 
-        binding.map.onCreate(savedInstanceState)
-        binding.map.getMapAsync { mapBox ->
+        binding.mapbox.onCreate(savedInstanceState)
+        binding.mapbox.getMapAsync { mapBox ->
             this.mapBox = mapBox
             mapBox.setStyle(Style.OUTDOORS) {
                 styleLoaded(it)
@@ -143,13 +149,13 @@ class ChallengeRecorderActivity : AppCompatActivity(),
             when (it.itemId) {
                 R.id.action_details -> {
                     Log.i("MENU", "DETAILS")
-                    binding.map.visibility = View.GONE
+                    binding.mapHolderFrameLayout.visibility = View.GONE
                     binding.detailsLinearLayout.visibility = View.VISIBLE
                     true
                 }
                 R.id.action_map -> {
                     binding.detailsLinearLayout.visibility = View.GONE
-                    binding.map.visibility = View.VISIBLE
+                    binding.mapHolderFrameLayout.visibility = View.VISIBLE
                     Log.i("MENU", "MAP")
                     true
                 }
@@ -256,12 +262,12 @@ class ChallengeRecorderActivity : AppCompatActivity(),
         PreferenceManager.getDefaultSharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(this)
         super.onStop()
-        binding.map.onStop()
+        binding.mapbox.onStop()
     }
 
     override fun onStart() {
         super.onStart()
-        binding.map.onStart()
+        binding.mapbox.onStart()
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)
 
@@ -302,7 +308,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
-        binding.map.onResume()
+        binding.mapbox.onResume()
         LocalBroadcastManager.getInstance(this).registerReceiver(
             activityDataReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST_UI_UPDATE)
@@ -316,17 +322,17 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     override fun onPause() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(activityDataReceiver)
         super.onPause()
-        binding.map.onPause()
+        binding.mapbox.onPause()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        binding.map.onDestroy()
+        binding.mapbox.onDestroy()
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
-        binding.map.onLowMemory()
+        binding.mapbox.onLowMemory()
     }
 
     //endregion activity lifecycle
@@ -334,40 +340,43 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
     //region map
 
+    @SuppressLint("MissingPermission")//checked
+    private fun startLocationTracking() {
+        val locationComponent: LocationComponent = mapBox!!.locationComponent
+        // Activate with a built LocationComponentActivationOptions object
+
+        // Activate with a built LocationComponentActivationOptions object
+        locationComponent.activateLocationComponent(
+            LocationComponentActivationOptions.builder(
+                this,
+                style!!
+            ).build()
+        )
+        locationComponent.apply {
+            isLocationComponentEnabled = true
+            cameraMode = CameraMode.TRACKING_GPS
+            renderMode = RenderMode.GPS
+            addOnCameraTrackingChangedListener(object : OnCameraTrackingChangedListener {
+                override fun onCameraTrackingDismissed() {
+                    binding.recenterButton.visibility = View.VISIBLE
+                }
+
+                override fun onCameraTrackingChanged(currentMode: Int) {
+
+                }
+
+            })
+            zoomWhileTracking(15.0, 2000)
+        }
+    }
+
     @SuppressLint("MissingPermission") //checked
     private fun styleLoaded(style: Style) {
+
+        this.style = style
+
         if (locationPermissionCheck(this)) {
-            val locationComponent: LocationComponent = mapBox!!.locationComponent
-            // Activate with a built LocationComponentActivationOptions object
-
-            // Activate with a built LocationComponentActivationOptions object
-            locationComponent.activateLocationComponent(
-                LocationComponentActivationOptions.builder(
-                    this,
-                    style
-                ).build()
-            )
-
-
-
-            locationComponent.apply {
-                isLocationComponentEnabled = true
-                cameraMode = CameraMode.TRACKING_GPS
-                renderMode = RenderMode.GPS
-                addOnCameraTrackingChangedListener(object : OnCameraTrackingChangedListener {
-                    override fun onCameraTrackingDismissed() {
-                        Log.d(TAG, "changed")
-                    }
-
-                    override fun onCameraTrackingChanged(currentMode: Int) {
-
-                    }
-
-                })
-                zoomWhileTracking(15.0, 2000)
-            }
-
-
+            startLocationTracking()
         }
 
         if (challenge) {
@@ -587,7 +596,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                     binding.muteVoiceCoachButton.visibility = View.GONE
 
                 binding.recorderBottomNavigationView.visibility = View.VISIBLE
-                binding.map.visibility = View.GONE
+                binding.mapHolderFrameLayout.visibility = View.GONE
 
                 gpsService?.requestLocationUpdates()
                 with(buttonSharedPreferences.edit()) {
