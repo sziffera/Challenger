@@ -119,6 +119,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
             .build()
 
         Executors.newSingleThreadExecutor().execute {
+            //getting the bitmap from the url
             initShareImage(Picasso.get().load(staticImage.url().toString()).get())
         }
 
@@ -157,6 +158,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
 
     /** takes a screenshot of map and adds text to image */
     private fun initShareImage(it: Bitmap) {
+
         val mutableBitmap =
             it.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(mutableBitmap)
@@ -222,8 +224,11 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
                 (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
             )
         }
+
         sharingImage = mutableBitmap
+
         runOnUiThread {
+            binding.sharingImageLoadingProgressBar.visibility = View.GONE
             binding.sharingImageView.setImageBitmap(mutableBitmap)
         }
     }
@@ -264,7 +269,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
             val metadata = """<metadata><time>${df.format(endDate!!)}</time></metadata>"""
             val baseInfo = """<trk>
                 <name>${challenge.name}</name>
-                <type>9</type>
+                <type>${challenge.type}</type>
                 <trkseg>"""
 
             if (challengeData.first().hr == -1) {

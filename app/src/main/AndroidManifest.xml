@@ -32,7 +32,8 @@
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ui.MapboxActivity"></activity>
+        <activity android:name=".ui.walkthrough.WalkthroughActivity"></activity>
+        <activity android:name=".ui.MapboxActivity" />
         <activity android:name=".ui.ShareActivity" />
         <activity android:name=".ui.user.IndoorTrainingActivity" />
         <activity

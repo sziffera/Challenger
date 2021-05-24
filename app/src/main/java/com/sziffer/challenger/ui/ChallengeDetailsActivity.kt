@@ -508,7 +508,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                     PropertyFactory.lineWidth(4f),
                     PropertyFactory.lineColor(
                         resources.getColor(
-                            R.color.colorAccent,
+                            R.color.colorPrimaryDark,
                             null
                         )
                     )

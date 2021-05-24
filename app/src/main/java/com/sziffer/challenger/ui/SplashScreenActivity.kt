@@ -44,6 +44,7 @@ class SplashScreenActivity : AppCompatActivity() {
 
         //decide whether the user has already opened the app
         if (mAuth.currentUser != null || userSharedPreferences.contains(MainActivity.NOT_REGISTERED)) {
+            //TODO(start walkthrough)
             startActivity(
                 Intent(this, MainActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
@@ -56,10 +57,6 @@ class SplashScreenActivity : AppCompatActivity() {
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
             )
             finish()
-
         }
-
-
-
     }
 }

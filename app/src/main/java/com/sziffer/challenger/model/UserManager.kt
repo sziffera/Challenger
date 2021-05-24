@@ -197,6 +197,19 @@ class UserManager(
             field = value
         }
 
+
+    var walkthroughSeen: Boolean = false
+        get() {
+            return sharedPreferences.getBoolean(KEY_WALKTHROUGH_SEEN, true)
+        }
+        set(value) {
+            with(sharedPreferences.edit()) {
+                putBoolean(KEY_WALKTHROUGH_SEEN, value)
+                apply()
+            }
+            field = value
+        }
+
     companion object {
         private const val NAME = "UserManager"
         private const val KEY_USER = "$NAME.user"
@@ -216,5 +229,6 @@ class UserManager(
         private const val KEY_USER_IS_FEMALE = "$NAME.isFemale"
         private const val KEY_UV_ALERT = "$NAME.uvAlert"
         private const val KEY_WIND_ALERT = "$NAME.windAlert"
+        private const val KEY_WALKTHROUGH_SEEN = "$NAME.walkthroughSeen"
     }
 }

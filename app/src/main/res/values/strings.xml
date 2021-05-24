@@ -257,5 +257,6 @@
     <string name="pace">Pace</string>
     <string name="can_t_load_sharing_image">No internet connection, can\'t load sharing image</string>
     <string name="sharing_image_not_loaded">The sharing image hasn\'t been created yet, please wait a few seconds!</string>
+    <string name="next">Next</string>
 
 </resources>

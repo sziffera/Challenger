@@ -21,12 +21,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
-import androidx.lifecycle.LifecycleObserver
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupWithNavController
 import com.google.android.gms.location.*
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -39,12 +34,11 @@ import com.sziffer.challenger.model.UserManager
 import com.sziffer.challenger.ui.*
 import com.sziffer.challenger.ui.user.UserSettingsActivity
 import com.sziffer.challenger.utils.*
-import com.sziffer.challenger.utils.extensions.NavigationBottomBarSectionsStateKeeperWorkaround
 import okhttp3.*
 import java.util.*
 
 
-class MainActivity : AppCompatActivity(), LifecycleObserver {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var userManager: UserManager
@@ -56,17 +50,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     private var locationRequest: LocationRequest? = null
     private var locationCallback: LocationCallback? = null
 
-
-    private val navSectionsStateKeeper by lazy {
-        NavigationBottomBarSectionsStateKeeperWorkaround(
-            activity = this,
-            navHostContainerID = R.id.nav_host_fragment,
-            navGraphIds = listOf(
-                R.navigation.main_navigation
-            ),
-            bottomNavigationViewID = R.id.nav_view
-        )
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,7 +100,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
             )
         }
 
-        //navSectionsStateKeeper.onCreate(savedInstanceState)
+
 
         setUpBottomNavBar()
     }
@@ -140,14 +123,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
     }
 
-
-    override fun onSupportNavigateUp() =
-        navSectionsStateKeeper.onSupportNavigateUp()
-
-    override fun onBackPressed() {
-        if (!navSectionsStateKeeper.onSupportNavigateUp())
-            super.onBackPressed()
-    }
 
 
     private fun buildAlertMessageNoGps() {
@@ -215,7 +190,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
             }
         }
         fusedLocationProviderClient.requestLocationUpdates(
-            locationRequest, locationCallback, Looper.getMainLooper()
+            locationRequest!!, locationCallback!!, Looper.getMainLooper()
         )
     }
 
@@ -322,33 +297,10 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
             }
             true
         }
-        //avoid item reselection
+        //to avoid item reselection
         binding.navView.setOnNavigationItemReselectedListener {
             Log.d("MAIN", "Reselected")
         }
-    }
-
-    private fun BottomNavigationView.checkItem(actionId: Int) {
-        menu.findItem(actionId)?.isChecked = true
-    }
-
-    private fun initBottomNavBar() {
-        val navController = findNavController(R.id.nav_host_fragment)
-
-
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        val appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.navigation_feed,
-                R.id.navigation_create,
-                R.id.navigation_record,
-                R.id.navigation_profile
-            )
-        )
-        //setupActionBarWithNavController(navController, appBarConfiguration)
-        binding.navView.setupWithNavController(navController)
-
     }
 
     companion object {
@@ -366,10 +318,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
         //key for the user's sharedPref
         const val UID_SHARED_PREF = "sharedPrefUid"
-
-        private const val LAST_REFRESH = "$SHOWCASE_ID.LastRefresh"
-        private const val LAST_REFRESH_TIME_SYNC = "time"
-        private const val LAST_REFRESH_TIME_WEATHER = "weatherTime"
 
         //get unregistered user id
         const val NOT_REGISTERED = "registered"
