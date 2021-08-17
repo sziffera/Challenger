@@ -5,10 +5,9 @@
     android:id="@+id/challengeItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="4dp"
-    android:layout_marginVertical="4dp"
+    android:layout_marginVertical="2dp"
     android:backgroundTint="#4D000000"
-    android:background="@drawable/round_edittext">
+    android:background="@drawable/round_16dp">
 
 
     <TextView
@@ -84,13 +83,13 @@
         android:layout_height="0dp"
         android:layout_marginTop="24dp"
 
-        android:tint="@color/colorMinus"
         android:background="@android:color/transparent"
         android:layout_marginBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_keyboard_arrow_right_24px" />
+        app:srcCompat="@drawable/ic_keyboard_arrow_right_24px"
+        app:tint="@color/colorMinus" />
 
     <TextView
         android:id="@+id/dateTextView"

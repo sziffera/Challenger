@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:layout_marginHorizontal="1dp"
     android:padding="8dp"
-    android:background="@drawable/round_edittext"
+    android:background="@drawable/round_16dp"
     android:backgroundTint="@color/colorDarkBlueLightOpacity">
 
     <TextView

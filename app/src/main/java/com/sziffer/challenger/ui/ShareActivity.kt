@@ -2,7 +2,9 @@ package com.sziffer.challenger.ui
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.*
+import android.graphics.drawable.Drawable
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Bundle
@@ -28,6 +30,7 @@ import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityShareBinding
 import com.sziffer.challenger.model.Challenge
+import com.sziffer.challenger.model.ChallengeDetailsViewModel
 import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.utils.*
 import java.io.*
@@ -35,6 +38,7 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
+import kotlin.math.roundToInt
 
 class ShareActivity : AppCompatActivity(), NetworkStateListener {
 
@@ -163,6 +167,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
             it.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(mutableBitmap)
         val scale = resources.displayMetrics.density
+        val size = 22 * scale
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ContextCompat.getColor(
                 this@ShareActivity,
@@ -180,7 +185,8 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
             alpha = 160
         }
 
-        val drawable = ContextCompat.getDrawable(this, R.drawable.sharing_logo)
+        // adding the Sziffer logo
+        val drawable = ContextCompat.getDrawable(this, R.mipmap.sharing_logo)
 
         drawable?.setBounds(
             (it.width * 0.83).toInt(),
@@ -194,39 +200,115 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
             it.height * 0.07f, background
         )
 
+        // adding the app name text
         canvas.drawText("CHALLENGER", it.width * 0.5f, it.height * 0.05f, textPaint)
 
         canvas.drawRect(
             0f, it.height * 0.93f, it.width.toFloat(),
             it.height.toFloat(), background
         )
-        canvas.drawText(
-            DateUtils.formatElapsedTime(challenge.dur),
-            0.5f * it.width, 0.98f * it.height, textPaint
-        )
-        textPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText(
-            "${getStringFromNumber(1, challenge.dst)} km",
-            (0.05f * it.width), it.height.toFloat() * 0.98f, textPaint
-        )
-        textPaint.textAlign = Paint.Align.RIGHT
+        // adding the challenge details
 
-        //if it is running, the user needs avg pace not speed
-        if (challenge.type == getString(R.string.running)) {
-            val avgPace = challenge.dur.div(challenge.dst)
-            canvas.drawText(
-                "${DateUtils.formatElapsedTime(avgPace.toLong())} /km",
-                (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
-            )
-        } else {
-            canvas.drawText(
-                "${getStringFromNumber(1, challenge.avg)} km/h",
-                (0.95f * it.width), it.height.toFloat() * 0.98f, textPaint
-            )
+        val textBaseLine = it.height * 0.98f
+        val textHeight = -textPaint.ascent() + textPaint.descent()
+        val yPositionCorrection: Float = it.width * 0.007f
+        val xPositionCorrection: Float = it.width * 0.005f
+        val drawableBottom = (textBaseLine + yPositionCorrection).roundToInt()
+        val drawableTop = (textBaseLine - textHeight + yPositionCorrection).roundToInt()
+        val textCenteringIconCorrection = (textHeight + xPositionCorrection) / 2.0
+
+        // 5% DISTANCE, right align
+        textPaint.textAlign = Paint.Align.LEFT
+        val distanceText = "${getStringFromNumber(1, challenge.dst)} km"
+        val distanceIcon = ContextCompat.getDrawable(this, R.drawable.distance_icon)?.apply {
+            setTintList(ColorStateList.valueOf(Color.WHITE))
         }
+        val distanceTextStartingPosition = it.width * 0.05f
+        textPaint.measureText(distanceText)
+        val iconEnd = distanceTextStartingPosition + textHeight
+
+        distanceIcon?.setBounds(
+            distanceTextStartingPosition.roundToInt(),
+            drawableTop,
+            iconEnd.roundToInt(),
+            drawableBottom
+        )
+        distanceIcon?.draw(canvas)
+        canvas.drawText(
+            distanceText,
+            (iconEnd + xPositionCorrection).toFloat(), it.height.toFloat() * 0.98f, textPaint
+        )
+
+        // 38% DURATION
+        textPaint.textAlign = Paint.Align.CENTER
+        val durationText = DateUtils.formatElapsedTime(challenge.dur)
+        val durationTextPosition = it.width * 0.38f + textCenteringIconCorrection
+        val durationWidth = textPaint.measureText(durationText)
+        val durationIcon = ContextCompat.getDrawable(this, R.drawable.duration_icon)?.apply {
+            setTintList(ColorStateList.valueOf(Color.WHITE))
+        }
+        durationIcon?.setBounds(
+            (durationTextPosition - (durationWidth / 2.0) - textHeight - xPositionCorrection).roundToInt(),
+            drawableTop,
+            (durationTextPosition - (durationWidth / 2.0) - xPositionCorrection).roundToInt(),
+            drawableBottom
+        )
+        durationIcon?.draw(canvas)
+        canvas.drawText(
+            durationText,
+            durationTextPosition.toFloat(), 0.98f * it.height, textPaint
+        )
+
+
+        // 62% ELEVATION
+        val elevationText = ChallengeDetailsViewModel.shared.elevationGained.value.toString() + " m"
+        val elevationTextPosition = it.width * 0.62f + textCenteringIconCorrection
+        val elevationWidth = textPaint.measureText(elevationText)
+        val elevationIcon = ContextCompat.getDrawable(this, R.drawable.mountain)?.apply {
+            setTintList(ColorStateList.valueOf(Color.WHITE))
+        }
+        elevationIcon?.setBounds(
+            (elevationTextPosition - (elevationWidth / 2.0) - textHeight - xPositionCorrection).roundToInt(),
+            drawableTop,
+            (elevationTextPosition - (elevationWidth / 2.0) - xPositionCorrection).roundToInt(),
+            drawableBottom
+        )
+        elevationIcon?.draw(canvas)
+        canvas.drawText(
+            elevationText,
+            elevationTextPosition.toFloat(), 0.98f * it.height, textPaint
+        )
+
+        // 95% PACE/AVG, align left
+        textPaint.textAlign = Paint.Align.RIGHT
+        val paceText = if (challenge.type == getString(R.string.running)) {
+            val avgPace = challenge.dur.div(challenge.dst)
+            "${DateUtils.formatElapsedTime(avgPace.toLong())} /km"
+        } else {
+            "${getStringFromNumber(1, challenge.avg)} km/h"
+        }
+        val paceTextEndPosition = it.width * 0.95f
+        val paceWidth = textPaint.measureText(paceText)
+        val iconStart = paceTextEndPosition - paceWidth - xPositionCorrection - textHeight
+        val paceIconEnd = paceTextEndPosition - paceWidth - xPositionCorrection
+        val paceIcon = ContextCompat.getDrawable(this, R.drawable.average_speed_icon)?.apply {
+            setTintList(ColorStateList.valueOf(Color.WHITE))
+        }
+        paceIcon?.setBounds(
+            iconStart.roundToInt(),
+            drawableTop,
+            paceIconEnd.roundToInt(),
+            drawableBottom
+        )
+        paceIcon?.draw(canvas)
+        canvas.drawText(
+            paceText,
+            paceTextEndPosition, 0.98f * it.height, textPaint
+        )
 
         sharingImage = mutableBitmap
 
+        // network operation was before, setting the views on the UI thread
         runOnUiThread {
             binding.sharingImageLoadingProgressBar.visibility = View.GONE
             binding.sharingImageView.setImageBitmap(mutableBitmap)
@@ -234,6 +316,12 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
     }
 
     //endregion sharing
+
+
+    private fun getWidth(drawable: Drawable, desiredHeightInPx: Double): Int {
+        val aspectRatio = drawable.intrinsicWidth.toFloat() / drawable.intrinsicHeight
+        return (aspectRatio / desiredHeightInPx).roundToInt()
+    }
 
 
     private fun exportGPX(challengeData: ArrayList<MyLocation>) {

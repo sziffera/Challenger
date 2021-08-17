@@ -42,6 +42,7 @@ import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
 import com.sziffer.challenger.model.Challenge
+import com.sziffer.challenger.model.ChallengeDetailsViewModel
 import com.sziffer.challenger.model.HeartRateZones
 import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.sync.KEY_UPLOAD
@@ -52,6 +53,7 @@ import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.ArrayList
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 
 class ChallengeDetailsActivity : AppCompatActivity() {
@@ -528,6 +530,12 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
                 binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
                 binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
+
+                ChallengeDetailsViewModel.shared.setElevationData(
+                    elevGain.roundToInt(),
+                    elevLoss.roundToInt()
+                )
+
                 if (hr) {
                     binding.apply {
                         maxHeartRateTextView.text = "$maxHr bpm"
@@ -544,7 +552,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     }
 
     //endregion processing
-
 
 
     //region for testing

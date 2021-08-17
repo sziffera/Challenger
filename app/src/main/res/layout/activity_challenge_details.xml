@@ -67,7 +67,7 @@
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="20dp"
                 android:autofillHints=""
-                android:background="@drawable/round_edittext"
+                android:background="@drawable/round_16dp"
                 android:gravity="center"
                 android:hint="@string/add_a_name"
                 android:inputType="text"
@@ -110,7 +110,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:layout_marginHorizontal="20dp"
-                android:background="@drawable/round_edittext"
+                android:background="@drawable/round_16dp"
                 android:backgroundTint="@color/colorDarkBlue"
                 android:padding="10dp"
                 app:columnCount="2"
@@ -404,7 +404,7 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="6dp"
                 style="?android:attr/borderlessButtonStyle"
-                android:background="@drawable/round_edittext"
+                android:background="@drawable/round_16dp"
                 android:text="@string/show_charts"
                 android:textColor="@color/colorAccent" />
 
@@ -426,7 +426,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:background="@drawable/round_edittext"
+            android:background="@drawable/round_16dp"
             android:text="@string/discard"
             style="?android:attr/borderlessButtonStyle"
             android:textColor="@color/colorPrimary" />
@@ -441,7 +441,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:background="@drawable/round_edittext"
+            android:background="@drawable/round_16dp"
             android:text="@string/save"
             style="?android:attr/borderlessButtonStyle"
             android:textColor="@color/colorAccent" />

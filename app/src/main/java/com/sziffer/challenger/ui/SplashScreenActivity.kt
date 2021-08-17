@@ -4,9 +4,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.ktx.Firebase
 import com.sziffer.challenger.ui.user.LoginActivity
 
 class SplashScreenActivity : AppCompatActivity() {
@@ -26,9 +28,12 @@ class SplashScreenActivity : AppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+
         super.onCreate(savedInstanceState)
 
         mDatabase = FirebaseDatabase.getInstance()
+        val analytics = Firebase.analytics
 
 
         usersDatabase = mDatabase.getReference(USERS)

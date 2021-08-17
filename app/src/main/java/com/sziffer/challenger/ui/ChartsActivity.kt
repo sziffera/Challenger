@@ -43,6 +43,8 @@ class ChartsActivity : AppCompatActivity() {
     private var maxHr = 0
     private var avgHr = 0
 
+    private var isCycling = false
+
     private var avgSpeed: Double = 0.0
 
     private var heartRateZones: HeartRateZones? = null
@@ -62,7 +64,13 @@ class ChartsActivity : AppCompatActivity() {
         dbHelper.close()
 
         setSupportActionBar(binding.toolbar)
-        supportActionBar?.title = challenge?.name?.capitalize(Locale.ROOT)
+        supportActionBar?.title = challenge?.name?.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(
+                Locale.ROOT
+            ) else it.toString()
+        }
+
+        isCycling = challenge?.type == getString(R.string.cycling)
 
         var challengeData =
             Gson().fromJson<ArrayList<MyLocation>>(challenge?.routeAsString, typeJson)
@@ -110,7 +118,9 @@ class ChartsActivity : AppCompatActivity() {
             startActivity(
                 Intent(
                     this, ShareActivity::class.java
-                )
+                ).apply {
+                    putExtra(ChallengeDetailsActivity.CHALLENGE_ID, challenge!!.id)
+                }
             )
         }
 
@@ -207,7 +217,7 @@ class ChartsActivity : AppCompatActivity() {
             setColors(colors)
             valueFormatter = object : ValueFormatter() {
                 override fun getPieLabel(value: Float, pieEntry: PieEntry?): String {
-                    return if (value > 7) "${value.toInt()}%" else ""
+                    return if (value > 5) "${value.toInt()}%" else ""
                 }
             }
             setDrawValues(false)
@@ -374,8 +384,14 @@ class ChartsActivity : AppCompatActivity() {
             valueFormatter = object : ValueFormatter() {
                 override fun getFormattedValue(value: Float): String {
                     return value.toPace()
+//                    if (!isCycling)  else getStringFromNumber(
+//                        1,
+//                        (1000 / value).times(3.6)
+//                    ) + " km/h"
                 }
             }
+            valueTextSize = 10f
+            valueTextColor = resources.getColor(R.color.colorDarkBlue, null)
         }
 
 

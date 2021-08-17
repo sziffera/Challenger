@@ -12,14 +12,15 @@
         android:title="@string/weather" />
 
     <item
+        android:id="@+id/navigation_record"
+        android:icon="@android:color/transparent"
+        android:title="" />
+
+    <item
         android:id="@+id/navigation_create"
         android:icon="@drawable/heart"
         android:title="@string/training" />
 
-    <item
-        android:id="@+id/navigation_record"
-        android:icon="@drawable/ic_record"
-        android:title="@string/record" />
 
     <item
         android:id="@+id/navigation_profile"

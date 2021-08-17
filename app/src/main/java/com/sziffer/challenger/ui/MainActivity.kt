@@ -33,6 +33,7 @@ import com.sziffer.challenger.model.ActivityMainViewModel
 import com.sziffer.challenger.model.UserManager
 import com.sziffer.challenger.ui.*
 import com.sziffer.challenger.ui.user.UserSettingsActivity
+import com.sziffer.challenger.ui.weather.WeatherFragment
 import com.sziffer.challenger.utils.*
 import okhttp3.*
 import java.util.*
@@ -58,7 +59,13 @@ class MainActivity : AppCompatActivity() {
         userManager = UserManager(this)
 
 
-
+        viewModel.isTrainingLiveData.observe(this, { isTraining ->
+            if (isTraining) {
+                binding.recordTextView.text = "Start"
+            } else {
+                binding.recordTextView.text = getString(R.string.record)
+            }
+        })
 
         if (userManager.username == null) {
             setUserName()
@@ -101,6 +108,50 @@ class MainActivity : AppCompatActivity() {
         }
 
 
+        binding.recordHolder.setOnClickListener {
+            if (viewModel.isTrainingLiveData.value == true) {
+
+                if (viewModel.avgSpeed.value == 0.0) {
+                    supportFragmentManager.setFragmentResult(
+                        CreateFragment.KEY_CHALLENGE_START,
+                        Bundle.EMPTY
+                    )
+                    return@setOnClickListener
+                }
+
+                val startRecordingIntent =
+                    Intent(this, ChallengeRecorderActivity::class.java).apply {
+                        putExtra(ChallengeRecorderActivity.CREATED_CHALLENGE_INTENT, true)
+                        putExtra(ChallengeRecorderActivity.AVG_SPEED, viewModel.avgSpeed.value)
+                        putExtra(ChallengeRecorderActivity.DISTANCE, viewModel.distance.value)
+                        putExtra(
+                            ChallengeRecorderActivity.SHOW_UV_ALERT,
+                            viewModel.shouldShowUvAlert
+                        )
+                        putExtra(
+                            ChallengeRecorderActivity.SHOW_WIND_ALERT,
+                            viewModel.shouldShowWindAlert
+                        )
+                    }
+                startActivity(startRecordingIntent)
+            } else {
+                startActivity(
+                    Intent(
+                        this,
+                        ChallengeRecorderActivity::class.java
+                    ).apply {
+                        putExtra(
+                            ChallengeRecorderActivity.SHOW_UV_ALERT,
+                            viewModel.shouldShowUvAlert
+                        )
+                        putExtra(
+                            ChallengeRecorderActivity.SHOW_WIND_ALERT,
+                            viewModel.shouldShowWindAlert
+                        )
+                    }
+                )
+            }
+        }
 
         setUpBottomNavBar()
     }
@@ -122,7 +173,6 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-
 
 
     private fun buildAlertMessageNoGps() {
@@ -174,7 +224,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fetchWeatherData(location: Location) {
-        fusedLocationProviderClient.removeLocationUpdates(locationCallback)
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback!!)
         viewModel.fetchWeatherData(location, this)
     }
 
@@ -238,7 +288,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setUpBottomNavBar() {
-        binding.navView.setOnNavigationItemSelectedListener { item ->
+        binding.navView.setOnItemSelectedListener { item ->
+
+            viewModel.setIsTraining(item.itemId == R.id.navigation_create)
+
             Log.d("NAV", "feed")
             when (item.itemId) {
 
@@ -268,24 +321,9 @@ class MainActivity : AppCompatActivity() {
                     supportActionBar?.title = getString(R.string.set_your_goal)
                 }
 
-                R.id.navigation_record -> {
-                    startActivity(
-                        Intent(
-                            this,
-                            ChallengeRecorderActivity::class.java
-                        ).apply {
-                            putExtra(
-                                ChallengeRecorderActivity.SHOW_UV_ALERT,
-                                viewModel.shouldShowUvAlert
-                            )
-                            putExtra(
-                                ChallengeRecorderActivity.SHOW_WIND_ALERT,
-                                viewModel.shouldShowWindAlert
-                            )
-                        }
-                    )
-                    finish()
-                }
+//                R.id.navigation_record -> {
+//
+//                }
 
                 R.id.navigation_profile -> {
                     supportFragmentManager.commit {
@@ -298,14 +336,10 @@ class MainActivity : AppCompatActivity() {
             true
         }
         //to avoid item reselection
-        binding.navView.setOnNavigationItemReselectedListener {
-            Log.d("MAIN", "Reselected")
-        }
+        binding.navView.setOnItemReselectedListener {}
     }
 
     companion object {
-        private const val SHOWCASE_ID = "MainActivity"
-        private const val REQUEST = 200
         private const val WEATHER_URL =
             "https://api.openweathermap.org/data/2.5/" +
                     "weather?appid=$WEATHER_KEY&units=metric&"

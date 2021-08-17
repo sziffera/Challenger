@@ -17,7 +17,7 @@
         android:textSize="14sp"
         android:textAllCaps="true"
         android:text="@string/no_internet_connection"
-        android:background="@drawable/round_edittext"
+        android:background="@drawable/round_16dp"
         android:backgroundTint="@color/colorPlus"
         android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
@@ -65,7 +65,7 @@
             android:layout_marginTop="12dp"
             android:layout_marginBottom="7dp"
             android:autofillHints=""
-            android:background="@drawable/round_edittext"
+            android:background="@drawable/round_16dp"
             android:drawableStart="@drawable/ic_email"
             android:ems="10"
             android:gravity="center"
@@ -79,7 +79,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:autofillHints="@string/password"
-            android:background="@drawable/round_edittext"
+            android:background="@drawable/round_16dp"
             android:drawableStart="@drawable/password_icon"
             android:ems="10"
             android:gravity="center"
@@ -93,7 +93,7 @@
             android:layout_width="match_parent"
             android:layout_height="35dp"
             android:layout_marginTop="15dp"
-            android:background="@drawable/round_edittext"
+            android:background="@drawable/round_16dp"
             android:text="@string/sign_in"
             android:textColor="@color/colorAccent" />
 
@@ -138,7 +138,7 @@
             android:layout_marginLeft="12dp"
             android:layout_marginRight="12dp"
             android:layout_marginBottom="4dp"
-            android:background="@drawable/round_edittext"
+            android:background="@drawable/round_16dp"
             android:textColor="@color/colorAccent"
             android:text="@string/create_an_account" />
 

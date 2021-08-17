@@ -18,10 +18,20 @@ import com.sziffer.challenger.utils.getStringFromNumber
 
 
 class ChallengeRecyclerViewAdapter(
-    private val challenges: ArrayList<Challenge>,
+    challengeList: ArrayList<Challenge>,
     private val mContext: Context
 ) :
     RecyclerView.Adapter<ChallengeRecyclerViewAdapter.ViewHolder>() {
+
+    var challenges: ArrayList<Challenge> = ArrayList()
+        private set(value) {
+            field = value
+            notifyDataSetChanged()
+        }
+
+    init {
+        challenges = challengeList
+    }
 
 
     class ViewHolder(
@@ -31,6 +41,7 @@ class ChallengeRecyclerViewAdapter(
 
         val type: ImageView = itemView.findViewById(R.id.challengeTypeImageView)
         private val item: ImageView = itemView.findViewById(R.id.DetailsImageButton)
+        private val viewHolder: View = itemView.findViewById(R.id.challengeItem)
         val distance: TextView = itemView.findViewById(R.id.challengeDistanceText)
         val duration: TextView = itemView.findViewById(R.id.challengeDurationText)
         val avgSpeed: TextView = itemView.findViewById(R.id.avgSpeedText)
@@ -43,6 +54,7 @@ class ChallengeRecyclerViewAdapter(
 
         init {
             item.setOnClickListener(this)
+            viewHolder.setOnClickListener(this)
         }
 
     }

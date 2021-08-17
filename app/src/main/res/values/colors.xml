@@ -19,7 +19,7 @@
     <color name="colorRelaxed">#98e4fd</color>
     <color name="colorModerate">#FFF263</color>
     <color name="colorWeightControl">#FFBF5B</color>
-    <color name="colorAerobic">#FF8A11</color>
-    <color name="colorAnaerobic">#FF590D</color>
+    <color name="colorAerobic">#F37D03</color>
+    <color name="colorAnaerobic">#F42222</color>
     <color name="colorVoMax">#851432</color>
 </resources>

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:background="@color/colorPrimaryDark"
+    android:background="@drawable/gradient_blue_background"
     android:layout_height="match_parent"
     tools:context=".ui.walkthrough.WalkthroughActivity">
 
@@ -13,7 +13,7 @@
         android:layout_marginTop="24dp"
         android:layout_height="45dp"
         android:id="@+id/logoImageView"
-        android:src="@drawable/sharing_logo"
+        android:src="@mipmap/sharing_logo"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -61,8 +61,8 @@
         android:layout_marginBottom="24dp"
         android:layout_marginHorizontal="24dp"
         android:text="@string/next"
-        android:background="@drawable/round_edittext"
-        android:backgroundTint="@color/colorDarkBlue"
+        android:background="@drawable/round_16dp"
+        android:backgroundTint="@color/colorPrimaryDark"
         android:textColor="@android:color/white" />
 
 

@@ -145,7 +145,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
         initChips()
         initVoiceCoach()
 
-        binding.recorderBottomNavigationView.setOnNavigationItemSelectedListener {
+        binding.recorderBottomNavigationView.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.action_details -> {
                     Log.i("MENU", "DETAILS")
@@ -191,7 +191,6 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                     gpsService?.startHeartRateScan()
                     binding.setUpHeartRateSensor.text = getString(R.string.connecting)
                     binding.setUpHeartRateSensor.isEnabled = false
-                    //TODO(set text and disable)
                 }
             } else {
                 //TODO(show normal alert with open action)
@@ -414,42 +413,6 @@ class ChallengeRecorderActivity : AppCompatActivity(),
         }
     }
 
-//    @SuppressLint("MissingPermission")
-//    override fun onMapReady(googleMap: GoogleMap) {
-//
-//        mMap = googleMap
-//
-//        if (locationPermissionCheck(this)) {
-//            with(mMap) {
-//                isMyLocationEnabled = true
-//                uiSettings.isCompassEnabled = true
-//                uiSettings.isZoomControlsEnabled = true
-//            }
-//            val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-//            fusedLocationClient.lastLocation.addOnSuccessListener {
-//                if (it != null) {
-//                    val latLng = LatLng(it.latitude, it.longitude)
-//                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14.0f))
-//                }
-//            }
-//        }
-//
-//        //if it is a recorded activity challenge, draws the route onto the map
-//        if (challenge) {
-//
-//            val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
-//            val route =
-//                Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
-//            val mapPair = zoomAndRouteCreator(route)
-//
-//            mMap.setOnMapLoadedCallback {
-//                mMap.addPolyline(PolylineOptions().addAll(mapPair.second))
-//                val padding = 50
-//                val cu = CameraUpdateFactory.newLatLngBounds(mapPair.first, padding)
-//                mMap.animateCamera(cu)
-//            }
-//        }
-//    }
     //endregion map
 
     //region recording actions
@@ -873,12 +836,6 @@ class ChallengeRecorderActivity : AppCompatActivity(),
         if (buttonSharedPreferences.getBoolean("started", false)) {
             this.moveTaskToBack(true)
         } else {
-            startActivity(
-                Intent(
-                    this,
-                    MainActivity::class.java
-                )
-            )
             finish()
         }
     }
@@ -936,8 +893,8 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                 numberForVoiceCoach = data.replace("[^0-9]".toRegex(), "").toInt().times(1000)
                 voiceCoachIsBasedOnDistance = true
             }
-            data.toLowerCase(Locale.ROOT)
-                .contains(getString(string.minute).toLowerCase(Locale.ROOT)) -> {
+            data.lowercase(Locale.ROOT)
+                .contains(getString(string.minute).lowercase(Locale.ROOT)) -> {
                 //in seconds
                 numberForVoiceCoach = data.replace("[^0-9]".toRegex(), "").toInt().times(60)
                 voiceCoachIsBasedOnDuration = true
@@ -977,15 +934,24 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                         false
                     )
                 ) {
+                    val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        vibrator.vibrate(
+                            VibrationEffect
+                                .createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE)
+                        )
+                    } else {
+                        vibrator.vibrate(200)
+                    }
                     binding.setUpHeartRateSensor.apply {
                         text = getString(R.string.connected)
                         isEnabled = true
-//                        setTextColor(
-//                            ContextCompat.getColor(
-//                                this@ChallengeRecorderActivity,
-//                                R.color.colorGreen
-//                            )
-//                        )
+                        compoundDrawables[0].setTint(
+                            ContextCompat.getColor(
+                                this@ChallengeRecorderActivity,
+                                R.color.colorGreen
+                            )
+                        )
                     }
                 }
             } else {
@@ -1011,13 +977,6 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                 binding.altitudeTextView.text = "${altitude}m"
                 val hr = intent.getIntExtra(LocationUpdatesService.HEART_RATE, -1)
                 binding.heartRateTextView?.text = if (hr == -1) "-" else hr.toString()
-
-//                mMap.addPolyline(
-//                    PolylineOptions()
-//                        .color(R.color.colorPrimaryDark)
-//                        .addAll(gpsService?.route)
-//
-//                )
 
                 if (challenge || createdChallenge) {
 

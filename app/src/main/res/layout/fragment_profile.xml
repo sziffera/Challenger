@@ -540,7 +540,7 @@
                 android:text="@string/body_fat_calculator"
                 android:layout_marginTop="24dp"
                 android:layout_marginHorizontal="12dp"
-                android:background="@drawable/round_edittext"
+                android:background="@drawable/round_16dp"
                 android:backgroundTint="@android:color/white"
                 android:textColor="@color/colorStop"
                 android:textAllCaps="true" />

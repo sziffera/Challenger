@@ -52,6 +52,7 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
         savedInstanceState: Bundle?
     ): View {
         // Inflate the layout for this fragment
+
         _binding = FragmentFeedBinding.inflate(layoutInflater, container, false)
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.setHasFixedSize(true)
@@ -70,14 +71,11 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
 
         viewModel.challengesLiveData.observe(viewLifecycleOwner, {
             with(binding) {
+                if (it.isEmpty()) return@observe
                 swipeRefreshLayout.visibility = View.VISIBLE
                 emptyViewLinearLayout.visibility = View.GONE
                 with(recyclerView) {
-                    adapter =
-                        ChallengeRecyclerViewAdapter(
-                            it,
-                            requireContext()
-                        )
+                    adapter = viewModel.challengeRecyclerViewAdapter
                     addItemDecoration(
                         DividerItemDecoration(
                             recyclerView.context,
@@ -88,10 +86,6 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
             }
         })
 
-        binding.apply {
-            swipeRefreshLayout.visibility = View.GONE
-            emptyViewLinearLayout.visibility = View.GONE
-        }
 
         return binding.root
     }

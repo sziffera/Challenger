@@ -61,9 +61,7 @@ fun updateSharedPrefForSync(context: Context, id: String, whatToDo: String) {
     val sharedPref = context.getSharedPreferences(KEY_SYNC, Context.MODE_PRIVATE)
     val stringData = sharedPref.getString(KEY_SYNC_DATA, null)
 
-    val mMap: MutableMap<String, String>?
-
-    mMap = if (stringData != null) {
+    val mMap: MutableMap<String, String>? = if (stringData != null) {
         val typeJson = object : TypeToken<HashMap<String, String>>() {}.type
         Gson().fromJson<HashMap<String, String>>(stringData, typeJson)
     } else {

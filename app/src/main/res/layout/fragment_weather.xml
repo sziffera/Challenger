@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:background="@drawable/gradient_background"
     android:layout_height="match_parent"
-    tools:context=".ui.WeatherFragment">
+    tools:context=".ui.weather.WeatherFragment">
 
 
     <ImageView
@@ -237,7 +237,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:background="@drawable/round_edittext"
+                    android:background="@drawable/round_16dp"
                     android:padding="2dp"
                     android:text="7.8" />
 

@@ -15,10 +15,12 @@ import com.sziffer.challenger.model.weather.OneCallWeather
 import com.sziffer.challenger.model.weather.WeatherRequest
 import com.sziffer.challenger.model.weather.WeatherResultListener
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
+import com.sziffer.challenger.ui.ChallengeRecyclerViewAdapter
 import com.sziffer.challenger.utils.*
 import com.sziffer.challenger.utils.Constants.KEY_WEATHER
 import com.sziffer.challenger.utils.Constants.KEY_WEATHER_DATA
 import java.text.SimpleDateFormat
+import java.util.concurrent.Executors
 
 class ActivityMainViewModel : ViewModel(), WeatherResultListener {
 
@@ -34,6 +36,8 @@ class ActivityMainViewModel : ViewModel(), WeatherResultListener {
         get() = _weatherData
     private var weatherRequest: WeatherRequest? = null
 
+    var challengeRecyclerViewAdapter: ChallengeRecyclerViewAdapter? = null
+
 
     //CHALLENGES
     private val _challengesLiveData = MutableLiveData<ArrayList<Challenge>>()
@@ -46,6 +50,19 @@ class ActivityMainViewModel : ViewModel(), WeatherResultListener {
     val statisticsLiveData: LiveData<ArrayList<Statistics>>
         get() = _statistics
 
+    private val _isTraining = MutableLiveData<Boolean>()
+    val isTrainingLiveData: LiveData<Boolean> get() = _isTraining
+
+    private val _avgSpeed = MutableLiveData<Double>()
+    private val _distance = MutableLiveData<Double>()
+
+    val avgSpeed: LiveData<Double> get() = _avgSpeed
+    val distance: LiveData<Double> get() = _distance
+
+    fun setAvgSpeed(value: Double) = _avgSpeed.postValue(value)
+    fun setDistance(value: Double) = _distance.postValue(value)
+    fun setIsTraining(value: Boolean) = _isTraining.postValue(value)
+
 
     //region challenges
 
@@ -57,79 +74,92 @@ class ActivityMainViewModel : ViewModel(), WeatherResultListener {
         val cyclingStatistics = Statistics()
         val runningStatistics = Statistics()
 
-        _challengesLiveData.value?.let {
-            for (challenge in it) {
+        Executors.newSingleThreadExecutor().execute {
+            _challengesLiveData.value?.let {
+                for (challenge in it) {
 
-                if (challenge.type == context.getString(R.string.running)) {
+                    if (challenge.type == context.getString(R.string.running)) {
 
-                    with(runningStatistics) {
-                        totalDistance += challenge.dst
-                        totalTime += challenge.dur
-                        ++numberOfActivities
-                        if (challenge.dst > longestDistance)
-                            longestDistance = challenge.dst
-                        val format = SimpleDateFormat("dd-MM-yyyy. HH:mm")
-                        if (sameMonth(format.parse(challenge.date)!!)) {
-                            thisMonth += challenge.dst
+                        with(runningStatistics) {
+                            totalDistance += challenge.dst
+                            totalTime += challenge.dur
+                            ++numberOfActivities
+                            if (challenge.dst > longestDistance)
+                                longestDistance = challenge.dst
+                            val format = SimpleDateFormat("dd-MM-yyyy. HH:mm")
+                            if (sameMonth(format.parse(challenge.date)!!)) {
+                                thisMonth += challenge.dst
+                            }
+                            if (sameWeek(format.parse(challenge.date)!!))
+                                thisWeek += challenge.dst
+                            if (sameYear(format.parse(challenge.date)!!))
+                                thisYear += challenge.dst
                         }
-                        if (sameWeek(format.parse(challenge.date)!!))
-                            thisWeek += challenge.dst
-                        if (sameYear(format.parse(challenge.date)!!))
-                            thisYear += challenge.dst
+
+                    } else {
+
+                        with(cyclingStatistics) {
+                            totalDistance += challenge.dst
+                            totalTime += challenge.dur
+                            ++numberOfActivities
+                            if (challenge.dst > longestDistance)
+                                longestDistance = challenge.dst
+                            val format = SimpleDateFormat("dd-MM-yyyy. HH:mm")
+                            if (sameMonth(format.parse(challenge.date)!!)) {
+                                thisMonth += challenge.dst
+                            }
+                            if (sameWeek(format.parse(challenge.date)!!))
+                                thisWeek += challenge.dst
+                            if (sameYear(format.parse(challenge.date)!!))
+                                thisYear += challenge.dst
+                        }
                     }
 
-                } else {
 
-                    with(cyclingStatistics) {
-                        totalDistance += challenge.dst
-                        totalTime += challenge.dur
-                        ++numberOfActivities
-                        if (challenge.dst > longestDistance)
-                            longestDistance = challenge.dst
-                        val format = SimpleDateFormat("dd-MM-yyyy. HH:mm")
-                        if (sameMonth(format.parse(challenge.date)!!)) {
-                            thisMonth += challenge.dst
-                        }
-                        if (sameWeek(format.parse(challenge.date)!!))
-                            thisWeek += challenge.dst
-                        if (sameYear(format.parse(challenge.date)!!))
-                            thisYear += challenge.dst
-                    }
                 }
-
-
             }
+
+            _statistics.postValue(arrayListOf(cyclingStatistics, runningStatistics))
         }
 
-        _statistics.postValue(arrayListOf(cyclingStatistics, runningStatistics))
 
     }
 
     @SuppressLint("SimpleDateFormat") //works in this situation
     fun fetchChallenges(context: Context, startDownloader: Boolean = true) {
-        val dbHelper = ChallengeDbHelper(context)
-        val list = dbHelper.getAllChallenges() as MutableList<Challenge>
-        //sorts the challenge list based on date
-        list.sortWith { o1, o2 ->
-            if (o1.date.isEmpty() || o2.date.isEmpty()) 0
-            else {
-                val format = SimpleDateFormat("dd-MM-yyyy. HH:mm")
-                val date1 = format.parse(o1.date)!!
-                val date2 = format.parse(o2.date)!!
-                date1
-                    .compareTo(date2)
+
+        Executors.newSingleThreadExecutor().execute {
+            challengesLiveData.value?.let {
+                if (it.isNotEmpty())
+                    return@execute
             }
+
+            val dbHelper = ChallengeDbHelper(context)
+            val list = dbHelper.getAllChallenges() as MutableList<Challenge>
+            //sorts the challenge list based on date
+            list.sortWith { o1, o2 ->
+                if (o1.date.isEmpty() || o2.date.isEmpty()) 0
+                else {
+                    val format = SimpleDateFormat("dd-MM-yyyy. HH:mm")
+                    val date1 = format.parse(o1.date)!!
+                    val date2 = format.parse(o2.date)!!
+                    date1
+                        .compareTo(date2)
+                }
+            }
+            list.reverse()
+            //if the list is empty, it means that no Challenge is stored in db - downloading from firebase
+            if (list.isEmpty() && startDownloader) {
+                //starting data downloader,
+                startDataDownloaderWorkManager(context)
+                _callObserveWork.postValue(true)
+            } else {
+                challengeRecyclerViewAdapter =
+                    ChallengeRecyclerViewAdapter(ArrayList(list), context)
+                _challengesLiveData.postValue(ArrayList(list))
+            }
+            dbHelper.close()
         }
-        list.reverse()
-        //if the list is empty, it means that no Challenge is stored in db - downloading from firebase
-        if (list.isEmpty() && startDownloader) {
-            //starting data downloader,
-            startDataDownloaderWorkManager(context)
-            _callObserveWork.postValue(true)
-        } else {
-            _challengesLiveData.postValue(ArrayList(list))
-        }
-        dbHelper.close()
     }
 
     fun turnOfObserver() {

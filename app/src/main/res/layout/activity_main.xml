@@ -61,21 +61,6 @@
     </com.google.android.material.appbar.AppBarLayout>
 
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="0dp"
-        android:layout_marginEnd="0dp"
-        android:background="#FC1B4251"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:labelVisibilityMode="labeled"
-        app:layout_constraintRight_toRightOf="parent"
-        app:itemIconTint="@color/bottom_nav_bar_selector"
-        app:itemTextColor="@color/bottom_nav_bar_selector"
-        app:menu="@menu/main_bottom_nav_menu" />
-
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"
         android:name="androidx.navigation.fragment.NavHostFragment"
@@ -87,6 +72,68 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
         app:navGraph="@navigation/main_navigation" />
+
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp"
+        android:background="#FC1B4251"
+        app:elevation="0dp"
+        app:itemIconTint="@color/bottom_nav_bar_selector"
+        app:itemTextColor="@color/bottom_nav_bar_selector"
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:menu="@menu/main_bottom_nav_menu" />
+
+    <FrameLayout
+        android:id="@+id/recordHolder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center_horizontal|top"
+            android:scaleType="centerCrop"
+            android:src="@drawable/circle"
+            android:tint="#FC1B4251"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/nav_host_fragment" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center"
+            android:scaleType="centerCrop"
+            android:src="@drawable/circle"
+            android:tint="@color/colorMinus"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/nav_host_fragment" />
+
+        <TextView
+            android:id="@+id/recordTextView"
+            style="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/segoe_ui_bold"
+            android:text="@string/record"
+            android:textAllCaps="true"
+            android:textColor="@color/colorDarkBlue"
+            android:textSize="11sp" />
+
+    </FrameLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

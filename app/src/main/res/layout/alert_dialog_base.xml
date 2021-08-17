@@ -54,7 +54,7 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="@string/cancel"
-                android:background="@drawable/round_edittext"
+                android:background="@drawable/round_16dp"
                 android:backgroundTint="@color/colorDarkBlue"
                 android:textColor="@android:color/white"
                 android:layout_marginBottom="16dp" />
@@ -70,7 +70,7 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="@string/ok"
-                android:background="@drawable/round_edittext"
+                android:background="@drawable/round_16dp"
                 android:backgroundTint="@color/colorDarkBlue"
                 android:textColor="@android:color/white"
                 android:layout_marginBottom="16dp" />

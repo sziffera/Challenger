@@ -165,7 +165,7 @@
     <string name="calculate_body_fat">Calculate body fat</string>
     <string name="waist">Waist</string>
     <string name="hip">Hip</string>
-    <string name="your_body_fat_is">Your body fat is</string>
+    <string name="your_body_fat_is">Your body fat is:</string>
     <string name="not_calculated">Not calculated</string>
     <string name="essential_fat">Essential fat</string>
     <string name="athletic">Athletic</string>

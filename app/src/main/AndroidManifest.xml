@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.sziffer.challenger">
-    <!--
-         The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
-         Google Maps Android API v2, but you must specify either coarse or fine
-         location permissions for the 'MyLocation' functionality.
-    -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -18,10 +13,11 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.BILLING" />
 
     <uses-feature
         android:name="android.hardware.bluetooth_le"
-        android:required="false" />
+        android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -32,36 +28,40 @@
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ui.walkthrough.WalkthroughActivity"></activity>
+        <activity
+            android:name=".ui.walkthrough.WalkthroughActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
         <activity android:name=".ui.MapboxActivity" />
-        <activity android:name=".ui.ShareActivity" />
-        <activity android:name=".ui.user.IndoorTrainingActivity" />
+        <activity
+            android:name=".ui.ShareActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.user.IndoorTrainingActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.user.BodyFatCalculatorActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".ui.ChartsActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".ui.user.UserSettingsActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".ui.user.ForgotPasswordActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
-        <!--
-             The API key for Google Maps-based APIs is defined as a string resource.
-             (See the file "res/values/google_maps_api.xml").
-             Note that the API key is linked to the encryption key used to sign the APK.
-             You need a different API key for each encryption key, including the release key that is used to
-             sign the APK for publishing.
-             You can define the keys for the debug and release targets in src/debug/ and src/release/.
-        -->
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_api_key" />
+
 
         <service
             android:name=".LocationUpdatesService"
+            android:exported="true"
             android:enabled="true"
             android:foregroundServiceType="location" />
 
@@ -73,6 +73,7 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".ui.ChallengeDetailsActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".ui.CreateChallengeActivity"
@@ -80,15 +81,19 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".ui.AllChallengeActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".ui.user.UserProfileActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".ui.user.LoginActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".ui.SplashScreenActivity"
+            android:exported="true"
             android:theme="@style/AppTheme.Launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -102,9 +107,11 @@
         </activity>
         <activity
             android:name=".ui.user.RegisterActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".ui.MainActivity"
+            android:exported="true"
             android:launchMode="singleTop"
             android:screenOrientation="portrait" /> <!-- File Provider -->
         <provider

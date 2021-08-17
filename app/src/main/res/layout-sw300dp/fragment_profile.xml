@@ -536,7 +536,7 @@
                 android:layout_marginTop="24dp"
                 style="?android:attr/borderlessButtonStyle"
                 android:layout_marginHorizontal="0dp"
-                android:background="@drawable/round_edittext"
+                android:background="@drawable/round_16dp"
                 android:backgroundTint="@android:color/white"
                 android:textColor="@color/colorStop" />
 

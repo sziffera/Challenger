@@ -1,4 +1,4 @@
-package com.sziffer.challenger.ui
+package com.sziffer.challenger.ui.weather
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -19,7 +19,6 @@ import com.sziffer.challenger.databinding.FragmentWeatherBinding
 import com.sziffer.challenger.model.ActivityMainViewModel
 import com.sziffer.challenger.model.weather.MinuteData
 import com.sziffer.challenger.model.weather.OneCallWeather
-import com.sziffer.challenger.ui.weather.WeatherForecastRecyclerViewAdapter
 import com.sziffer.challenger.utils.*
 import java.text.SimpleDateFormat
 import java.util.*

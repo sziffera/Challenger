@@ -24,7 +24,7 @@
             android:id="@+id/recenterButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/round_edittext"
+            android:background="@drawable/round_16dp"
             android:textColor="@color/colorDarkBlue"
             android:paddingEnd="7dp"
             android:drawableStart="@drawable/ic_baseline_navigation_24"
@@ -327,7 +327,7 @@
                 android:layout_height="35dp"
                 android:layout_marginVertical="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/round_edittext"
+                android:background="@drawable/round_16dp"
                 android:text="@string/start"
                 android:textColor="@color/colorStop" />
 
@@ -342,7 +342,7 @@
                 android:layout_height="35dp"
                 android:layout_marginVertical="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/round_edittext"
+                android:background="@drawable/round_16dp"
                 android:backgroundTint="@color/colorPlus"
                 android:text="@string/finish" />
 
@@ -454,7 +454,7 @@
             android:layout_height="35dp"
             android:layout_marginHorizontal="12dp"
             android:layout_marginVertical="20dp"
-            android:background="@drawable/round_edittext"
+            android:background="@drawable/round_16dp"
             android:text="@string/start"
             android:textColor="@color/colorStop"
             android:textSize="17sp" />

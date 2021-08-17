@@ -108,7 +108,7 @@
         android:text="@string/start"
         android:textColor="@color/colorAccent"
         android:textSize="17sp"
-        android:background="@drawable/round_edittext"
+        android:background="@drawable/round_16dp"
         android:textAllCaps="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

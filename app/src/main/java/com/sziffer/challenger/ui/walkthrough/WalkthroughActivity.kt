@@ -13,6 +13,27 @@ class WalkthroughActivity : AppCompatActivity() {
         binding = ActivityWalkthroughBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val fragments = arrayListOf(WalkthroughFragment())
+
+
+    }
+
+
+    private fun initWalkthroughFragment(
+        title: String,
+        description: String,
+        image: String
+    ): WalkthroughFragment {
+
+        val bundle = Bundle().apply {
+            putString(WalkthroughFragment.KEY_DESCRIPTION, description)
+            putString(WalkthroughFragment.KEY_IMAGE, image)
+            putString(WalkthroughFragment.KEY_TITLE, title)
+        }
+
+        return WalkthroughFragment().apply {
+            arguments = bundle
+        }
 
     }
 }
