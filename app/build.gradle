@@ -21,8 +21,8 @@ android {
         applicationId "com.sziffer.challenger"
         minSdkVersion 23
         targetSdkVersion 31
-        versionCode 32
-        versionName "1.3.1"
+        versionCode 33
+        versionName "1.4.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
