@@ -5,14 +5,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.ConnectivityManager
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import androidx.core.content.ContextCompat
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.DatabaseReference
@@ -20,12 +24,9 @@ import com.google.firebase.database.FirebaseDatabase
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityLoginBinding
-import com.sziffer.challenger.model.User
 import com.sziffer.challenger.model.UserManager
 import com.sziffer.challenger.ui.MainActivity
-import com.sziffer.challenger.utils.MyNetworkCallback
-import com.sziffer.challenger.utils.NetworkStateListener
-import com.sziffer.challenger.utils.isEmailAddressValid
+import com.sziffer.challenger.utils.*
 
 
 class LoginActivity : AppCompatActivity(), NetworkStateListener {
@@ -35,11 +36,9 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
     private lateinit var database: FirebaseDatabase
     private lateinit var mRef: DatabaseReference
 
+    private lateinit var googleSignInClient: GoogleSignInClient
+
     private lateinit var sharedPreferences: SharedPreferences
-
-
-    //private lateinit var mGoogleSignInClient: GoogleSignInClient
-    private lateinit var mGoogleSignInOptions: GoogleSignInOptions
 
     private lateinit var binding: ActivityLoginBinding
 
@@ -56,6 +55,14 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
         database = FirebaseDatabase.getInstance()
         mRef = database.getReference("users")
 
+        // Configure Google Sign In
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(DEFAULT_WEB_CLIENT_ID)
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
         myNetworkCallback = MyNetworkCallback(
@@ -64,17 +71,27 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
 
         sharedPreferences = getSharedPreferences(MainActivity.UID_SHARED_PREF, Context.MODE_PRIVATE)
 
-
-
         binding.registerRedirectButton.setOnClickListener {
             val intent = Intent(applicationContext, RegisterActivity::class.java)
-            startActivity(intent)
+            startActivity(
+                intent,
+                ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+            )
         }
 
-        binding.forgotPassworButton.setOnClickListener {
+        binding.forgotPasswordButton.setOnClickListener {
             startActivity(
                 Intent(this, ForgotPasswordActivity::class.java),
                 ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+            )
+        }
+
+        binding.privacy.setOnClickListener {
+            startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://challenger-fitnessapp.sziffer.hu/")
+                )
             )
         }
 
@@ -84,6 +101,19 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
         binding.skipButton.setOnClickListener {
             startMainActivity()
         }
+
+        binding.googleSignInButton.setOnClickListener {
+            googleSignIn()
+        }
+
+        val backgrounds = arrayListOf(
+            ContextCompat.getDrawable(this, R.drawable.gradient_background),
+            ContextCompat.getDrawable(this, R.drawable.gradient_background_2),
+            ContextCompat.getDrawable(this, R.drawable.gradient_background_3),
+            ContextCompat.getDrawable(this, R.drawable.gradient_background_4)
+        )
+
+        crossfade(binding.backgroundImageView, backgrounds, 5000, this)
     }
 
     override fun onStart() {
@@ -100,6 +130,11 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
     override fun onStop() {
         myNetworkCallback.unregisterCallback()
         super.onStop()
+    }
+
+    private fun googleSignIn() {
+        val signInIntent = googleSignInClient.signInIntent
+        startActivityForResult(signInIntent, RC_SIGN_IN)
     }
 
     private fun login(email: String, password: String) {
@@ -132,21 +167,7 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
         )
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                Toast.makeText(
-                    applicationContext,
-                    getString(R.string.successful_login),
-                    Toast.LENGTH_SHORT
-                ).show()
-
-                UserManager(this).apply {
-                    username = FirebaseManager.mAuth.currentUser?.displayName.also {
-                        Log.d("LOGIN", it.toString())
-                    }
-                }
-
-                //TODO(set username)
-                startActivity(Intent(this, MainActivity::class.java))
-                finish()
+                successfulSignIn()
             } else {
                 buttonShake()
                 binding.loginButton.isEnabled = true
@@ -166,20 +187,6 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
         }
     }
 
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//        if (requestCode == RC_SIGN_IN) {
-//            val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(data)
-//            try {
-//                val account = task.getResult(ApiException::class.java)
-//                if (account != null) {
-//                    firebaseAuthWithGoogle(account)
-//                }
-//            } catch (e: ApiException) {
-//                Toast.makeText(this, "Google sign in failed:(", Toast.LENGTH_LONG).show()
-//            }
-//        }
-//    }
 
     private fun buttonShake() {
         binding.loginEmailText.startAnimation(
@@ -196,54 +203,20 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
         )
     }
 
+    private fun successfulSignIn() {
+        Toast.makeText(
+            applicationContext,
+            getString(R.string.successful_login),
+            Toast.LENGTH_SHORT
+        ).show()
 
-//    private fun configureGoogleSignIn() {
-//        mGoogleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-//            .requestIdToken(getString(R.string.default_web_client_id))
-//            .requestEmail()
-//            .build()
-//        mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions)
-//    }
-//
-//    private fun signIn() {
-//        val signInIntent: Intent = mGoogleSignInClient.signInIntent
-//        startActivityForResult(
-//            signInIntent,
-//            RC_SIGN_IN
-//        )
-//    }
-
-    private fun firebaseAuthWithGoogle(acct: GoogleSignInAccount) {
-        val credential = GoogleAuthProvider.getCredential(acct.idToken, null)
-        mAuth.signInWithCredential(credential).addOnCompleteListener {
-            if (it.isSuccessful) {
-
-                mAuth.currentUser!!.linkWithCredential(credential)
-                    .addOnCompleteListener(
-                        this
-                    ) { task ->
-                        if (task.isSuccessful) {
-
-                            val userResult = task.result!!.user
-                            Log.i("LINKED", userResult?.email.toString())
-
-                        } else {
-
-                        }
-                    }
-                val user =
-                    User(email = mAuth.currentUser?.email.toString())
-                FirebaseManager.currentUserRef?.setValue(user)?.addOnSuccessListener {
-                    Log.i("REGISTER", "userdata added to realtime database")
-                }
-
-                startActivity(Intent(applicationContext, MainActivity::class.java))
-
-                finish()
-            } else {
-                Toast.makeText(this, "Google sign in failed:(", Toast.LENGTH_LONG).show()
+        UserManager(this).apply {
+            username = FirebaseManager.mAuth.currentUser?.displayName.also {
+                Log.d("LOGIN", it.toString())
             }
         }
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 
     private fun startMainActivity() {
@@ -264,10 +237,40 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
         finish()
     }
 
-
-    companion object {
-        private const val RC_SIGN_IN: Int = 1
+    private fun firebaseAuthWithGoogle(idToken: String) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        mAuth.signInWithCredential(credential)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    // Sign in success, update UI with the signed-in user's information
+                    Log.d(TAG, "signInWithCredential:success")
+                    successfulSignIn()
+                } else {
+                    // If sign in fails, display a message to the user.
+                    Log.w(TAG, "signInWithCredential:failure", task.exception)
+                    Toast.makeText(this, "Google sign-in failed!", Toast.LENGTH_SHORT).show()
+                }
+            }
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                // Google Sign In was successful, authenticate with Firebase
+                val account = task.getResult(ApiException::class.java)!!
+                Log.d(TAG, "firebaseAuthWithGoogle:" + account.id)
+                firebaseAuthWithGoogle(account.idToken!!)
+            } catch (e: ApiException) {
+                // Google Sign In failed, update UI appropriately
+                Log.w(TAG, "Google sign in failed", e)
+            }
+        }
+    }
+
 
     override fun noInternetConnection() {
         runOnUiThread {
@@ -283,6 +286,11 @@ class LoginActivity : AppCompatActivity(), NetworkStateListener {
             binding.noInternetTextView.visibility = View.GONE
         }
 
+    }
+
+    companion object {
+        private const val RC_SIGN_IN = 9001
+        const val TAG = "LoginActivity"
     }
 
 }

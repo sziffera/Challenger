@@ -17,7 +17,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.sziffer.challenger.R
-import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.FragmentFeedBinding
 import com.sziffer.challenger.model.ActivityMainViewModel
 import com.sziffer.challenger.sync.DATA_DOWNLOADER_TAG
@@ -29,10 +28,13 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
     private var _binding: FragmentFeedBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var connectivityManager: ConnectivityManager
     private lateinit var myNetworkCallback: MyNetworkCallback
     private lateinit var userIdSharedPreferences: SharedPreferences
+
+    private var layoutManager: LinearLayoutManager? = null
+
+    private var challengeAdapter: ChallengeRecyclerViewAdapter? = null
 
     private val viewModel: ActivityMainViewModel by activityViewModels()
 
@@ -45,6 +47,8 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
         myNetworkCallback = MyNetworkCallback(this, connectivityManager)
         userIdSharedPreferences =
             requireContext().getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
+
+
     }
 
     override fun onCreateView(
@@ -75,7 +79,8 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
                 swipeRefreshLayout.visibility = View.VISIBLE
                 emptyViewLinearLayout.visibility = View.GONE
                 with(recyclerView) {
-                    adapter = viewModel.challengeRecyclerViewAdapter
+                    challengeAdapter = ChallengeRecyclerViewAdapter(it, requireContext())
+                    adapter = challengeAdapter
                     addItemDecoration(
                         DividerItemDecoration(
                             recyclerView.context,
@@ -102,6 +107,13 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
     override fun onStop() {
         myNetworkCallback.unregisterCallback()
         super.onStop()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        challengeAdapter = null
+        binding.recyclerView.adapter = null
+        _binding = null
     }
 
     // swipe refresh layout helper method

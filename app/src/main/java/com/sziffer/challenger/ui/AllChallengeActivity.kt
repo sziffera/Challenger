@@ -79,7 +79,7 @@ class AllChallengeActivity : AppCompatActivity() {
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val pos = viewHolder.adapterPosition.also {
+                val pos = viewHolder.layoutPosition.also {
                     Log.i(this::class.java.simpleName, it.toString())
                 }
                 val challenge = challenges[pos]

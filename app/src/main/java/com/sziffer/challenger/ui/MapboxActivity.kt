@@ -1,11 +1,14 @@
 package com.sziffer.challenger.ui
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.location.LocationComponent
 import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
 import com.mapbox.mapboxsdk.location.LocationComponentOptions
+import com.mapbox.mapboxsdk.location.OnCameraTrackingChangedListener
 import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
 import com.mapbox.mapboxsdk.maps.MapboxMap
@@ -20,6 +23,7 @@ class MapboxActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMapboxBinding
 
     private lateinit var mapBox: MapboxMap
+    private var style: Style? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,11 +37,43 @@ class MapboxActivity : AppCompatActivity() {
         binding.mapView.getMapAsync { mapBox ->
             this.mapBox = mapBox
             this.mapBox.setStyle(Style.OUTDOORS) {
+                style = it
                 enableLocationComponent(it)
             }
         }
     }
 
+    @SuppressLint("MissingPermission")//checked
+    private fun startLocationTracking() {
+        val locationComponent: LocationComponent = mapBox.locationComponent
+        // Activate with a built LocationComponentActivationOptions object
+
+        // Activate with a built LocationComponentActivationOptions object
+        locationComponent.activateLocationComponent(
+            LocationComponentActivationOptions.builder(
+                this,
+                style!!
+            ).build()
+        )
+        locationComponent.apply {
+            isLocationComponentEnabled = true
+            cameraMode = CameraMode.TRACKING_COMPASS
+            renderMode = RenderMode.COMPASS
+            addOnCameraTrackingChangedListener(object : OnCameraTrackingChangedListener {
+                override fun onCameraTrackingDismissed() {
+
+                }
+
+                override fun onCameraTrackingChanged(currentMode: Int) {
+
+                }
+
+            })
+            zoomWhileTracking(15.0, 2000)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
     private fun enableLocationComponent(style: Style) {
         val customLocationComponentOptions = LocationComponentOptions.builder(this)
             .trackingGesturesManagement(true)
@@ -56,6 +92,7 @@ class MapboxActivity : AppCompatActivity() {
             zoomWhileTracking(14.0)
             renderMode = RenderMode.COMPASS
         }
+        startLocationTracking()
     }
 
     override fun onStart() {

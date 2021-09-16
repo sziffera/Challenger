@@ -3,7 +3,9 @@ package com.sziffer.challenger.model
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
+import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,11 +13,11 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.model.weather.OneCallWeather
 import com.sziffer.challenger.model.weather.WeatherRequest
 import com.sziffer.challenger.model.weather.WeatherResultListener
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
-import com.sziffer.challenger.ui.ChallengeRecyclerViewAdapter
 import com.sziffer.challenger.utils.*
 import com.sziffer.challenger.utils.Constants.KEY_WEATHER
 import com.sziffer.challenger.utils.Constants.KEY_WEATHER_DATA
@@ -36,7 +38,10 @@ class ActivityMainViewModel : ViewModel(), WeatherResultListener {
         get() = _weatherData
     private var weatherRequest: WeatherRequest? = null
 
-    var challengeRecyclerViewAdapter: ChallengeRecyclerViewAdapter? = null
+    //var challengeRecyclerViewAdapter: ChallengeRecyclerViewAdapter? = null
+
+    private val _profilePhotoUri = MutableLiveData<Uri>()
+    val profilePhotoUriLiveData: LiveData<Uri> get() = _profilePhotoUri
 
 
     //CHALLENGES
@@ -62,6 +67,17 @@ class ActivityMainViewModel : ViewModel(), WeatherResultListener {
     fun setAvgSpeed(value: Double) = _avgSpeed.postValue(value)
     fun setDistance(value: Double) = _distance.postValue(value)
     fun setIsTraining(value: Boolean) = _isTraining.postValue(value)
+
+
+    fun requestPhotoUri() {
+        if (_profilePhotoUri.value == null) {
+            FirebaseManager.mAuth.currentUser?.photoUrl?.let {
+
+                val betterQualityPhoto = it.toString().replace("s96-c", "s492-c")
+                _profilePhotoUri.postValue(betterQualityPhoto.toUri())
+            }
+        }
+    }
 
 
     //region challenges
@@ -129,10 +145,10 @@ class ActivityMainViewModel : ViewModel(), WeatherResultListener {
     fun fetchChallenges(context: Context, startDownloader: Boolean = true) {
 
         Executors.newSingleThreadExecutor().execute {
-            challengesLiveData.value?.let {
-                if (it.isNotEmpty())
-                    return@execute
-            }
+//            challengesLiveData.value?.let {
+//                if (it.isNotEmpty())
+//                    return@execute
+//            }
 
             val dbHelper = ChallengeDbHelper(context)
             val list = dbHelper.getAllChallenges() as MutableList<Challenge>
@@ -154,13 +170,12 @@ class ActivityMainViewModel : ViewModel(), WeatherResultListener {
                 startDataDownloaderWorkManager(context)
                 _callObserveWork.postValue(true)
             } else {
-                challengeRecyclerViewAdapter =
-                    ChallengeRecyclerViewAdapter(ArrayList(list), context)
                 _challengesLiveData.postValue(ArrayList(list))
             }
             dbHelper.close()
         }
     }
+
 
     fun turnOfObserver() {
         _callObserveWork.postValue(false)

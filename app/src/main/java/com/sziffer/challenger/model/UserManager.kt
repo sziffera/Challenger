@@ -17,8 +17,11 @@ class UserManager(
         set(value) {
             Log.i("USERMANAGER", value.toString())
             with(sharedPreferences.edit()) {
-                putString(KEY_USERNAME, value)
-                apply()
+                if (value.equals("null", true))
+                    putString(KEY_USERNAME, null)
+                else
+                    putString(KEY_USERNAME, value)
+                commit()
             }
             field = value
         }

@@ -78,6 +78,11 @@ class WeatherFragment : Fragment(), NetworkStateListener {
         super.onPause()
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
 
     @SuppressLint("SetTextI18n")
     private fun setWeather(weatherData: OneCallWeather) {

@@ -12,6 +12,7 @@ import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -26,6 +27,7 @@ import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import com.squareup.picasso.Picasso
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityMainBinding
@@ -67,7 +69,9 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        if (userManager.username == null) {
+        //setProfilePhoto()
+
+        if (userManager.username == null || userManager.username.equals("null", true)) {
             setUserName()
         }
 
@@ -83,11 +87,11 @@ class MainActivity : AppCompatActivity() {
 
 
         supportActionBar?.title = if (userManager.username == null)
-            "Challenger"
+            getString(R.string.feed)
         else {
             if (FirebaseManager.mAuth.currentUser?.email == "juditbiliczki@gmail.com")
                 "Hajrá Cukika!"
-            else "${getString(R.string.hey)}, ${userManager.username}!"
+            else getString(R.string.feed)
         }
 
         binding.settingsImageButton.setOnClickListener {
@@ -174,8 +178,18 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun setProfilePhoto() {
+        FirebaseManager.mAuth.currentUser?.photoUrl?.let {
+            Picasso.get().load(it).into(binding.profileImageView)
+            return
+        }
+        binding.profileImageView.visibility = View.GONE
+    }
+
 
     private fun buildAlertMessageNoGps() {
+
+        //TODO: add don't show again
 
         Log.d("UTILS", "Dialog called")
         val dialogBuilder = AlertDialog.Builder(this, R.style.AlertDialog)
@@ -263,6 +277,13 @@ class MainActivity : AppCompatActivity() {
 
         if (!FirebaseManager.isUserValid)
             return
+
+        FirebaseManager.mAuth.currentUser?.displayName?.let {
+            userManager.username = it
+            supportActionBar?.title = "${getString(R.string.hey)}, ${userManager.username}!"
+            return
+        }
+
         FirebaseManager.currentUserRef?.child("username")
             ?.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -300,10 +321,13 @@ class MainActivity : AppCompatActivity() {
                     supportFragmentManager.commit {
                         replace<FeedFragment>(R.id.nav_host_fragment)
                     }
-                    supportActionBar?.title = if (userManager.username == null)
-                        "Challenger"
-                    else
-                        "${getString(R.string.hey)}, ${userManager.username}!"
+
+                    supportActionBar?.title = getString(R.string.feed)
+
+//                    supportActionBar?.title = if (userManager.username == null)
+//                        "Challenger"
+//                    else
+//                        "${getString(R.string.hey)}, ${userManager.username}!"
 
                 }
 
@@ -330,7 +354,7 @@ class MainActivity : AppCompatActivity() {
                         replace<ProfileFragment>(R.id.nav_host_fragment)
                     }
                     supportActionBar?.title =
-                        "${getString(R.string.profile)} - ${userManager.username}"
+                        getString(R.string.profile)
                 }
             }
             true

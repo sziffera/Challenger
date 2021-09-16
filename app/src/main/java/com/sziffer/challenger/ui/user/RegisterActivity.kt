@@ -10,6 +10,7 @@ import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.database.FirebaseDatabase
@@ -21,6 +22,7 @@ import com.sziffer.challenger.model.UserManager
 import com.sziffer.challenger.ui.MainActivity
 import com.sziffer.challenger.utils.MyNetworkCallback
 import com.sziffer.challenger.utils.NetworkStateListener
+import com.sziffer.challenger.utils.crossfade
 import com.sziffer.challenger.utils.isEmailAddressValid
 
 
@@ -52,9 +54,23 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
         binding.registerButton.setOnClickListener {
             createAccount(
                 binding.registerEmailEditText.text.toString(),
-                binding.registerPasswordEditText.text.toString()
+                binding.registerPasswordEditText.text.toString(),
+                binding.registerPasswordConfirmEditText.text.toString()
             )
         }
+
+        binding.backButton.setOnClickListener {
+            onBackPressed()
+        }
+
+        val backgrounds = arrayListOf(
+            ContextCompat.getDrawable(this, R.drawable.gradient_background),
+            ContextCompat.getDrawable(this, R.drawable.gradient_background_2),
+            ContextCompat.getDrawable(this, R.drawable.gradient_background_3),
+            ContextCompat.getDrawable(this, R.drawable.gradient_background_4)
+        )
+
+        crossfade(binding.backgroundImageView, backgrounds, 5000, this)
 
     }
 
@@ -72,7 +88,7 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
         super.onStop()
     }
 
-    private fun createAccount(email: String, password: String) {
+    private fun createAccount(email: String, password: String, confirmPassword: String) {
 
         if (!connected) {
             binding.noInternetTextView.startAnimation(
@@ -87,6 +103,23 @@ class RegisterActivity : AppCompatActivity(), NetworkStateListener {
         if (password.length < 6) {
             binding.registerPasswordEditText.error = getString(R.string.invalid_password)
             binding.registerPasswordEditText.startAnimation(
+                AnimationUtils.loadAnimation(
+                    this,
+                    R.anim.shake
+                )
+            )
+            return
+        }
+
+        if (password != confirmPassword) {
+            binding.registerPasswordEditText.error = getString(R.string.passwords_not_match)
+            binding.registerPasswordEditText.startAnimation(
+                AnimationUtils.loadAnimation(
+                    this,
+                    R.anim.shake
+                )
+            )
+            binding.registerPasswordConfirmEditText.startAnimation(
                 AnimationUtils.loadAnimation(
                     this,
                     R.anim.shake

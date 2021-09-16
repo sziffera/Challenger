@@ -332,16 +332,13 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         characteristic: BluetoothGattCharacteristic
     ) {
         val flag: Int = characteristic.properties
-        val format: Int
-        if (flag and 0x01 != 0) {
-            format = BluetoothGattCharacteristic.FORMAT_UINT16
-            Log.d(TAG, "Heart rate format UINT16.")
-        } else {
-            format = BluetoothGattCharacteristic.FORMAT_UINT8
-            Log.d(TAG, "Heart rate format UINT8.")
-        }
-        val hr: Int = characteristic.getIntValue(format, 1)
-        this.heartRate = hr
+        val format =
+            if (flag and 0x01 != 0) {
+                BluetoothGattCharacteristic.FORMAT_UINT16
+            } else {
+                BluetoothGattCharacteristic.FORMAT_UINT8
+            }
+        heartRate = characteristic.getIntValue(format, 1)
         Log.d(TAG, "Received heart rate: $heartRate")
     }
 

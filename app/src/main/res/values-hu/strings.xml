@@ -216,4 +216,10 @@
     <string name="challenge">Kihívás</string>
     <string name="processing">Feldolgozás...</string>
     <string name="export_as_gpx">GPX  file exportálás</string>
+    <string name="can_t_load_sharing_image">Nincs internetkapcsolat, nem sikerült letölteni a megosztási képet</string>
+    <string name="sharing_image_not_loaded">A megosztási kép még nem készült el, kérlek várj egy kicsit!</string>
+    <string name="next">Következő</string>
+    <string name="don_t_worry_you_can_reset_it_here_easily">Ne aggódj, itt könnyedén helyreállíthatod</string>
+    <string name="confirm_password">jelszó újra</string>
+    <string name="passwords_not_match">A két jelszó nem egyezik</string>
 </resources>

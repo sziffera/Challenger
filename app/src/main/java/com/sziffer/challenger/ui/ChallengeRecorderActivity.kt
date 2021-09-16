@@ -430,7 +430,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
         Log.i(TAG, "activity type is $activityType")
 
-        if (gpsService?.myRoute!!.size < 1) {
+        if (gpsService?.myRoute!!.size < 30) {
             buildAlertMessageNoLocationPoints()
         } else {
             if (gpsService != null) {

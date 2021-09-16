@@ -8,7 +8,6 @@ object FirebaseManager {
 
     private val mDatabase = FirebaseDatabase.getInstance()
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
-
     val mAuth = FirebaseAuth.getInstance()
 
     /** returns with the reference of the current user */

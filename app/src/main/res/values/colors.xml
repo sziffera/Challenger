@@ -15,6 +15,7 @@
     <color name="colorWindYellow">#FDD835</color>
     <color name="colorDarkBlueLightOpacity">#4D006584</color>
     <color name="colorDarkBlue">#006584</color>
+    <color name="colorDarkBlue_light_opacity">#8C014C63</color>
     <!--   Heart rate zone -->
     <color name="colorRelaxed">#98e4fd</color>
     <color name="colorModerate">#FFF263</color>

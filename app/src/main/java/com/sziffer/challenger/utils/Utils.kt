@@ -13,13 +13,16 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.TransitionDrawable
 import android.os.Build
+import android.os.Handler
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -38,6 +41,59 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
 
+
+fun crossfade(image: ImageView, layers: ArrayList<Drawable?>, speedInMs: Int, context: Context) {
+    class BackgroundGradientThread(var mainContext: Context) : Runnable {
+        var crossFader: TransitionDrawable? = null
+        var first = true
+        override fun run() {
+            val mHandler = Handler(mainContext.mainLooper)
+            var reverse = false
+            while (true) {
+                if (!reverse) {
+                    for (i in 0 until layers.size - 1) {
+                        val tLayers = arrayOfNulls<Drawable>(2)
+                        tLayers[0] = layers[i]
+                        tLayers[1] = layers[i + 1]
+                        val tCrossFader = TransitionDrawable(tLayers)
+                        tCrossFader.isCrossFadeEnabled = true
+                        val transitionRunnable = Runnable {
+                            image.setImageDrawable(tCrossFader)
+                            tCrossFader.startTransition(speedInMs)
+                        }
+                        mHandler.post(transitionRunnable)
+                        try {
+                            Thread.sleep(speedInMs.toLong())
+                        } catch (e: Exception) {
+                        }
+                    }
+                    reverse = true
+                } else if (reverse) {
+                    for (i in layers.size - 1 downTo 1) {
+                        val tLayers = arrayOfNulls<Drawable>(2)
+                        tLayers[0] = layers[i]
+                        tLayers[1] = layers[i - 1]
+                        val tCrossFader = TransitionDrawable(tLayers)
+                        tCrossFader.isCrossFadeEnabled = true
+                        val transitionRunnable = Runnable {
+                            image.setImageDrawable(tCrossFader)
+                            tCrossFader.startTransition(speedInMs)
+                        }
+                        mHandler.post(transitionRunnable)
+                        try {
+                            Thread.sleep(speedInMs.toLong())
+                        } catch (e: Exception) {
+                        }
+                    }
+                    reverse = false
+                }
+            }
+        }
+    }
+
+    val backgroundThread = Thread(BackgroundGradientThread(context))
+    backgroundThread.start()
+}
 
 const val KEY_REQUESTING_LOCATION_UPDATES = "requestingLocationUpdates"
 

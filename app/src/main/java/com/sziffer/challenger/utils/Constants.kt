@@ -8,7 +8,7 @@ object Constants {
     const val KEY_WEATHER = "Weather"
     const val KEY_WEATHER_DATA = "WeatherData"
 
-    const val WINDOW_SIZE_HELPER = 35
+    const val WINDOW_SIZE_HELPER = 50
     const val MAX_WINDOW_SIZE = 130
     const val SMOOTH_MODE = "triangular"
 

@@ -7,84 +7,111 @@
     android:background="@drawable/gradient_background"
     tools:context=".ui.user.RegisterActivity">
 
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/backButton"
+                android:layout_width="24dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="16dp"
+                android:src="@drawable/ic_outline_arrow_back_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+            <androidx.appcompat.widget.Toolbar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/backButton"
+                app:layout_constraintTop_toTopOf="parent"
+                app:title="@string/create_an_account" />
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ImageView
+        android:id="@+id/backgroundImageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+
     <TextView
         android:id="@+id/noInternetTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:paddingHorizontal="20dp"
-        android:textSize="15sp"
-        android:textAllCaps="true"
-        android:text="@string/no_internet_connection"
         android:background="@drawable/round_16dp"
         android:backgroundTint="@color/colorPlus"
+        android:paddingHorizontal="20dp"
+        android:text="@string/no_internet_connection"
+        android:textAllCaps="true"
+        android:textSize="15sp"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.504"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/appBar" />
 
     <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="32dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="24dp"
         android:orientation="vertical"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:gravity="center"
-            android:text="@string/welcome_to_challenger"
-            android:textAllCaps="true"
-            android:textColor="@android:color/white"
-            android:textSize="25sp" />
-
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/create_an_account"
-            android:textAllCaps="true"
-            android:textColor="@android:color/white"
-            android:textSize="16sp" />
+        app:layout_constraintTop_toBottomOf="@id/appBar">
 
 
         <EditText
             android:id="@+id/registerUsernameEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:layout_marginBottom="15dp"
-            android:autofillHints="@string/username"
+            android:layout_marginBottom="8dp"
+            android:autofillHints="username"
+            android:drawableEnd="@drawable/ic_transparent"
+            android:drawableTint="@color/colorDarkBlue"
+            android:hint="@string/username"
+            android:textColorHint="@color/colorDarkBlueLightOpacity"
             android:background="@drawable/round_16dp"
             android:drawableStart="@drawable/ic_account_circle_small"
             android:ems="10"
             android:gravity="center"
-            android:hint="@string/username"
             android:inputType="textPersonName"
             android:padding="10dp"
             android:textColor="@android:color/background_dark" />
 
         <EditText
             android:id="@+id/registerEmailEditText"
+            android:layout_marginBottom="8dp"
+            android:autofillHints="emailAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="15dp"
-            android:autofillHints="@string/email_address"
+            android:drawableEnd="@drawable/ic_transparent"
+            android:drawableTint="@color/colorDarkBlue"
             android:background="@drawable/round_16dp"
+            android:hint="@string/email_address"
+            android:textColorHint="@color/colorDarkBlueLightOpacity"
             android:drawableStart="@drawable/ic_email"
             android:ems="10"
             android:gravity="center"
-            android:hint="@string/email_address"
             android:inputType="textEmailAddress"
             android:padding="10dp"
             android:textColor="@android:color/background_dark" />
@@ -93,13 +120,34 @@
             android:id="@+id/registerPasswordEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:autofillHints="password"
+            android:background="@drawable/round_16dp"
+            android:drawableStart="@drawable/password_icon"
+            android:drawableEnd="@drawable/ic_transparent"
+            android:drawableTint="@color/colorDarkBlue"
+            android:ems="10"
+            android:gravity="center"
+            android:hint="@string/password"
+            android:inputType="textPassword"
+            android:padding="10dp"
+            android:textColor="@android:color/background_dark"
+            android:textColorHint="@color/colorDarkBlueLightOpacity" />
+
+        <EditText
+            android:id="@+id/registerPasswordConfirmEditText"
+            android:autofillHints="password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="15dp"
-            android:autofillHints="@string/password"
+            android:drawableEnd="@drawable/ic_transparent"
+            android:drawableTint="@color/colorDarkBlue"
+            android:hint="@string/confirm_password"
+            android:textColorHint="@color/colorDarkBlueLightOpacity"
             android:background="@drawable/round_16dp"
             android:drawableStart="@drawable/password_icon"
             android:ems="10"
             android:gravity="center"
-            android:hint="@string/password"
             android:inputType="textPassword"
             android:padding="10dp"
             android:textColor="@android:color/background_dark" />
@@ -107,26 +155,31 @@
 
     </LinearLayout>
 
-    <LinearLayout
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:src="@mipmap/sharing_logo"
+        app:layout_constraintBottom_toTopOf="@id/registerButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/linearLayout"
+        app:tint="@android:color/white" />
+
+
+    <Button
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="24dp"
+        android:id="@+id/registerButton"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:orientation="vertical"
-        android:gravity="bottom"
+        android:text="@string/create_an_account"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:background="@drawable/round_16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        android:textColor="@color/colorAccent" />
 
-        <Button
-            android:id="@+id/registerButton"
-            android:layout_width="match_parent"
-            android:background="@drawable/round_16dp"
-            android:textColor="@color/colorAccent"
-            android:textSize="17sp"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:text="@string/create_an_account" />
-
-    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

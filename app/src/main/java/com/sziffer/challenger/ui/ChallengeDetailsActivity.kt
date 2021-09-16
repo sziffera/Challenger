@@ -29,6 +29,7 @@ import com.mapbox.geojson.Feature
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.exceptions.InvalidLatLngBoundsException
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
 import com.mapbox.mapboxsdk.maps.MapboxMap
@@ -520,13 +521,16 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                 style.addSource(geoJsonSource)
                 style.addLayer(lineLayer)
 
-                mapBox?.animateCamera(
-                    com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(
-                        latLngBoundsBuilder.build(),
-                        100
-                    ), 2000
-                )
-
+                try {
+                    mapBox?.animateCamera(
+                        com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(
+                            latLngBoundsBuilder.build(),
+                            100
+                        ), 2000
+                    )
+                } catch (e: InvalidLatLngBoundsException) {
+                    e.printStackTrace()
+                }
 
                 binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
                 binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"

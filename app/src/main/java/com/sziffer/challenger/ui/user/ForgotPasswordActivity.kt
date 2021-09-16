@@ -37,6 +37,9 @@ class ForgotPasswordActivity : AppCompatActivity(), NetworkStateListener {
         binding.sendPasswordResetEmailButton.setOnClickListener {
             sendPasswordResetEmail()
         }
+        binding.backButton.setOnClickListener {
+            onBackPressed()
+        }
     }
 
     override fun onStart() {

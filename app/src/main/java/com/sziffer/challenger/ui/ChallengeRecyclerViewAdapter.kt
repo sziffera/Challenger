@@ -24,7 +24,7 @@ class ChallengeRecyclerViewAdapter(
     RecyclerView.Adapter<ChallengeRecyclerViewAdapter.ViewHolder>() {
 
     var challenges: ArrayList<Challenge> = ArrayList()
-        private set(value) {
+        set(value) {
             field = value
             notifyDataSetChanged()
         }

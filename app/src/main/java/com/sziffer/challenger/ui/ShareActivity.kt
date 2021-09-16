@@ -10,13 +10,18 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelFileDescriptor
+import android.provider.MediaStore
 import android.text.format.DateUtils
 import android.util.Log
+import android.util.Size
+import android.util.TypedValue
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.graphics.scale
 import com.github.psambit9791.jdsp.signal.Smooth
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -39,6 +44,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
+
 
 class ShareActivity : AppCompatActivity(), NetworkStateListener {
 
@@ -112,13 +118,13 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
                             )
                         }, 5))
                         .strokeColor(60, 147, 180)
-                        .strokeWidth(10.0)
+                        .strokeWidth(5.0)
                         .build()
                 )
             )
             .cameraAuto(true)
-            .width(1000) // Image width
-            .height(1000) // Image height
+            .width(IMAGE_SIZE) // Image width
+            .height(IMAGE_SIZE) // Image height
             .retina(true) // Retina 2x image will be returned
             .build()
 
@@ -136,6 +142,11 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
                 ).show()
             } else
                 share(sharingImage!!)
+        }
+
+        binding.choosePhotoButton.setOnClickListener {
+            val pickPhoto = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            startActivityForResult(pickPhoto, 1)
         }
 
     }
@@ -158,22 +169,75 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
     }
 
 
-    //region sharing
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode != RESULT_CANCELED) {
+            data?.let { intent ->
+                val selectedImage = intent.data
+                Executors.newSingleThreadExecutor().execute {
+                    if (selectedImage != null) {
+                        getBitmapFromUri(selectedImage)?.let {
+                            initShareImage(it)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    @Throws(IOException::class)
+    private fun getBitmapFromUri(uri: Uri): Bitmap? {
+
+        val parcelFileDescriptor: ParcelFileDescriptor? =
+            contentResolver.openFileDescriptor(uri, "r")
+        val fileDescriptor = parcelFileDescriptor?.fileDescriptor
+        val image = BitmapFactory.decodeFileDescriptor(fileDescriptor)
+        parcelFileDescriptor?.close()
+        val size = setSize(image.width, image.height)
+
+        return image.scale(size.width, size.height, false).also {
+            Log.d("SIZE", "after scale ${it.width}x${it.height}")
+        }
+
+    }
+
+
+    private fun setSize(width: Int, height: Int): Size {
+        val finalWidth: Int
+        val finalHeight: Int
+        //downscale
+        if (width < height) {
+            val x = (IMAGE_SIZE * 2) / width.toDouble()
+            finalHeight = (height * x).toInt()
+            finalWidth = (width * x).toInt()
+        } else {
+            val x = (IMAGE_SIZE * 2) / height.toDouble()
+            finalHeight = (height * x).toInt()
+            finalWidth = (width * x).toInt()
+        }
+        Log.d("SIZE", "width: $finalWidth, height: $finalHeight")
+        return Size(finalWidth, finalHeight)
+    }
+
+
+//region sharing
 
     /** takes a screenshot of map and adds text to image */
     private fun initShareImage(it: Bitmap) {
 
         val mutableBitmap =
-            it.copy(Bitmap.Config.ARGB_8888, true)
+            it.copy(Bitmap.Config.ARGB_8888, true).also {
+                Log.d("SIZE", "the ise in the share image init: ${it.width}x${it.height}")
+            }
         val canvas = Canvas(mutableBitmap)
-        val scale = resources.displayMetrics.density
-        val size = 22 * scale
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ContextCompat.getColor(
                 this@ShareActivity,
                 android.R.color.white
             )
-            textSize = 22 * scale
+            textSize =
+                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 11f, resources.displayMetrics)
             textAlign = Paint.Align.CENTER
             setShadowLayer(1f, 0f, 1f, Color.DKGRAY)
         }
@@ -185,31 +249,42 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
             alpha = 160
         }
 
+        val backgroundHeight = 75F
+
         // adding the Sziffer logo
         val drawable = ContextCompat.getDrawable(this, R.mipmap.sharing_logo)
+        val logoEnd = it.width - 20F
+        val logoStart = logoEnd - 150F
+        val logoWidth = logoEnd - logoStart
+        val logoTop = 100F
 
-        drawable?.setBounds(
-            (it.width * 0.83).toInt(),
-            (it.height * 0.1).toInt(), (it.width * 0.98).toInt(), (it.height * 0.18).toInt()
+        val aspectRatio = drawable!!.intrinsicWidth.toFloat() / drawable.intrinsicHeight
+        val derivedHeightInPx = (logoWidth / aspectRatio).toInt()
+
+        drawable.setBounds(
+            logoStart.roundToInt(),
+            logoTop.roundToInt(),
+            logoEnd.roundToInt(),
+            (logoTop + derivedHeightInPx).toInt()
         )
 
-        drawable?.draw(canvas)
+        drawable.draw(canvas)
 
         canvas.drawRect(
             0f, 0f, it.width.toFloat(),
-            it.height * 0.07f, background
+            backgroundHeight, background
         )
 
         // adding the app name text
-        canvas.drawText("CHALLENGER", it.width * 0.5f, it.height * 0.05f, textPaint)
+        canvas.drawText("CHALLENGER", it.width * 0.5f, 50f, textPaint)
 
         canvas.drawRect(
-            0f, it.height * 0.93f, it.width.toFloat(),
+            0f, it.height - backgroundHeight, it.width.toFloat(),
             it.height.toFloat(), background
         )
         // adding the challenge details
 
-        val textBaseLine = it.height * 0.98f
+        val textBaseLine = it.height.toFloat() - 25F
         val textHeight = -textPaint.ascent() + textPaint.descent()
         val yPositionCorrection: Float = it.width * 0.007f
         val xPositionCorrection: Float = it.width * 0.005f
@@ -217,9 +292,10 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
         val drawableTop = (textBaseLine - textHeight + yPositionCorrection).roundToInt()
         val textCenteringIconCorrection = (textHeight + xPositionCorrection) / 2.0
 
+
         // 5% DISTANCE, right align
         textPaint.textAlign = Paint.Align.LEFT
-        val distanceText = "${getStringFromNumber(1, challenge.dst)} km"
+        val distanceText = "${getStringFromNumber(1, challenge.dst)}km"
         val distanceIcon = ContextCompat.getDrawable(this, R.drawable.distance_icon)?.apply {
             setTintList(ColorStateList.valueOf(Color.WHITE))
         }
@@ -236,7 +312,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
         distanceIcon?.draw(canvas)
         canvas.drawText(
             distanceText,
-            (iconEnd + xPositionCorrection).toFloat(), it.height.toFloat() * 0.98f, textPaint
+            (iconEnd + xPositionCorrection), textBaseLine, textPaint
         )
 
         // 38% DURATION
@@ -256,12 +332,12 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
         durationIcon?.draw(canvas)
         canvas.drawText(
             durationText,
-            durationTextPosition.toFloat(), 0.98f * it.height, textPaint
+            durationTextPosition.toFloat(), textBaseLine, textPaint
         )
 
 
         // 62% ELEVATION
-        val elevationText = ChallengeDetailsViewModel.shared.elevationGained.value.toString() + " m"
+        val elevationText = ChallengeDetailsViewModel.shared.elevationGained.value.toString() + "m"
         val elevationTextPosition = it.width * 0.62f + textCenteringIconCorrection
         val elevationWidth = textPaint.measureText(elevationText)
         val elevationIcon = ContextCompat.getDrawable(this, R.drawable.mountain)?.apply {
@@ -276,16 +352,16 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
         elevationIcon?.draw(canvas)
         canvas.drawText(
             elevationText,
-            elevationTextPosition.toFloat(), 0.98f * it.height, textPaint
+            elevationTextPosition.toFloat(), textBaseLine, textPaint
         )
 
         // 95% PACE/AVG, align left
         textPaint.textAlign = Paint.Align.RIGHT
         val paceText = if (challenge.type == getString(R.string.running)) {
             val avgPace = challenge.dur.div(challenge.dst)
-            "${DateUtils.formatElapsedTime(avgPace.toLong())} /km"
+            "${DateUtils.formatElapsedTime(avgPace.toLong())}/km"
         } else {
-            "${getStringFromNumber(1, challenge.avg)} km/h"
+            "${getStringFromNumber(1, challenge.avg)}km/h"
         }
         val paceTextEndPosition = it.width * 0.95f
         val paceWidth = textPaint.measureText(paceText)
@@ -303,7 +379,21 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
         paceIcon?.draw(canvas)
         canvas.drawText(
             paceText,
-            paceTextEndPosition, 0.98f * it.height, textPaint
+            paceTextEndPosition, textBaseLine, textPaint
+        )
+
+        // Activity Type
+        textPaint.apply {
+            textAlign = Paint.Align.LEFT
+            color = resources.getColor(R.color.colorPrimaryDark, null)
+            textSize =
+                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 15f, resources.displayMetrics)
+        }
+        canvas.drawText(
+            challenge.type.uppercase(),
+            distanceTextStartingPosition,
+            it.height - backgroundHeight - 15f,
+            textPaint
         )
 
         sharingImage = mutableBitmap
@@ -315,7 +405,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
         }
     }
 
-    //endregion sharing
+//endregion sharing
 
 
     private fun getWidth(drawable: Drawable, desiredHeightInPx: Double): Int {
@@ -471,7 +561,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
         val fileOutputStream: FileOutputStream
         try {
             fileOutputStream = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 80, fileOutputStream)
             fileOutputStream.flush()
             fileOutputStream.close()
         } catch (e: FileNotFoundException) {
@@ -512,5 +602,10 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
         runOnUiThread {
             binding.noInternetTextView.visibility = View.INVISIBLE
         }
+    }
+
+
+    companion object {
+        private const val IMAGE_SIZE = 500
     }
 }

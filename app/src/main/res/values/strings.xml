@@ -253,10 +253,14 @@
     <string name="export_as_gpx">Export as GPX</string>
 
     <string name="mapbox_access_token" translatable="false">pk.eyJ1Ijoic3ppZmZlcmEiLCJhIjoiY2tubHd6a3dlMG13dDJvbjB1cDk0Z3lqciJ9.pFSPVz4-icft9PBQpIG6pw</string>
-    <string name="max">Max</string>
+    <string name="max" translatable="false">Max</string>
     <string name="pace">Pace</string>
     <string name="can_t_load_sharing_image">No internet connection, can\'t load sharing image</string>
     <string name="sharing_image_not_loaded">The sharing image hasn\'t been created yet, please wait a few seconds!</string>
     <string name="next">Next</string>
+    <string name="don_t_worry_you_can_reset_it_here_easily">Don\'t worry, you can reset it here easily</string>
+    <string name="confirm_password">confirm password</string>
+    <string name="passwords_not_match">Passwords don\'t match</string>
+    <string name="google_sign_in">Google sign in</string>
 
 </resources>
