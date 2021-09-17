@@ -3,15 +3,12 @@ package com.sziffer.challenger.model.weather
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
-import android.os.Build
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.utils.Constants.KEY_WEATHER
 import com.sziffer.challenger.utils.Constants.KEY_WEATHER_DATA
-import com.sziffer.challenger.utils.UpdateTypes
 import com.sziffer.challenger.utils.WEATHER_KEY
-import com.sziffer.challenger.utils.updateRefreshDate
 import okhttp3.*
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -31,9 +28,11 @@ class WeatherRequest(
 
         var shouldShowUv: Boolean
 
+        val loc = Locale.getDefault().displayLanguage
+
         //fetching current weather data
         val request = Request.Builder()
-            .url("${WEATHER_URL}lat=${location.latitude}&lon=${location.longitude}")
+            .url("${WEATHER_URL}lat=${location.latitude}&lon=${location.longitude}&lang=$loc")
             .build()
 
         okHttpClient.newCall(request).enqueue(object : Callback {
@@ -50,7 +49,7 @@ class WeatherRequest(
                         val typeJson = object : TypeToken<OneCallWeather>() {}.type
                         val weatherData = Gson()
                             .fromJson<OneCallWeather>(data, typeJson)
-                        Log.i("WEATHER", weatherData.toString())
+                        Log.i("WEATHER_ALERTS", weatherData.alerts.toString())
 
                         val cal = Calendar.getInstance()
                         val tz = cal.timeZone
@@ -60,17 +59,9 @@ class WeatherRequest(
                         val localSunrise = format.format(Date(weatherData.current.sunrise * 1000))
                         Log.i("DATENOW", format.format(Date().time))
 
-                        shouldShowUv = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        shouldShowUv =
                             LocalTime.now().isAfter(LocalTime.parse(localSunrise)) &&
                                     LocalTime.now().isBefore(LocalTime.parse(localSunset))
-                        } else {
-                            val localTimeString = format.format(Date())
-                            val localTime = format.parse(localTimeString)
-                            val sunrise: Date = format.parse(localSunrise)
-                            val sunset: Date = format.parse(localSunset)
-                            //returns -1 if the date is before the compared
-                            sunrise.compareTo(localTime) == -1 && localTime?.compareTo(sunset) == -1
-                        }
 
                         //if its not cloudy and not night, fetching UV index
                         if (shouldShowUv && weatherData.current.clouds < 95) {
@@ -82,8 +73,10 @@ class WeatherRequest(
                         }
 
                         // updating weather update time for weather
-                        updateRefreshDate(UpdateTypes.WEATHER, context)
-                        saveWeather(weatherData)
+//                        updateRefreshDate(UpdateTypes.WEATHER, context)
+//                        saveWeather(weatherData)
+
+                        //TODO: set back
                         weatherResultListener.weatherFetched(weatherData)
 
                     }
@@ -106,7 +99,7 @@ class WeatherRequest(
         private const val SHOWCASE_ID = "MainActivity"
         private const val WEATHER_URL =
             "https://api.openweathermap.org/data/2.5/onecall?" +
-                    "appid=$WEATHER_KEY&units=metric&"
+                    "appid=$WEATHER_KEY&exclude=daily&units=metric&"
 
     }
 

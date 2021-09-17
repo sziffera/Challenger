@@ -251,8 +251,6 @@
     <string name="challenge">Challenge</string>
     <string name="processing">Processing...</string>
     <string name="export_as_gpx">Export as GPX</string>
-
-    <string name="mapbox_access_token" translatable="false">pk.eyJ1Ijoic3ppZmZlcmEiLCJhIjoiY2tubHd6a3dlMG13dDJvbjB1cDk0Z3lqciJ9.pFSPVz4-icft9PBQpIG6pw</string>
     <string name="max" translatable="false">Max</string>
     <string name="pace">Pace</string>
     <string name="can_t_load_sharing_image">No internet connection, can\'t load sharing image</string>
@@ -262,5 +260,6 @@
     <string name="confirm_password">confirm password</string>
     <string name="passwords_not_match">Passwords don\'t match</string>
     <string name="google_sign_in">Google sign in</string>
+    <string name="alerts">Alerts</string>
 
 </resources>

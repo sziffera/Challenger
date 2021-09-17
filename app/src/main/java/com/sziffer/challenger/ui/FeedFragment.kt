@@ -32,8 +32,6 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
     private lateinit var myNetworkCallback: MyNetworkCallback
     private lateinit var userIdSharedPreferences: SharedPreferences
 
-    private var layoutManager: LinearLayoutManager? = null
-
     private var challengeAdapter: ChallengeRecyclerViewAdapter? = null
 
     private val viewModel: ActivityMainViewModel by activityViewModels()

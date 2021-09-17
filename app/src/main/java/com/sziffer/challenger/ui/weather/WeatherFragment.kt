@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.sziffer.challenger.R
 import com.sziffer.challenger.databinding.FragmentWeatherBinding
 import com.sziffer.challenger.model.ActivityMainViewModel
+import com.sziffer.challenger.model.weather.AlertData
 import com.sziffer.challenger.model.weather.MinuteData
 import com.sziffer.challenger.model.weather.OneCallWeather
 import com.sziffer.challenger.utils.*
@@ -139,8 +140,35 @@ class WeatherFragment : Fragment(), NetworkStateListener {
             layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
         }
 
+        binding.currentWeatherDescription?.text =
+            weatherData.current.weather[0].description.split(' ')
+                .joinToString(" ") { it ->
+                    it.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.getDefault()
+                        ) else it.toString()
+                    }
+                }
+
+        setWeatherAlert(weatherData.alerts)
+
         setOneHourPrecipitation(weatherData.minutely)
     }
+
+    private fun setWeatherAlert(alerts: ArrayList<AlertData>) {
+        if (alerts.isEmpty()) {
+            binding.weatherAlertLinearLayout?.visibility = View.GONE
+        } else {
+            binding.weatherAlertLinearLayout?.visibility = View.VISIBLE
+            alerts.firstOrNull()?.let {
+                binding.apply {
+                    weatherAlertTitle?.text = it.event
+                    weatherAlertDescription?.text = it.description
+                }
+            }
+        }
+    }
+
 
     private fun setOneHourPrecipitation(minutely: ArrayList<MinuteData>) {
 

@@ -8,8 +8,10 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.location.Location
 import android.location.LocationManager
+import android.net.Uri
 import android.os.*
 import android.provider.Settings
+import android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.Gravity
@@ -106,7 +108,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
+        Mapbox.getInstance(this, MAPBOX_ACCESS_TOKEN)
 
         binding = ActivityChallengeRecorderBinding.inflate(layoutInflater)
 
@@ -129,6 +131,8 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                 styleLoaded(it)
             }
         }
+
+        checkOptimization()
 
 
         //setting user preferences based on settings
@@ -830,7 +834,17 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
 
     //region helper methods
-
+    @SuppressLint("NewApi", "BatteryLife")
+    private fun checkOptimization() {
+        val packageName = applicationContext.packageName
+        val pm = applicationContext.getSystemService(POWER_SERVICE) as PowerManager
+        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+            val intent = Intent()
+            intent.action = ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+            intent.data = Uri.parse("package:" + getPackageName())
+            startActivity(intent)
+        }
+    }
 
     override fun onBackPressed() {
         if (buttonSharedPreferences.getBoolean("started", false)) {

@@ -15,6 +15,7 @@ import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.Style
 import com.sziffer.challenger.R
 import com.sziffer.challenger.databinding.ActivityMapboxBinding
+import com.sziffer.challenger.utils.MAPBOX_ACCESS_TOKEN
 
 
 class MapboxActivity : AppCompatActivity() {
@@ -28,7 +29,7 @@ class MapboxActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
+        Mapbox.getInstance(this, MAPBOX_ACCESS_TOKEN)
         binding = ActivityMapboxBinding.inflate(layoutInflater)
         setContentView(binding.root)
 

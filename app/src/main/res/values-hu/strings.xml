@@ -222,4 +222,6 @@
     <string name="don_t_worry_you_can_reset_it_here_easily">Ne aggódj, itt könnyedén helyreállíthatod</string>
     <string name="confirm_password">jelszó újra</string>
     <string name="passwords_not_match">A két jelszó nem egyezik</string>
+    <string name="google_sign_in">Google bejelentkezés</string>
+    <string name="pace">Tempó</string>
 </resources>

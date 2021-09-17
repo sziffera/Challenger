@@ -88,7 +88,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
+        Mapbox.getInstance(this, MAPBOX_ACCESS_TOKEN)
 
         binding = ActivityChallengeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
