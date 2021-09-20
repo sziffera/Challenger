@@ -150,9 +150,9 @@ class WeatherFragment : Fragment(), NetworkStateListener {
                     }
                 }
 
-        setWeatherAlert(weatherData.alerts)
+        weatherData.alerts?.let { setWeatherAlert(it) }
 
-        setOneHourPrecipitation(weatherData.minutely)
+        //setOneHourPrecipitation(weatherData.minutely)
     }
 
     private fun setWeatherAlert(alerts: ArrayList<AlertData>) {

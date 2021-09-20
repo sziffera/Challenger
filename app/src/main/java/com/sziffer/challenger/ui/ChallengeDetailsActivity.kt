@@ -23,22 +23,24 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.github.psambit9791.jdsp.signal.Smooth
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.mapbox.geojson.Feature
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.exceptions.InvalidLatLngBoundsException
-import com.mapbox.mapboxsdk.geometry.LatLng
-import com.mapbox.mapboxsdk.geometry.LatLngBounds
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.snapshotter.MapSnapshotter
-import com.mapbox.mapboxsdk.style.layers.LineLayer
-import com.mapbox.mapboxsdk.style.layers.Property
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+import com.mapbox.geojson.Polygon
+import com.mapbox.maps.CameraBoundsOptions
+import com.mapbox.maps.CoordinateBounds
+import com.mapbox.maps.Style
+import com.mapbox.maps.extension.style.layers.generated.lineLayer
+import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
+import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
+import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
+import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
+import com.mapbox.maps.extension.style.sources.getSource
+import com.mapbox.maps.extension.style.style
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
@@ -61,8 +63,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
     //private lateinit var mMap: GoogleMap
 
-    private var mapBox: MapboxMap? = null
-    private var snapshotter: MapSnapshotter? = null
+    //private var mapBox: MapboxMap? = null
+
 
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var challenge: Challenge
@@ -88,18 +90,16 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Mapbox.getInstance(this, MAPBOX_ACCESS_TOKEN)
+
 
         binding = ActivityChallengeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.challengeDetailsMap.onCreate(savedInstanceState)
-        binding.challengeDetailsMap.getMapAsync { mapboxMap ->
-            this.mapBox = mapboxMap
-            mapBox!!.setStyle(Style.OUTDOORS) {
-                runProcessThread(it)
-            }
-        }
+
+        //binding.challengeDetailsMap.getMapboxMap().loadStyleUri(Style.OUTDOORS) {
+
+        // }
+
 
         setSupportActionBar(binding.challengeDetailsToolbar)
 
@@ -248,31 +248,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             )
         }
 
-    }
+        runProcessThread()
 
-    override fun onStart() {
-        super.onStart()
-        binding.challengeDetailsMap.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        binding.challengeDetailsMap.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        binding.challengeDetailsMap.onPause()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        binding.challengeDetailsMap.onDestroy()
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        binding.challengeDetailsMap.onLowMemory()
     }
 
 
@@ -392,6 +369,29 @@ class ChallengeDetailsActivity : AppCompatActivity() {
         startMainActivity()
     }
 
+    private fun showBoundsArea(boundsOptions: CameraBoundsOptions) {
+        val source = binding.challengeDetailsMap.getMapboxMap().getStyle()!!
+            .getSource("geojson-source") as GeoJsonSource
+        val bounds = boundsOptions.bounds
+        val list = mutableListOf<List<Point>>()
+        bounds?.let {
+            if (!it.infiniteBounds) {
+                val northEast = it.northeast
+                val southWest = it.southwest
+                val northWest = Point.fromLngLat(southWest.longitude(), northEast.latitude())
+                val southEast = Point.fromLngLat(northEast.longitude(), southWest.latitude())
+                list.add(
+                    mutableListOf(northEast, southEast, southWest, northWest, northEast)
+                )
+            }
+        }
+        source.geometry(
+            Polygon.fromLngLats(
+                list
+            )
+        )
+    }
+
     //endregion helper methods
 
     //region processing
@@ -401,7 +401,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
      * alos filter calculates the elevation data
      * - the filtering will be remooved as soon as the method is final, will be moved to the saving part
      **/
-    private fun runProcessThread(style: Style) {
+    private fun runProcessThread() {
         val executor = Executors.newSingleThreadExecutor()
         val handler = Handler(Looper.getMainLooper())
 
@@ -427,8 +427,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                     latLngBoundsBuilder.include(
                         LatLng(
                             i.latLng.latitude,
-                            i.latLng.longitude,
-                            i.altitude
+                            i.latLng.longitude
                         )
                     )
                 }
@@ -449,8 +448,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                     latLngBoundsBuilder.include(
                         LatLng(
                             myLocation.latLng.latitude,
-                            myLocation.latLng.longitude,
-                            myLocation.altitude
+                            myLocation.latLng.longitude
                         )
                     )
                     points.add(
@@ -499,38 +497,46 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                 }
             }
 
+            val build = latLngBoundsBuilder.build()
+            val myBuilder = CameraBoundsOptions.Builder()
+                .bounds(
+                    CoordinateBounds(
+                        Point.fromLngLat(build.northeast.longitude, build.northeast.longitude),
+                        Point.fromLngLat(build.southwest.longitude, build.southwest.longitude),
+                        false
+                    )
+                )
+                .minZoom(10.0)
+                .build()
+
 
             handler.post {
                 val lineString: LineString = LineString.fromLngLats(points)
                 val feature = Feature.fromGeometry(lineString)
-                val geoJsonSource = GeoJsonSource("geojson-source", feature)
-                val lineLayer = LineLayer("linelayer", "geojson-source").withProperties(
-                    PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
-                    PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
-                    PropertyFactory.lineOpacity(1f),
-                    PropertyFactory.lineWidth(4f),
-                    PropertyFactory.lineColor(
-                        resources.getColor(
-                            R.color.colorPrimaryDark,
-                            null
-                        )
-                    )
-                )
+
+                binding.challengeDetailsMap.getMapboxMap()
+                    .loadStyle(style(styleUri = Style.OUTDOORS) {
+                        +geoJsonSource(id = "geojson-source") {
+
+                            feature(feature)
+
+                        }
+                        +lineLayer("linelayer", "geojson-source") {
+                            lineCap(LineCap.ROUND)
+                            lineJoin(LineJoin.MITER)
+                            lineOpacity(1.0)
+                            lineWidth(4.0)
+                            lineColor(
+                                resources.getColor(
+                                    R.color.colorPrimaryDark,
+                                    null
+                                )
+                            )
+                        }
+                    }) { showBoundsArea(myBuilder) }
 
 
-                style.addSource(geoJsonSource)
-                style.addLayer(lineLayer)
 
-                try {
-                    mapBox?.animateCamera(
-                        com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(
-                            latLngBoundsBuilder.build(),
-                            100
-                        ), 2000
-                    )
-                } catch (e: InvalidLatLngBoundsException) {
-                    e.printStackTrace()
-                }
 
                 binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
                 binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"

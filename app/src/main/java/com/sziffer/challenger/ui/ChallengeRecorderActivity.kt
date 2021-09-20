@@ -21,6 +21,7 @@ import android.view.animation.AnimationUtils
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
@@ -28,21 +29,16 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.chip.Chip
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.mapbox.geojson.Feature
-import com.mapbox.geojson.LineString
-import com.mapbox.geojson.Point
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.location.LocationComponent
-import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
-import com.mapbox.mapboxsdk.location.OnCameraTrackingChangedListener
-import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.location.modes.RenderMode
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.style.layers.LineLayer
-import com.mapbox.mapboxsdk.style.layers.Property
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+import com.mapbox.android.gestures.MoveGestureDetector
+import com.mapbox.maps.CameraOptions
+import com.mapbox.maps.Style
+import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
+import com.mapbox.maps.plugin.LocationPuck2D
+import com.mapbox.maps.plugin.gestures.OnMoveListener
+import com.mapbox.maps.plugin.gestures.gestures
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
+import com.mapbox.maps.plugin.locationcomponent.location
 import com.sziffer.challenger.LocationUpdatesService
 import com.sziffer.challenger.LocationUpdatesService.LocalBinder
 import com.sziffer.challenger.R
@@ -77,8 +73,35 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var userManager: UserManager
 
-    private var mapBox: MapboxMap? = null
-    private var style: Style? = null
+    private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
+        binding.mapbox.getMapboxMap().setCamera(
+            CameraOptions.Builder()
+                .bearing(it)
+                .build()
+        )
+    }
+
+    private val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener {
+        binding.mapbox.getMapboxMap().setCamera(
+            CameraOptions.Builder()
+                .center(it)
+                .zoom(14.0)
+                .build()
+        )
+        binding.mapbox.gestures.focalPoint = binding.mapbox.getMapboxMap().pixelForCoordinate(it)
+    }
+
+    private val onMoveListener = object : OnMoveListener {
+        override fun onMoveBegin(detector: MoveGestureDetector) {
+            onCameraTrackingDismissed()
+        }
+
+        override fun onMove(detector: MoveGestureDetector): Boolean {
+            return false
+        }
+
+        override fun onMoveEnd(detector: MoveGestureDetector) {}
+    }
 
     private lateinit var binding: ActivityChallengeRecorderBinding
 
@@ -108,7 +131,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Mapbox.getInstance(this, MAPBOX_ACCESS_TOKEN)
+
 
         binding = ActivityChallengeRecorderBinding.inflate(layoutInflater)
 
@@ -117,19 +140,17 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
         binding.recenterButton.setOnClickListener {
             binding.recenterButton.visibility = View.INVISIBLE
-            startLocationTracking()
+            initLocationComponent()
+            setupGesturesListener()
         }
 
         setContentView(binding.root)
 
         this.actionBar?.hide()
 
-        binding.mapbox.onCreate(savedInstanceState)
-        binding.mapbox.getMapAsync { mapBox ->
-            this.mapBox = mapBox
-            mapBox.setStyle(Style.OUTDOORS) {
-                styleLoaded(it)
-            }
+        binding.mapbox.getMapboxMap().loadStyleUri(Style.OUTDOORS) {
+            initLocationComponent()
+            setupGesturesListener()
         }
 
         checkOptimization()
@@ -265,12 +286,12 @@ class ChallengeRecorderActivity : AppCompatActivity(),
         PreferenceManager.getDefaultSharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(this)
         super.onStop()
-        binding.mapbox.onStop()
+
     }
 
     override fun onStart() {
         super.onStart()
-        binding.mapbox.onStart()
+
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)
 
@@ -311,7 +332,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
-        binding.mapbox.onResume()
+
         LocalBroadcastManager.getInstance(this).registerReceiver(
             activityDataReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST_UI_UPDATE)
@@ -325,97 +346,123 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     override fun onPause() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(activityDataReceiver)
         super.onPause()
-        binding.mapbox.onPause()
+
     }
+
 
     override fun onDestroy() {
         super.onDestroy()
-        binding.mapbox.onDestroy()
+        binding.mapbox.location
+            .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
+        binding.mapbox.location
+            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+        binding.mapbox.gestures.removeOnMoveListener(onMoveListener)
     }
 
-    override fun onLowMemory() {
-        super.onLowMemory()
-        binding.mapbox.onLowMemory()
-    }
 
     //endregion activity lifecycle
 
 
     //region map
 
-    @SuppressLint("MissingPermission")//checked
-    private fun startLocationTracking() {
-        val locationComponent: LocationComponent = mapBox!!.locationComponent
-        // Activate with a built LocationComponentActivationOptions object
 
-        // Activate with a built LocationComponentActivationOptions object
-        locationComponent.activateLocationComponent(
-            LocationComponentActivationOptions.builder(
-                this,
-                style!!
-            ).build()
-        )
-        locationComponent.apply {
-            isLocationComponentEnabled = true
-            cameraMode = CameraMode.TRACKING_GPS
-            renderMode = RenderMode.GPS
-            addOnCameraTrackingChangedListener(object : OnCameraTrackingChangedListener {
-                override fun onCameraTrackingDismissed() {
-                    binding.recenterButton.visibility = View.VISIBLE
-                }
-
-                override fun onCameraTrackingChanged(currentMode: Int) {
-
-                }
-
-            })
-            zoomWhileTracking(15.0, 2000)
-        }
+    private fun setupGesturesListener() {
+        binding.mapbox.gestures.addOnMoveListener(onMoveListener)
     }
 
-    @SuppressLint("MissingPermission") //checked
-    private fun styleLoaded(style: Style) {
-
-        this.style = style
-
-        if (locationPermissionCheck(this)) {
-            startLocationTracking()
-        }
-
-        if (challenge) {
-            val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
-            val route =
-                Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
-
-            val points = route.map {
-                Point.fromLngLat(
-                    it.latLng.longitude,
-                    it.latLng.latitude,
-                    it.altitude
-                )
-            } as ArrayList<Point>
-
-            val lineString: LineString = LineString.fromLngLats(points)
-            val feature = Feature.fromGeometry(lineString)
-            val geoJsonSource = GeoJsonSource("geojson-source", feature)
-            style.addSource(geoJsonSource)
-            style.addLayer(
-                LineLayer("linelayer", "geojson-source").withProperties(
-                    PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
-                    PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
-                    PropertyFactory.lineOpacity(1f),
-                    PropertyFactory.lineWidth(4f),
-                    PropertyFactory.lineColor(
-                        resources.getColor(
-                            R.color.colorAccent,
-                            null
-                        )
-                    )
-                )
+    private fun initLocationComponent() {
+        val locationComponentPlugin = binding.mapbox.location
+        locationComponentPlugin.updateSettings {
+            this.enabled = true
+            this.locationPuck = LocationPuck2D(
+                bearingImage = AppCompatResources.getDrawable(
+                    this@ChallengeRecorderActivity,
+                    drawable.mapbox_user_puck_icon,
+                ),
+                shadowImage = AppCompatResources.getDrawable(
+                    this@ChallengeRecorderActivity,
+                    drawable.mapbox_user_icon_shadow,
+                ),
+                scaleExpression = interpolate {
+                    linear()
+                    zoom()
+                    stop {
+                        literal(0.0)
+                        literal(0.6)
+                    }
+                    stop {
+                        literal(20.0)
+                        literal(1.0)
+                    }
+                }.toJson()
             )
-
         }
+        locationComponentPlugin.addOnIndicatorPositionChangedListener(
+            onIndicatorPositionChangedListener
+        )
+        locationComponentPlugin.addOnIndicatorBearingChangedListener(
+            onIndicatorBearingChangedListener
+        )
     }
+
+    private fun onCameraTrackingDismissed() {
+
+        binding.mapbox.location
+            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+        binding.mapbox.location
+            .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
+        binding.mapbox.gestures.removeOnMoveListener(onMoveListener)
+
+        binding.recenterButton.visibility = View.VISIBLE
+    }
+
+    /*
+
+       @SuppressLint("MissingPermission") //checked
+       private fun styleLoaded(style: Style) {
+
+           this.style = style
+
+           if (locationPermissionCheck(this)) {
+               startLocationTracking()
+           }
+
+           if (challenge) {
+               val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+               val route =
+                   Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
+
+               val points = route.map {
+                   Point.fromLngLat(
+                       it.latLng.longitude,
+                       it.latLng.latitude,
+                       it.altitude
+                   )
+               } as ArrayList<Point>
+
+               val lineString: LineString = LineString.fromLngLats(points)
+               val feature = Feature.fromGeometry(lineString)
+               val geoJsonSource = GeoJsonSource("geojson-source", feature)
+               style.addSource(geoJsonSource)
+               style.addLayer(
+                   LineLayer("linelayer", "geojson-source").withProperties(
+                       PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
+                       PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
+                       PropertyFactory.lineOpacity(1f),
+                       PropertyFactory.lineWidth(4f),
+                       PropertyFactory.lineColor(
+                           resources.getColor(
+                               R.color.colorAccent,
+                               null
+                           )
+                       )
+                   )
+               )
+
+           }
+       }
+
+     */
 
     //endregion map
 

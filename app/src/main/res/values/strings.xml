@@ -262,4 +262,6 @@
     <string name="google_sign_in">Google sign in</string>
     <string name="alerts">Alerts</string>
 
+    <string name="mapbox_access_token" translatable="false">pk.eyJ1Ijoic3ppZmZlcmEiLCJhIjoiY2tubHd6a3dlMG13dDJvbjB1cDk0Z3lqciJ9.pFSPVz4-icft9PBQpIG6pw</string>
+
 </resources>

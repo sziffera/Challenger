@@ -60,7 +60,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         userManager = UserManager(this)
 
-
         viewModel.isTrainingLiveData.observe(this, { isTraining ->
             if (isTraining) {
                 binding.recordTextView.text = "Start"

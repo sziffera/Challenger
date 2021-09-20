@@ -14,12 +14,14 @@
         <entry key="app/src/main/res/drawable/ic_transparent.xml" value="0.3125" />
         <entry key="app/src/main/res/drawable/password_icon.xml" value="0.3125" />
         <entry key="app/src/main/res/drawable/share_drawable.xml" value="0.3106481481481482" />
+        <entry key="app/src/main/res/layout-sw300dp/activity_challenge_recorder.xml" value="0.8" />
         <entry key="app/src/main/res/layout-sw300dp/fragment_profile.xml" value="0.7395833333333334" />
-        <entry key="app/src/main/res/layout-sw300dp/fragment_weather.xml" value="0.33" />
+        <entry key="app/src/main/res/layout-sw300dp/fragment_weather.xml" value="0.75" />
         <entry key="app/src/main/res/layout-sw350dp/activity_challenge_recorder.xml" value="0.2828703703703704" />
         <entry key="app/src/main/res/layout-sw350dp/activity_register.xml" value="0.2962962962962963" />
         <entry key="app/src/main/res/layout-sw350dp/fragment_profile.xml" value="0.2922374429223744" />
         <entry key="app/src/main/res/layout-sw350dp/fragment_weather.xml" value="0.2962962962962963" />
+        <entry key="app/src/main/res/layout/activity_challenge_recorder.xml" value="2.0428571428571427" />
         <entry key="app/src/main/res/layout/activity_forgot_password.xml" value="0.26296296296296295" />
         <entry key="app/src/main/res/layout/activity_login.xml" value="0.1983695652173913" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.25462962962962965" />
