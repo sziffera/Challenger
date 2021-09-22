@@ -14,7 +14,6 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.TransitionDrawable
-import android.os.Build
 import android.os.Handler
 import android.provider.Settings
 import android.util.Log
@@ -258,17 +257,9 @@ fun updateRefreshDate(type: UpdateTypes, context: Context) {
         LAST_REFRESH,
         Context.MODE_PRIVATE
     )
-    val currentDate: String
-    currentDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val current = LocalDateTime.now()
-        val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
-        current.format(formatter)
-
-    } else {
-        val date = Date();
-        val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
-        formatter.format(date)
-    }
+    val current = LocalDateTime.now()
+    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
+    val currentDate: String = current.format(formatter)
     with(lastRefreshSharedPreferences.edit()) {
         if (type == UpdateTypes.DATA_SYNC)
             putString(LAST_REFRESH_TIME_SYNC, currentDate)

@@ -8,7 +8,9 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.utils.Constants.KEY_WEATHER
 import com.sziffer.challenger.utils.Constants.KEY_WEATHER_DATA
+import com.sziffer.challenger.utils.UpdateTypes
 import com.sziffer.challenger.utils.WEATHER_KEY
+import com.sziffer.challenger.utils.updateRefreshDate
 import okhttp3.*
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -28,11 +30,13 @@ class WeatherRequest(
 
         var shouldShowUv: Boolean
 
-        val loc = Locale.getDefault().displayLanguage
+        val loc = Locale.getDefault().isO3Country.also {
+            Log.d("LOCALE", it)
+        }
 
         //fetching current weather data
         val request = Request.Builder()
-            .url("${WEATHER_URL}lat=${location.latitude}&lon=${location.longitude}&lang=$loc")
+            .url("${WEATHER_URL}lat=${location.latitude}&lon=${location.longitude}")
             .build()
 
         okHttpClient.newCall(request).enqueue(object : Callback {
@@ -73,8 +77,8 @@ class WeatherRequest(
                         }
 
                         // updating weather update time for weather
-//                        updateRefreshDate(UpdateTypes.WEATHER, context)
-//                        saveWeather(weatherData)
+                        updateRefreshDate(UpdateTypes.WEATHER, context)
+                        saveWeather(weatherData)
 
                         //TODO: set back
                         weatherResultListener.weatherFetched(weatherData)

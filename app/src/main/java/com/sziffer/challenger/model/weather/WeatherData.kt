@@ -6,7 +6,7 @@ data class OneCallWeather(
     val minutely: ArrayList<MinuteData>,
     val hourly: ArrayList<HourlyData>,
     val daily: ArrayList<DailyData>,
-    val alerts: ArrayList<AlertData>,
+    val alerts: ArrayList<AlertData>?,
     var shouldShowUvIndex: Boolean = false //set based on the conditions after weather fetch
 )
 
