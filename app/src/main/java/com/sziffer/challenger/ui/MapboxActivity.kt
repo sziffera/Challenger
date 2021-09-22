@@ -1,128 +1,127 @@
 package com.sziffer.challenger.ui
 
 
+import android.annotation.SuppressLint
+import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
+import android.view.View
+import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources
-import com.mapbox.android.gestures.MoveGestureDetector
-import com.mapbox.maps.CameraOptions
+import com.mapbox.geojson.FeatureCollection
+import com.mapbox.geojson.Point
+import com.mapbox.geojson.Polygon
+import com.mapbox.maps.CameraBoundsOptions
+import com.mapbox.maps.CoordinateBounds
+import com.mapbox.maps.MapboxMap
 import com.mapbox.maps.Style
-import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
-import com.mapbox.maps.plugin.LocationPuck2D
-import com.mapbox.maps.plugin.gestures.OnMoveListener
-import com.mapbox.maps.plugin.gestures.gestures
-import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
-import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
-import com.mapbox.maps.plugin.locationcomponent.location
-import com.sziffer.challenger.R
+import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
+import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
+import com.mapbox.maps.extension.style.sources.getSource
+import com.mapbox.maps.extension.style.style
 import com.sziffer.challenger.databinding.ActivityMapboxBinding
 
 
 class MapboxActivity : AppCompatActivity() {
 
 
+    private lateinit var mapboxMap: MapboxMap
     private lateinit var binding: ActivityMapboxBinding
-
-
-    private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
-        binding.mapView.getMapboxMap().setCamera(
-            CameraOptions.Builder().bearing(it).build()
-        )
-    }
-
-    private val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener {
-        binding.mapView.getMapboxMap().setCamera(
-            CameraOptions.Builder()
-                .center(it)
-                .zoom(14.0)
-                .build()
-        )
-        binding.mapView.gestures.focalPoint = binding.mapView.getMapboxMap().pixelForCoordinate(it)
-    }
-
-    private val onMoveListener = object : OnMoveListener {
-        override fun onMoveBegin(detector: MoveGestureDetector) {
-            onCameraTrackingDismissed()
-        }
-
-        override fun onMove(detector: MoveGestureDetector): Boolean {
-            return false
-        }
-
-        override fun onMoveEnd(detector: MoveGestureDetector) {}
-    }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityMapboxBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        mapboxMap = binding.mapView.getMapboxMap()
+        mapboxMap.loadStyle(
+            style(Style.MAPBOX_STREETS) {
+                +geoJsonSource(BOUNDS_ID) {
+                    featureCollection(FeatureCollection.fromFeatures(listOf()))
+                }
+            }
+        ) { setupBounds(SAN_FRANCISCO_BOUND) }
+        showCrosshair()
+    }
 
-        binding.mapView.getMapboxMap().loadStyleUri(
-            Style.OUTDOORS
-        ) {
-            initLocationComponent()
-            setupGesturesListener()
+
+    private fun setupBounds(bounds: CameraBoundsOptions) {
+        mapboxMap.setBounds(bounds)
+        showBoundsArea(bounds)
+    }
+
+    private fun showBoundsArea(boundsOptions: CameraBoundsOptions) {
+        val source = mapboxMap.getStyle()!!.getSource(BOUNDS_ID) as GeoJsonSource
+        val bounds = boundsOptions.bounds
+        val list = mutableListOf<List<Point>>()
+        bounds?.let {
+            if (!it.infiniteBounds) {
+                val northEast = it.northeast
+                val southWest = it.southwest
+                val northWest = Point.fromLngLat(southWest.longitude(), northEast.latitude())
+                val southEast = Point.fromLngLat(northEast.longitude(), southWest.latitude())
+                list.add(
+                    mutableListOf(northEast, southEast, southWest, northWest, northEast)
+                )
+            }
         }
-    }
-
-
-    private fun setupGesturesListener() {
-        binding.mapView.gestures.addOnMoveListener(onMoveListener)
-    }
-
-    private fun initLocationComponent() {
-        val locationComponentPlugin = binding.mapView.location
-        locationComponentPlugin.updateSettings {
-            this.enabled = true
-            this.locationPuck = LocationPuck2D(
-                bearingImage = AppCompatResources.getDrawable(
-                    this@MapboxActivity,
-                    R.drawable.mapbox_user_puck_icon,
-                ),
-                shadowImage = AppCompatResources.getDrawable(
-                    this@MapboxActivity,
-                    R.drawable.mapbox_user_icon_shadow,
-                ),
-                scaleExpression = interpolate {
-                    linear()
-                    zoom()
-                    stop {
-                        literal(0.0)
-                        literal(0.6)
-                    }
-                    stop {
-                        literal(20.0)
-                        literal(1.0)
-                    }
-                }.toJson()
+        source.geometry(
+            Polygon.fromLngLats(
+                list
             )
-        }
-        locationComponentPlugin.addOnIndicatorPositionChangedListener(
-            onIndicatorPositionChangedListener
-        )
-        locationComponentPlugin.addOnIndicatorBearingChangedListener(
-            onIndicatorBearingChangedListener
         )
     }
 
-    private fun onCameraTrackingDismissed() {
-
-        binding.mapView.location
-            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
-        binding.mapView.location
-            .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
-        binding.mapView.gestures.removeOnMoveListener(onMoveListener)
+    private fun showCrosshair() {
+        val crosshair = View(this)
+        crosshair.layoutParams = FrameLayout.LayoutParams(10, 10, Gravity.CENTER)
+        crosshair.setBackgroundColor(Color.BLUE)
+        binding.mapView.addView(crosshair)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        binding.mapView.location
-            .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
-        binding.mapView.location
-            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
-        binding.mapView.gestures.removeOnMoveListener(onMoveListener)
-    }
+    companion object {
+        private const val BOUNDS_ID = "BOUNDS_ID"
+        private val SAN_FRANCISCO_BOUND: CameraBoundsOptions = CameraBoundsOptions.Builder()
+            .bounds(
+                CoordinateBounds(
+                    Point.fromLngLat(-122.66336, 37.492987),
+                    Point.fromLngLat(-122.250481, 37.87165),
+                    false
+                )
+            )
+            .minZoom(10.0)
+            .build()
 
+        private val ALMOST_WORLD_BOUNDS: CameraBoundsOptions = CameraBoundsOptions.Builder()
+            .bounds(
+                CoordinateBounds(
+                    Point.fromLngLat(-170.0, -20.0),
+                    Point.fromLngLat(170.0, 20.0),
+                    false
+                )
+            )
+            .minZoom(2.0)
+            .build()
+
+        @SuppressLint("Range")
+        private val CROSS_IDL_BOUNDS: CameraBoundsOptions = CameraBoundsOptions.Builder()
+            .bounds(
+                CoordinateBounds(
+                    Point.fromLngLat(170.0202020, -20.0),
+                    Point.fromLngLat(190.0, 20.0),
+                    false
+                )
+            )
+            .minZoom(2.0)
+            .build()
+
+        private val INFINITE_BOUNDS: CameraBoundsOptions = CameraBoundsOptions.Builder()
+            .bounds(
+                CoordinateBounds(
+                    Point.fromLngLat(0.0, 0.0),
+                    Point.fromLngLat(0.0, 0.0),
+                    true
+                )
+            )
+            .build()
+    }
 }

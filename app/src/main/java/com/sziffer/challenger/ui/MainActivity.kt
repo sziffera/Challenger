@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
             LocationServices.getFusedLocationProviderClient(this)
 
 
-        //if the recorder activity crashed, restores the bool for recording (important for ui init)
+        // if the recorder activity crashed, restores the bool for recording (important for ui init)
         val buttonSharedPreferences = getSharedPreferences("button", 0)
         buttonSharedPreferences.edit().putBoolean("started", false).apply()
 
@@ -88,6 +88,7 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.title = if (userManager.username == null)
             getString(R.string.feed)
         else {
+            // just for my girlfriend ;)
             if (FirebaseManager.mAuth.currentUser?.email == "juditbiliczki@gmail.com")
                 "Hajrá Cukika!"
             else getString(R.string.feed)

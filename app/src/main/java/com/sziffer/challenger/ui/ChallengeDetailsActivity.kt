@@ -413,7 +413,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             val points = ArrayList<Point>()
             val latLngBoundsBuilder = LatLngBounds.Builder()
 
-
             var hrSum = 0
             var hr = false
             if (route?.get(0)?.hr == -1) {
@@ -479,8 +478,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             }
 
             if (elevationArray.size > Constants.MIN_ROUTE_SIZE) {
-
-
                 var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
                 if (windowSize > Constants.MAX_WINDOW_SIZE)
                     windowSize = Constants.MAX_WINDOW_SIZE
@@ -501,8 +498,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             val myBuilder = CameraBoundsOptions.Builder()
                 .bounds(
                     CoordinateBounds(
-                        Point.fromLngLat(build.northeast.longitude, build.northeast.longitude),
                         Point.fromLngLat(build.southwest.longitude, build.southwest.longitude),
+                        Point.fromLngLat(build.northeast.longitude, build.northeast.longitude),
                         false
                     )
                 )
@@ -513,13 +510,22 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             handler.post {
                 val lineString: LineString = LineString.fromLngLats(points)
                 val feature = Feature.fromGeometry(lineString)
+                val bounds = latLngBoundsBuilder.build()
+                val southWest =
+                    Point.fromLngLat(bounds.southwest.longitude, bounds.southwest.latitude)
+                val northEast =
+                    Point.fromLngLat(bounds.northeast.longitude, bounds.northeast.latitude)
+                val northWest = Point.fromLngLat(southWest.longitude(), northEast.latitude())
+                val southEast = Point.fromLngLat(northEast.longitude(), southWest.latitude())
+                val list = mutableListOf<List<Point>>()
+                list.add(
+                    mutableListOf(northEast, southEast, southWest, northWest, northEast)
+                )
 
                 binding.challengeDetailsMap.getMapboxMap()
                     .loadStyle(style(styleUri = Style.OUTDOORS) {
                         +geoJsonSource(id = "geojson-source") {
-
                             feature(feature)
-
                         }
                         +lineLayer("linelayer", "geojson-source") {
                             lineCap(LineCap.ROUND)
@@ -533,8 +539,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                                 )
                             )
                         }
-                    }) { showBoundsArea(myBuilder) }
-
+                    })
 
 
 
