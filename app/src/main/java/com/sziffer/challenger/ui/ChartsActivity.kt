@@ -25,8 +25,8 @@ import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChartsBinding
-import com.sziffer.challenger.model.HeartRateZones
-import com.sziffer.challenger.model.MyLocation
+import com.sziffer.challenger.model.challenge.MyLocation
+import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.utils.extensions.dp
 import com.sziffer.challenger.utils.extensions.toPace
 import com.sziffer.challenger.utils.getStringFromNumber

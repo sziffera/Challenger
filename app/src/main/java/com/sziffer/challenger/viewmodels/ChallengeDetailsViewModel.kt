@@ -1,8 +1,9 @@
-package com.sziffer.challenger.model
+package com.sziffer.challenger.viewmodels
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.sziffer.challenger.model.challenge.MyLocation
 
 class ChallengeDetailsViewModel : ViewModel() {
 

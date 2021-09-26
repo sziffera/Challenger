@@ -18,10 +18,10 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.sziffer.challenger.R
 import com.sziffer.challenger.databinding.FragmentFeedBinding
-import com.sziffer.challenger.model.ActivityMainViewModel
 import com.sziffer.challenger.sync.DATA_DOWNLOADER_TAG
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
 import com.sziffer.challenger.utils.*
+import com.sziffer.challenger.viewmodels.MainViewModel
 
 class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkStateListener {
 
@@ -34,19 +34,18 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
 
     private var challengeAdapter: ChallengeRecyclerViewAdapter? = null
 
-    private val viewModel: ActivityMainViewModel by activityViewModels()
+    private val viewModel: MainViewModel by activityViewModels()
 
     private var connected = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         connectivityManager = requireActivity().getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
         myNetworkCallback = MyNetworkCallback(this, connectivityManager)
         userIdSharedPreferences =
             requireContext().getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
-
-
     }
 
     override fun onCreateView(

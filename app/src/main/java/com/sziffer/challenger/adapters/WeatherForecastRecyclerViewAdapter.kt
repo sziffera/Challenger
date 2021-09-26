@@ -1,4 +1,4 @@
-package com.sziffer.challenger.ui.weather
+package com.sziffer.challenger.adapters
 
 import android.content.Context
 import android.view.LayoutInflater

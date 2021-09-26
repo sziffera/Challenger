@@ -30,7 +30,8 @@ import androidx.preference.PreferenceManager
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.sziffer.challenger.R
-import com.sziffer.challenger.model.MyLocation
+import com.sziffer.challenger.model.challenge.MyLocation
+import com.sziffer.challenger.model.challenge.PublicRouteItem
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -39,6 +40,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.roundToInt
 
 
 fun crossfade(image: ImageView, layers: ArrayList<Drawable?>, speedInMs: Int, context: Context) {
@@ -219,7 +221,30 @@ fun sameYear(date: Date): Boolean {
 }
 
 enum class UpdateTypes {
-    WEATHER, DATA_SYNC
+    WEATHER, DATA_SYNC, PUBLIC_CHALLENGE
+}
+
+fun reduceArrayLength(
+    route: ArrayList<MyLocation>,
+    distanceInMetres: Double,
+    accuracyInMetres: Int = 90
+): ArrayList<PublicRouteItem> {
+
+    var filter = distanceInMetres / accuracyInMetres
+    if (filter > 1200) filter = 1200.0
+
+    filter = route.size.toDouble() / filter
+    val filtered = route.filterIndexed { index, _ ->
+        (index % filter.toInt()) == 0 || index == route.size - 1
+    } as ArrayList<MyLocation>
+    return filtered.map {
+        PublicRouteItem(
+            it.distance.roundToInt(),
+            it.time,
+            it.latLng.latitude,
+            it.latLng.longitude
+        )
+    } as ArrayList<PublicRouteItem>
 }
 
 @SuppressLint("SimpleDateFormat")
@@ -230,11 +255,9 @@ fun shouldRefreshDataSet(type: UpdateTypes, minutes: Int, context: Context): Boo
         Context.MODE_PRIVATE
     )
 
-    val lastRefreshString = if (type == UpdateTypes.DATA_SYNC) lastRefreshSharedPreferences
-        .getString(LAST_REFRESH_TIME_SYNC, null)
-    else
-        lastRefreshSharedPreferences
-            .getString(LAST_REFRESH_TIME_WEATHER, null)
+    val lastRefreshString = lastRefreshSharedPreferences
+        .getString(type.name, null)
+
 
     return if (lastRefreshString == null)
         true
@@ -247,7 +270,7 @@ fun shouldRefreshDataSet(type: UpdateTypes, minutes: Int, context: Context): Boo
             .div(1000).also {
                 Log.i("MAIN", "$it is the difference")
             }
-        difference > minutes * 10
+        difference > minutes
     }
 }
 
@@ -261,10 +284,7 @@ fun updateRefreshDate(type: UpdateTypes, context: Context) {
     val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
     val currentDate: String = current.format(formatter)
     with(lastRefreshSharedPreferences.edit()) {
-        if (type == UpdateTypes.DATA_SYNC)
-            putString(LAST_REFRESH_TIME_SYNC, currentDate)
-        else
-            putString(LAST_REFRESH_TIME_WEATHER, currentDate)
+        putString(type.name, currentDate)
         apply()
     }
 }

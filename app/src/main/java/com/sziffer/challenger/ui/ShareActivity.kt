@@ -34,10 +34,10 @@ import com.squareup.picasso.Picasso
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityShareBinding
-import com.sziffer.challenger.model.Challenge
-import com.sziffer.challenger.model.ChallengeDetailsViewModel
-import com.sziffer.challenger.model.MyLocation
+import com.sziffer.challenger.model.challenge.Challenge
+import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.utils.*
+import com.sziffer.challenger.viewmodels.ChallengeDetailsViewModel
 import java.io.*
 import java.text.DateFormat
 import java.text.SimpleDateFormat

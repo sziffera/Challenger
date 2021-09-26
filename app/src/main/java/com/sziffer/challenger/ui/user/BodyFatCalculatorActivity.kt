@@ -7,7 +7,7 @@ import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import com.sziffer.challenger.R
 import com.sziffer.challenger.databinding.ActivityBodyFatCalculatorBinding
-import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.utils.getStringFromNumber
 import kotlin.math.log
 

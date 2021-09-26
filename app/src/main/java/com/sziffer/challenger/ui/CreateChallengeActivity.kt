@@ -2,7 +2,6 @@ package com.sziffer.challenger.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
@@ -34,10 +33,8 @@ class CreateChallengeActivity : AppCompatActivity() {
                 calculateAndSetAvgSpeed()
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                timePicker.hour = 0
-                timePicker.minute = 0
-            }
+            timePicker.hour = 0
+            timePicker.minute = 0
             timePicker.setOnTimeChangedListener { _, hourOfDay, minute ->
                 seconds = hourOfDay.times(3600) + minute.times(60)
                 calculateAndSetAvgSpeed()

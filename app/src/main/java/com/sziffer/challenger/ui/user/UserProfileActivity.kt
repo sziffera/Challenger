@@ -13,7 +13,7 @@ import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityUserProfileBinding
-import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.utils.getStringFromNumber
 import java.util.*
 

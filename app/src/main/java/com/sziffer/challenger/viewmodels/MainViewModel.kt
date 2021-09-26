@@ -1,4 +1,4 @@
-package com.sziffer.challenger.model
+package com.sziffer.challenger.viewmodels
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -14,6 +14,8 @@ import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.database.FirebaseManager
+import com.sziffer.challenger.model.Statistics
+import com.sziffer.challenger.model.challenge.Challenge
 import com.sziffer.challenger.model.weather.OneCallWeather
 import com.sziffer.challenger.model.weather.WeatherRequest
 import com.sziffer.challenger.model.weather.WeatherResultListener
@@ -24,7 +26,8 @@ import com.sziffer.challenger.utils.Constants.KEY_WEATHER_DATA
 import java.text.SimpleDateFormat
 import java.util.concurrent.Executors
 
-class ActivityMainViewModel : ViewModel(), WeatherResultListener {
+class MainViewModel() :
+    ViewModel(), WeatherResultListener {
 
     //WEATHER
     private val _weatherData = MutableLiveData<OneCallWeather>()

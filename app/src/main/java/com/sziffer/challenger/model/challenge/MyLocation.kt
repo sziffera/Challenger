@@ -1,4 +1,4 @@
-package com.sziffer.challenger.model
+package com.sziffer.challenger.model.challenge
 
 import android.os.Parcelable
 import com.google.android.gms.maps.model.LatLng

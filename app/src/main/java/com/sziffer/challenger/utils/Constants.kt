@@ -13,4 +13,9 @@ object Constants {
     const val SMOOTH_MODE = "triangular"
 
     const val MIN_ROUTE_SIZE = WINDOW_SIZE_HELPER
+
+    object Database {
+        const val PUBLIC_CHALLENGES_TABLE_NAME = "public_challenges"
+        const val PUBLIC_ROUTES_TABLE_NAME = "public_routes"
+    }
 }

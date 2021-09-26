@@ -1,4 +1,4 @@
-package com.sziffer.challenger
+package com.sziffer.challenger.services
 
 
 import android.app.*
@@ -22,8 +22,10 @@ import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
-import com.sziffer.challenger.model.MyLocation
-import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.R
+import com.sziffer.challenger.model.challenge.MyLocation
+import com.sziffer.challenger.model.challenge.PublicRouteItem
+import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.ui.ChallengeRecorderActivity
 import com.sziffer.challenger.ui.MainActivity
 import com.sziffer.challenger.utils.bluetooth.GattHeartRateAttributes
@@ -1028,6 +1030,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
         const val NOTIFICATION_ID = 12345678
         var previousChallenge: ArrayList<MyLocation> = ArrayList()
+        var publicChallenge: ArrayList<PublicRouteItem> = ArrayList()
         private const val TTS_ID = "VoiceCoach"
         private const val LOCATION_SAVE_NUMBER = 3
     }

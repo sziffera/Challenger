@@ -12,7 +12,7 @@ import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityUserSettingsBinding
-import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.utils.MyNetworkCallback
 
 class UserSettingsActivity : AppCompatActivity() {

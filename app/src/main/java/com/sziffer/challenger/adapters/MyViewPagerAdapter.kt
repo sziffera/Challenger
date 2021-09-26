@@ -1,4 +1,4 @@
-package com.sziffer.challenger.ui.walkthrough
+package com.sziffer.challenger.adapters
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager

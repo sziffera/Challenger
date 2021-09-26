@@ -12,8 +12,8 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResultListener
 import com.sziffer.challenger.R
 import com.sziffer.challenger.databinding.FragmentCreateBinding
-import com.sziffer.challenger.model.ActivityMainViewModel
 import com.sziffer.challenger.utils.getStringFromNumber
+import com.sziffer.challenger.viewmodels.MainViewModel
 
 class CreateFragment : Fragment() {
 
@@ -24,7 +24,7 @@ class CreateFragment : Fragment() {
     private var seconds: Int = 0
     private var avgSpeed: Double = 0.0
 
-    private val viewModel: ActivityMainViewModel by activityViewModels()
+    private val viewModel: MainViewModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

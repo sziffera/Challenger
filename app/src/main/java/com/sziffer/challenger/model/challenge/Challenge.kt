@@ -1,4 +1,4 @@
-package com.sziffer.challenger.model
+package com.sziffer.challenger.model.challenge
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

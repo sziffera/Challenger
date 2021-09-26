@@ -17,8 +17,8 @@ import com.google.firebase.database.FirebaseDatabase
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityRegisterBinding
-import com.sziffer.challenger.model.User
-import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.model.user.User
+import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.ui.MainActivity
 import com.sziffer.challenger.utils.MyNetworkCallback
 import com.sziffer.challenger.utils.NetworkStateListener

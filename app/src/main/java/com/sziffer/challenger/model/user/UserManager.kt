@@ -1,4 +1,4 @@
-package com.sziffer.challenger.model
+package com.sziffer.challenger.model.user
 
 import android.content.Context
 import android.util.Log

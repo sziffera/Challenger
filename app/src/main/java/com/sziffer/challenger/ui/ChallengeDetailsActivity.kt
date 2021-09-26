@@ -42,13 +42,13 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
-import com.sziffer.challenger.model.Challenge
-import com.sziffer.challenger.model.ChallengeDetailsViewModel
-import com.sziffer.challenger.model.HeartRateZones
-import com.sziffer.challenger.model.MyLocation
+import com.sziffer.challenger.model.challenge.Challenge
+import com.sziffer.challenger.model.challenge.MyLocation
+import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import com.sziffer.challenger.utils.*
+import com.sziffer.challenger.viewmodels.ChallengeDetailsViewModel
 import java.io.*
 import java.util.*
 import java.util.concurrent.Executors

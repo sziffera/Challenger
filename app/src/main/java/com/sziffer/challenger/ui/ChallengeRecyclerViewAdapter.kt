@@ -13,7 +13,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.sziffer.challenger.R
-import com.sziffer.challenger.model.Challenge
+import com.sziffer.challenger.model.challenge.Challenge
 import com.sziffer.challenger.utils.getStringFromNumber
 
 

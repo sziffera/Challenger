@@ -1,4 +1,4 @@
-package com.sziffer.challenger.model
+package com.sziffer.challenger.model.heartrate
 
 import android.app.Service
 import android.content.Intent

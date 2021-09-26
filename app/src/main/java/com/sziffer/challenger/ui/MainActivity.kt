@@ -31,12 +31,11 @@ import com.squareup.picasso.Picasso
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityMainBinding
-import com.sziffer.challenger.model.ActivityMainViewModel
-import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.ui.*
 import com.sziffer.challenger.ui.user.UserSettingsActivity
-import com.sziffer.challenger.ui.weather.WeatherFragment
 import com.sziffer.challenger.utils.*
+import com.sziffer.challenger.viewmodels.MainViewModel
 import okhttp3.*
 import java.util.*
 
@@ -46,7 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var userManager: UserManager
 
-    private val viewModel: ActivityMainViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels()
 
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -58,6 +57,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         userManager = UserManager(this)
 
 

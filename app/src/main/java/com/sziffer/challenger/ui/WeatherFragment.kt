@@ -1,4 +1,4 @@
-package com.sziffer.challenger.ui.weather
+package com.sziffer.challenger.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -11,16 +11,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.sziffer.challenger.R
+import com.sziffer.challenger.adapters.WeatherForecastRecyclerViewAdapter
 import com.sziffer.challenger.databinding.FragmentWeatherBinding
-import com.sziffer.challenger.model.ActivityMainViewModel
 import com.sziffer.challenger.model.weather.AlertData
 import com.sziffer.challenger.model.weather.MinuteData
 import com.sziffer.challenger.model.weather.OneCallWeather
 import com.sziffer.challenger.utils.*
+import com.sziffer.challenger.viewmodels.MainViewModel
+import com.sziffer.challenger.viewmodels.NearbyChallengesViewModelFactory
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -30,8 +32,7 @@ class WeatherFragment : Fragment(), NetworkStateListener {
     private var _binding: FragmentWeatherBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: ActivityMainViewModel by activityViewModels()
-
+    private lateinit var viewModel: MainViewModel
 
     private lateinit var myNetworkCallback: MyNetworkCallback
     private lateinit var connectivityManager: ConnectivityManager
@@ -40,6 +41,10 @@ class WeatherFragment : Fragment(), NetworkStateListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        viewModel = ViewModelProvider(
+            requireActivity(),
+            NearbyChallengesViewModelFactory()
+        ).get(MainViewModel::class.java)
 
         connectivityManager = requireActivity().getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
