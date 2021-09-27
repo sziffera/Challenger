@@ -10,6 +10,6 @@ data class MyLocation(
     val hr: Int = -1,
     val time: Long,
     val speed: Float,
-    val altitude: Double,
+    var altitude: Double,
     val latLng: LatLng
 ) : Parcelable

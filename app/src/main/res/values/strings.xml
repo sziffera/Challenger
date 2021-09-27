@@ -261,5 +261,8 @@
     <string name="passwords_not_match">Passwords don\'t match</string>
     <string name="google_sign_in">Google sign in</string>
     <string name="alerts">Alerts</string>
+    <string name="upgrade_description">Your current challenges need some upgrade to show you more precise data, please wait until the process finishes and do not close this screen</string>
+    <string name="upgrade_failed_retry">Upgrade failed - retry</string>
+    <string name="upgrading_challenges">Upgrading challenges</string>
 
 </resources>

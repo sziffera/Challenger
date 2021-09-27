@@ -19,7 +19,6 @@ class DataDownloaderWorker(
 ) :
     Worker(appContext, workerParams) {
 
-
     /** Downloads new challenges from Firebase and saves them to local DB */
     override fun doWork(): Result {
 

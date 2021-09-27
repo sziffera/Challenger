@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
+import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.database.DataSnapshot
@@ -29,6 +30,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.squareup.picasso.Picasso
 import com.sziffer.challenger.R
+import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityMainBinding
 import com.sziffer.challenger.model.user.UserManager
@@ -59,6 +61,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         userManager = UserManager(this)
+
+        // if the db upgrade is done, but the data not processed yet
+        if (PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean(ChallengeDbHelper.KEY_MIGRATION_DONE, false) && !isDatabaseUpgradeDone(
+                this
+            )
+        ) {
+            startActivity(Intent(this, DatabaseUpgradeActivity::class.java))
+            this.finish()
+        }
 
 
         viewModel.isTrainingLiveData.observe(this, { isTraining ->

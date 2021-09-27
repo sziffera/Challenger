@@ -1,21 +1,16 @@
 package com.sziffer.challenger.sync
 
 import android.content.Context
-import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.github.psambit9791.jdsp.signal.Smooth
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.model.challenge.ChallengeType
 import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.model.challenge.PublicChallenge
-import com.sziffer.challenger.utils.Constants
 import com.sziffer.challenger.utils.reduceArrayLength
 import java.util.*
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 class PublicChallengeUploader(
     private val appContext: Context,
@@ -39,18 +34,6 @@ class PublicChallengeUploader(
         else {
             val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
             val route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
-            val elevationArray = DoubleArray(route!!.size)
-            var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
-            if (windowSize > Constants.MAX_WINDOW_SIZE)
-                windowSize = Constants.MAX_WINDOW_SIZE
-            Log.d("ELEVATION", "the calculated window size is: $windowSize")
-            val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
-            val filteredElevation = s1.smoothSignal()
-            var elevGain = 0.0
-            for (i in 0..filteredElevation.size - 2) {
-                if (filteredElevation[i] < filteredElevation[i + 1])
-                    elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
-            }
             val reducedRoute = reduceArrayLength(route, challenge.dst * 1000.0)
             val publicChallenge: PublicChallenge
             challenge.apply {
@@ -62,7 +45,7 @@ class PublicChallengeUploader(
                     geohash!!,
                     dst,
                     dur,
-                    elevGain.roundToInt(),
+                    elevGain,
                     type,
                     Date(),
                     reducedRoute

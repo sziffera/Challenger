@@ -59,6 +59,7 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
         binding.recyclerView.setHasFixedSize(true)
         binding.swipeRefreshLayout.setOnRefreshListener(this)
 
+        startDataDownloaderWorkManager(requireContext())
         viewModel.fetchChallenges(requireContext())
 
         viewModel.callObserveWork.observe(viewLifecycleOwner, {

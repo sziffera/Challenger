@@ -224,6 +224,16 @@ enum class UpdateTypes {
     WEATHER, DATA_SYNC, PUBLIC_CHALLENGE
 }
 
+fun isDatabaseUpgradeDone(context: Context) =
+    PreferenceManager.getDefaultSharedPreferences(context).getBoolean(
+        KEY_DATABASE_UPGRADE, false
+    )
+
+fun databaseUpgradeDone(context: Context) =
+    PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(
+        KEY_DATABASE_UPGRADE, true
+    ).apply()
+
 fun reduceArrayLength(
     route: ArrayList<MyLocation>,
     distanceInMetres: Double,
@@ -340,4 +350,5 @@ fun getMapBitmapFromInternalStorage(firebaseId: String, context: Context): Bitma
 private const val LAST_REFRESH = "Utils.LastRefresh"
 private const val LAST_REFRESH_TIME_SYNC = "time"
 private const val LAST_REFRESH_TIME_WEATHER = "weatherTime"
+private const val KEY_DATABASE_UPGRADE = "com.sziffer.challenger.dbUpgrade"
 

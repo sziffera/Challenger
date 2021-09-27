@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
+import com.github.psambit9791.jdsp.signal.Smooth
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.chip.Chip
 import com.google.gson.Gson
@@ -56,12 +57,13 @@ import com.sziffer.challenger.utils.*
 import com.sziffer.challenger.utils.dialogs.CustomListDialog
 import com.sziffer.challenger.utils.dialogs.DataAdapter
 import com.welie.blessed.*
-import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.abs
 import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 
 class ChallengeRecorderActivity : AppCompatActivity(),
@@ -133,7 +135,6 @@ class ChallengeRecorderActivity : AppCompatActivity(),
         }
 
         checkOptimization()
-
 
         //setting user preferences based on settings
         userManager = UserManager(this)
@@ -438,17 +439,31 @@ class ChallengeRecorderActivity : AppCompatActivity(),
             buildAlertMessageNoLocationPoints()
         } else {
             if (gpsService != null) {
-                val currentDate: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val current = LocalDateTime.now()
-                    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
-                    current.format(formatter)
 
-                } else {
-                    val date = Date()
-                    val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
-                    formatter.format(date)
-                }
+                val current = LocalDateTime.now()
+                val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
+
+                val currentDate: String = current.format(formatter)
                 val gson = Gson()
+                val doubleList = gpsService?.myRoute?.map { it.altitude }
+                val elevationArray = doubleList!!.toDoubleArray()
+                var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
+                if (windowSize > Constants.MAX_WINDOW_SIZE)
+                    windowSize = Constants.MAX_WINDOW_SIZE
+                Log.d("ELEVATION", "the calculated window size is: $windowSize")
+                val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
+                val filteredElevation = s1.smoothSignal()
+                var elevGain = 0.0
+                var elevLoss = 0.0
+                for (i in 0..filteredElevation.size - 2) {
+                    gpsService!!.myRoute[i].altitude = filteredElevation[i]
+                    if (filteredElevation[i] < filteredElevation[i + 1]) {
+                        elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
+                    } else {
+                        elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+                    }
+                }
+                gpsService!!.myRoute[filteredElevation.size - 1].altitude = filteredElevation.last()
                 val myLocationArrayString = gson.toJson(gpsService?.myRoute)
                 val duration: Long = gpsService!!.durationHelper.div(1000)
                 val distance = gpsService!!.distance.div(1000.0)
@@ -465,7 +480,9 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                     gpsService!!.maxSpeed.times(3.6),
                     avg,
                     duration,
-                    myLocationArrayString
+                    myLocationArrayString,
+                    elevGain.roundToInt(),
+                    elevLoss.roundToInt()
                 )
                 val challengeId = dbHelper.addChallenge(newChallenge).also {
                     Log.i(TAG, "the id for the new challenge is: $it")

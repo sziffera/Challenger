@@ -6,14 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import androidx.preference.PreferenceManager
-import com.github.psambit9791.jdsp.signal.Smooth
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.model.challenge.Challenge
-import com.sziffer.challenger.model.challenge.MyLocation
-import com.sziffer.challenger.utils.Constants
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 class ChallengeDbHelper(val context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
@@ -41,29 +34,29 @@ class ChallengeDbHelper(val context: Context) :
         db.execSQL("UPDATE $DATABASE_NAME SET $KEY_ELEVATION_GAIN = 0")
         db.execSQL("UPDATE $DATABASE_NAME SET $KEY_ELEVATION_LOSS = 0")
 
-        val challenges = getAllChallenges()
-        val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
-        for (challenge in challenges) {
-            val route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
-            val elevationArray = DoubleArray(route!!.size)
-            var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
-            if (windowSize > Constants.MAX_WINDOW_SIZE)
-                windowSize = Constants.MAX_WINDOW_SIZE
-            Log.d("ELEVATION", "the calculated window size is: $windowSize")
-            val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
-            val filteredElevation = s1.smoothSignal()
-            var elevGain = 0.0
-            var elevLoss = 0.0
-            for (i in 0..filteredElevation.size - 2) {
-                if (filteredElevation[i] < filteredElevation[i + 1])
-                    elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
-                else elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
-            }
-            challenge.elevGain = elevGain.roundToInt()
-            challenge.elevLoss = elevLoss.roundToInt()
-            updateChallenge(challenge.id.toInt(), challenge)
-        }
-
+//        val challenges = getAllChallenges()
+//        val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+//        for (challenge in challenges) {
+//            val route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
+//            val elevationArray = DoubleArray(route!!.size)
+//            var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
+//            if (windowSize > Constants.MAX_WINDOW_SIZE)
+//                windowSize = Constants.MAX_WINDOW_SIZE
+//            Log.d("ELEVATION", "the calculated window size is: $windowSize")
+//            val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
+//            val filteredElevation = s1.smoothSignal()
+//            var elevGain = 0.0
+//            var elevLoss = 0.0
+//            for (i in 0..filteredElevation.size - 2) {
+//                if (filteredElevation[i] < filteredElevation[i + 1])
+//                    elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
+//                else elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+//            }
+//            challenge.elevGain = elevGain.roundToInt()
+//            challenge.elevLoss = elevLoss.roundToInt()
+//            updateChallenge(challenge.id.toInt(), challenge)
+//        }
+//
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(context)
         sharedPref.edit()
             .putBoolean(KEY_MIGRATION_DONE, true)

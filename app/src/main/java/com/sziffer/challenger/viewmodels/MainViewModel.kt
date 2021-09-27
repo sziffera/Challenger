@@ -173,6 +173,7 @@ class MainViewModel() :
                 startDataDownloaderWorkManager(context)
                 _callObserveWork.postValue(true)
             } else {
+                Log.d("VIEWMODEL", "challenges fetched ${list.count()}")
                 _challengesLiveData.postValue(ArrayList(list))
             }
             dbHelper.close()
