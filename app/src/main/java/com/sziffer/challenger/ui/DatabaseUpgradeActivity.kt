@@ -36,6 +36,7 @@ class DatabaseUpgradeActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.upgradeButton.setOnClickListener {
             binding.progressBar.visibility = View.VISIBLE
+            binding.upgradeButton.isEnabled = false
             upgradeWithFlow()
         }
     }
@@ -66,6 +67,7 @@ class DatabaseUpgradeActivity : AppCompatActivity() {
     }
 
     private fun upgradeFailed() {
+        binding.upgradeButton.isEnabled = true
         binding.upgradeButton.text = getString(R.string.upgrade_failed_retry)
     }
 
@@ -88,42 +90,57 @@ class DatabaseUpgradeActivity : AppCompatActivity() {
 
             val challenges = dbHelper.getAllChallenges()
             val size = challenges.count().toDouble()
+
             var processed = 0.0
             val mRef = FirebaseManager.currentUsersChallenges
 
             for (challenge in challenges) {
+                Log.d("UPGRADE", "$processed/$size")
                 val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
                 val route =
                     Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
-                val doubleArray = route.map { it.altitude }
-                val elevationArray = doubleArray.toDoubleArray()
-                var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
-                if (windowSize > Constants.MAX_WINDOW_SIZE)
-                    windowSize = Constants.MAX_WINDOW_SIZE
-                Log.d("ELEVATION", "the calculated window size is: $windowSize")
-                val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
-                val filteredElevation = s1.smoothSignal()
-                var elevGain = 0.0
-                var elevLoss = 0.0
-                for (i in 0..filteredElevation.size - 2) {
-                    route[i].altitude = filteredElevation[i]
-                    if (filteredElevation[i] < filteredElevation[i + 1]) {
-                        elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
-                    } else {
-                        elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+                if (route.size > Constants.MIN_ROUTE_SIZE) {
+                    val doubleArray = route.map { it.altitude }
+                    val elevationArray = doubleArray.toDoubleArray()
+                    var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
+                    if (windowSize > Constants.MAX_WINDOW_SIZE)
+                        windowSize = Constants.MAX_WINDOW_SIZE
+                    Log.d("ELEVATION", "the calculated window size is: $windowSize")
+                    try {
+                        val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
+                        val filteredElevation = s1.smoothSignal()
+                        var elevGain = 0.0
+                        var elevLoss = 0.0
+                        for (i in 0..filteredElevation.size - 2) {
+                            route[i].altitude = filteredElevation[i]
+                            if (filteredElevation[i] < filteredElevation[i + 1]) {
+                                elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
+                            } else {
+                                elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+                            }
+                        }
+                        route.last().altitude = filteredElevation.last()
+                        challenge.elevLoss = elevLoss.roundToInt()
+                        challenge.elevGain = elevGain.roundToInt()
+                        dbHelper.updateChallenge(challenge.id.toInt(), challenge)
+                    } catch (e: IllegalArgumentException) {
+                        e.printStackTrace()
                     }
                 }
-                route.last().altitude = filteredElevation.last()
-                challenge.elevLoss = elevLoss.roundToInt()
-                challenge.elevGain = elevGain.roundToInt()
-                dbHelper.updateChallenge(challenge.id.toInt(), challenge)
-                mRef?.child(challenge.firebaseId)?.setValue(challenge)?.await()
                 processed++
-                emit(UpgradeStatus.Progress(((processed / size) * 100.0).roundToInt()))
+                emit(UpgradeStatus.Progress(((processed / (size * 2)) * 100.0).roundToInt()))
             }
+
+            dbHelper.getAllChallenges().forEach {
+                mRef?.child(it.firebaseId)?.setValue(it)?.await()
+                processed++
+                emit(UpgradeStatus.Progress(((processed / (size * 2)) * 100.0).roundToInt()))
+            }
+
             dbHelper.close()
             emit(UpgradeStatus.Success)
         }.catch {
+            Log.e("UPGRADE", it.localizedMessage ?: "no message")
             emit(UpgradeStatus.Error(it.localizedMessage ?: "Something happened"))
         }
 
