@@ -22,7 +22,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.github.psambit9791.jdsp.signal.Smooth
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.mapbox.geojson.Feature
@@ -48,13 +47,10 @@ import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import com.sziffer.challenger.utils.*
-import com.sziffer.challenger.viewmodels.ChallengeDetailsViewModel
 import java.io.*
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.ArrayList
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 
 class ChallengeDetailsActivity : AppCompatActivity() {
@@ -69,8 +65,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     private var previousChallenge: Challenge? = null
 
     private var route: ArrayList<MyLocation>? = null
-    private var elevGain = 0.0
-    private var elevLoss = 0.0
     private var sharingImageBitmap: Bitmap? = null
     private var update: Boolean = false
     private var isItAChallenge: Boolean = false
@@ -115,6 +109,10 @@ class ChallengeDetailsActivity : AppCompatActivity() {
         Log.i("CHALLENGE DETAILS", challenge.toString())
 
 
+        binding.elevationGainedTextView.text = challenge.elevGain.toString() + " m"
+        binding.elevationLostTextView.text = challenge.elevLoss.toString() + " m"
+
+
         isItAChallenge = intent.getBooleanExtra(IS_IT_A_CHALLENGE, false).also {
             Log.i(TAG, "$IS_IT_A_CHALLENGE is $it")
         }
@@ -143,8 +141,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                 Intent(this, ChartsActivity::class.java)
                     .putExtra(ChartsActivity.CHALLENGE_ID, id)
                     .putExtra(ChartsActivity.AVG_SPEED, challenge.avg)
-                    .putExtra(ChartsActivity.ELEVATION_GAIN, elevGain)
-                    .putExtra(ChartsActivity.ELEVATION_LOSS, elevLoss)
+                    .putExtra(ChartsActivity.ELEVATION_GAIN, challenge.elevGain)
+                    .putExtra(ChartsActivity.ELEVATION_LOSS, challenge.elevLoss)
                     .putExtra(ChartsActivity.SHOW_HR, maxHr > 0)
                     .putExtra(ChartsActivity.HEART_RATE_ZONES, heartRateZones)
                     .putExtra(ChartsActivity.MAX_HR, maxHr)
@@ -409,7 +407,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
             val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
             route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
-            val elevationArray = DoubleArray(route!!.size)
             val points = ArrayList<Point>()
             val latLngBoundsBuilder = LatLngBounds.Builder()
 
@@ -417,8 +414,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             var hrSum = 0
             var hr = false
             if (route?.get(0)?.hr == -1) {
-                for ((index, i) in route!!.withIndex()) {
-                    elevationArray[index] = i.altitude
+                for (i in route!!) {
                     points.add(
                         Point.fromLngLat(
                             i.latLng.longitude, i.latLng.latitude, i.altitude
@@ -435,7 +431,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             } else {
                 heartRateZones = HeartRateZones()
                 hr = true
-                for ((index, myLocation) in route!!.withIndex()) {
+                for (myLocation in route!!) {
 
                     when (myLocation.hr) {
                         in 0..97 -> heartRateZones!!.relaxed++
@@ -460,7 +456,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                             myLocation.altitude
                         )
                     )
-                    elevationArray[index] = myLocation.altitude
                 }
 
                 heartRateZones!!.apply {
@@ -479,26 +474,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
                 avgHr = hrSum.div(route!!.size)
             }
-
-            if (elevationArray.size > Constants.MIN_ROUTE_SIZE) {
-
-
-                var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
-                if (windowSize > Constants.MAX_WINDOW_SIZE)
-                    windowSize = Constants.MAX_WINDOW_SIZE
-                Log.d("ELEVATION", "the calculated window size is: $windowSize")
-                val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
-                val filteredElevation = s1.smoothSignal()
-
-                for (i in 0..filteredElevation.size - 2) {
-                    if (filteredElevation[i] < filteredElevation[i + 1]) {
-                        elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
-                    } else {
-                        elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
-                    }
-                }
-            }
-
 
             handler.post {
                 val lineString: LineString = LineString.fromLngLats(points)
@@ -531,14 +506,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                 } catch (e: InvalidLatLngBoundsException) {
                     e.printStackTrace()
                 }
-
-                binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
-                binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
-
-                ChallengeDetailsViewModel.shared.setElevationData(
-                    elevGain.roundToInt(),
-                    elevLoss.roundToInt()
-                )
 
                 if (hr) {
                     binding.apply {

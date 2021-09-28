@@ -1,6 +1,7 @@
 package com.sziffer.challenger.ui
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.os.Bundle
@@ -59,7 +60,9 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
         binding.recyclerView.setHasFixedSize(true)
         binding.swipeRefreshLayout.setOnRefreshListener(this)
 
-        startDataDownloaderWorkManager(requireContext())
+        binding.findNearbyChallengesButton.setOnClickListener {
+            startActivity(Intent(requireContext(), NearbyChallengesActivity::class.java))
+        }
         viewModel.fetchChallenges(requireContext())
 
         viewModel.callObserveWork.observe(viewLifecycleOwner, {

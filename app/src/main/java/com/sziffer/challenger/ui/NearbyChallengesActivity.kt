@@ -12,6 +12,8 @@ class NearbyChallengesActivity : AppCompatActivity() {
     private lateinit var binding: ActivityNearbyChallengesBinding
     private lateinit var viewModel: NearbyChallengesViewModel
 
+    private var recyclerViewAdapter: ChallengeRecyclerViewAdapter? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityNearbyChallengesBinding.inflate(layoutInflater)

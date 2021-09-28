@@ -37,7 +37,6 @@ import com.sziffer.challenger.databinding.ActivityShareBinding
 import com.sziffer.challenger.model.challenge.Challenge
 import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.utils.*
-import com.sziffer.challenger.viewmodels.ChallengeDetailsViewModel
 import java.io.*
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -337,7 +336,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
 
 
         // 62% ELEVATION
-        val elevationText = ChallengeDetailsViewModel.shared.elevationGained.value.toString() + "m"
+        val elevationText = challenge.elevGain.toString() + "m"
         val elevationTextPosition = it.width * 0.62f + textCenteringIconCorrection
         val elevationWidth = textPaint.measureText(elevationText)
         val elevationIcon = ContextCompat.getDrawable(this, R.drawable.mountain)?.apply {

@@ -12,12 +12,15 @@ import com.sziffer.challenger.model.challenge.PublicChallenge
 import com.sziffer.challenger.utils.reduceArrayLength
 import java.util.*
 
+/**
+ * Gets the local challenge and converts it to a PublicChallenge
+ * Uploads the PublicChallenge to Firestore if it meets with the criteria
+ */
 class PublicChallengeUploader(
     private val appContext: Context,
-    private val workerParams: WorkerParameters
+    workerParams: WorkerParameters
 ) :
     Worker(appContext, workerParams) {
-
 
     override fun doWork(): Result {
         val challengeId = inputData.getInt(KEY_CHALLENGE_ID, -1)
@@ -51,14 +54,8 @@ class PublicChallengeUploader(
                     reducedRoute
                 )
             }
-
-
         }
-
-
         return Result.success()
-
-
     }
 
 

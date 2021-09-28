@@ -37,8 +37,8 @@ import kotlin.collections.ArrayList
 
 class ChartsActivity : AppCompatActivity() {
 
-    private var elevationGain = 0.0
-    private var elevationLoss = 0.0
+    private var elevationGain = 0
+    private var elevationLoss = 0
 
     private var maxHr = 0
     private var avgHr = 0
@@ -92,8 +92,8 @@ class ChartsActivity : AppCompatActivity() {
 
         avgSpeed = intent.getDoubleExtra(AVG_SPEED, 0.0)
 
-        elevationGain = intent.getDoubleExtra(ELEVATION_GAIN, 0.0)
-        elevationLoss = intent.getDoubleExtra(ELEVATION_LOSS, 0.0)
+        elevationGain = challenge?.elevGain ?: 0
+        elevationLoss = challenge?.elevLoss ?: 0
 
         avgHr = intent.getIntExtra(AVG_HR, 0)
         maxHr = intent.getIntExtra(MAX_HR, 0)

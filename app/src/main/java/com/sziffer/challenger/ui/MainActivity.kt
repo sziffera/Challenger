@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
 
         // if the db upgrade is done, but the data not processed yet
         if (PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean(ChallengeDbHelper.KEY_MIGRATION_DONE, true) && !isDatabaseUpgradeDone(
+                .getBoolean(ChallengeDbHelper.KEY_MIGRATION_DONE, false) && !isDatabaseUpgradeDone(
                 this
             )
         ) {

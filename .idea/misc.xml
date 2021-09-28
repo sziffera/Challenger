@@ -25,6 +25,7 @@
         <entry key="app/src/main/res/layout/activity_login.xml" value="0.1983695652173913" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.25462962962962965" />
         <entry key="app/src/main/res/layout/activity_mapbox.xml" value="0.2962962962962963" />
+        <entry key="app/src/main/res/layout/activity_nearby_challenges.xml" value="0.2824561403508772" />
         <entry key="app/src/main/res/layout/activity_register.xml" value="0.22" />
         <entry key="app/src/main/res/layout/activity_share.xml" value="0.25" />
         <entry key="app/src/main/res/layout/activity_user_settings.xml" value="0.21195652173913043" />

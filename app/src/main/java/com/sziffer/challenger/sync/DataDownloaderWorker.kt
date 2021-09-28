@@ -104,9 +104,7 @@ class DataDownloaderWorker(
                         if (challenge?.firebaseId?.isEmpty()!!) {
                             challenge.firebaseId = challenge.id
                         }
-
-                        //TODO: set back
-                        //dbHelper.addChallenge(challenge)
+                        dbHelper.addChallenge(challenge)
                     }
                 }
                 countDownLatch.countDown()
