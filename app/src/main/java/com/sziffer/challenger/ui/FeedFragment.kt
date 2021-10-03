@@ -18,6 +18,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.sziffer.challenger.R
+import com.sziffer.challenger.adapters.ChallengeRecyclerViewAdapter
 import com.sziffer.challenger.databinding.FragmentFeedBinding
 import com.sziffer.challenger.sync.DATA_DOWNLOADER_TAG
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager

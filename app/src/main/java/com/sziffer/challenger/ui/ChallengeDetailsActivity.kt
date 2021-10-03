@@ -39,18 +39,27 @@ import com.mapbox.mapboxsdk.style.layers.Property
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.sziffer.challenger.R
+import com.sziffer.challenger.State
 import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.database.PublicChallengesRepository
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
 import com.sziffer.challenger.model.challenge.Challenge
 import com.sziffer.challenger.model.challenge.MyLocation
+import com.sziffer.challenger.model.challenge.PublicChallengeHash
 import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import com.sziffer.challenger.utils.*
+import com.sziffer.challenger.utils.extensions.toPublic
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import java.io.*
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.ArrayList
+import kotlin.time.ExperimentalTime
 
 
 class ChallengeDetailsActivity : AppCompatActivity() {
@@ -78,6 +87,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChallengeDetailsBinding
 
     //region lifecycle
+    @ExperimentalTime
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,6 +115,25 @@ class ChallengeDetailsActivity : AppCompatActivity() {
         //id for the challenge from the intent
         val id = intent.getLongExtra(CHALLENGE_ID, 0)
         challenge = dbHelper.getChallenge(id.toInt())!!
+
+
+//        FirebaseFirestore.getInstance().collection(
+//            PublicChallengesRepository.PUBLIC_CHALLENGES_COLLECTION
+//        ).add(challenge.toPublic(this))
+
+        CoroutineScope(Dispatchers.Default).launch {
+            PublicChallengesRepository().addPublicChallenge(
+                PublicChallengeHash(challenge.toPublic(applicationContext)),
+                applicationContext
+            ).collect { state ->
+                when (state) {
+                    is State.Loading -> Log.d(TAG, "Upload started")
+                    is State.Success -> Log.d(TAG, "Challenge uploaded: ${state.data.path}")
+                    is State.Failed -> Log.e(TAG, state.message)
+                }
+
+            }
+        }
 
         Log.i("CHALLENGE DETAILS", challenge.toString())
 

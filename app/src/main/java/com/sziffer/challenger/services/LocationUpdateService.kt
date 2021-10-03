@@ -23,8 +23,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.sziffer.challenger.R
+import com.sziffer.challenger.model.challenge.MyLatLng
 import com.sziffer.challenger.model.challenge.MyLocation
-import com.sziffer.challenger.model.challenge.PublicRouteItem
+import com.sziffer.challenger.model.challenge.RouteItemBase
 import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.ui.ChallengeRecorderActivity
 import com.sziffer.challenger.ui.MainActivity
@@ -55,7 +56,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     private lateinit var userManager: UserManager
 
     private var heartRate: Int = -1
-    private var cadence: Int = -1
 
     val isHeartRateConnected get() = peripheral != null
 
@@ -193,17 +193,15 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
         mNotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name: CharSequence = getString(R.string.app_name)
-            val mChannel = NotificationChannel(
-                CHANNEL_ID,
-                name,
-                NotificationManager.IMPORTANCE_HIGH
-            )
-            mChannel.lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
-            mChannel.setShowBadge(true)
-            mNotificationManager!!.createNotificationChannel(mChannel)
-        }
+        val name: CharSequence = getString(R.string.app_name)
+        val mChannel = NotificationChannel(
+            CHANNEL_ID,
+            name,
+            NotificationManager.IMPORTANCE_HIGH
+        )
+        mChannel.lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+        mChannel.setShowBadge(true)
+        mNotificationManager!!.createNotificationChannel(mChannel)
         initNotificationBuilder()
     }
 
@@ -376,7 +374,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         try {
             mFusedLocationClient!!.requestLocationUpdates(
                 mLocationRequest,
-                mLocationCallback, Looper.myLooper()
+                mLocationCallback, Looper.myLooper()!!
             )
             Log.i(TAG, "location request done")
         } catch (unlikely: SecurityException) {
@@ -511,7 +509,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                                 System.currentTimeMillis() - start + durationHelper,
                                 location.speed.round(1),
                                 correctedAltitude.round(1),
-                                LatLng(location.latitude, location.longitude)
+                                MyLatLng(location)
                             )
                         )
                     }
@@ -563,10 +561,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
 
                     override fun onError(utteranceId: String?) {
                         if (utteranceId == TTS_ID) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                audioManager.abandonAudioFocusRequest(audioFocusRequest)
-                            } else
-                                audioManager.abandonAudioFocus(this@LocationUpdatesService)
+                            audioManager.abandonAudioFocusRequest(audioFocusRequest)
                         }
                     }
 
@@ -592,14 +587,12 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             .build()
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            audioFocusRequest =
-                AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
-                    .setAudioAttributes(audioAttributes)
-                    .setAcceptsDelayedFocusGain(true)
-                    .setOnAudioFocusChangeListener(this)
-                    .build()
-        }
+        audioFocusRequest =
+            AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                .setAudioAttributes(audioAttributes)
+                .setAcceptsDelayedFocusGain(true)
+                .setOnAudioFocusChangeListener(this)
+                .build()
     }
 
     /**
@@ -959,10 +952,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            builder.setChannelId(CHANNEL_ID)
-            builder.setOngoing(true)
-        }
+        builder.setChannelId(CHANNEL_ID)
+        builder.setOngoing(true)
         if (ChallengeRecorderActivity.activityType == "running") {
             builder.setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.color_running))
         } else
@@ -1029,8 +1020,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
         const val NOTIFICATION_ID = 12345678
-        var previousChallenge: ArrayList<MyLocation> = ArrayList()
-        var publicChallenge: ArrayList<PublicRouteItem> = ArrayList()
+        var previousChallenge: ArrayList<RouteItemBase> = ArrayList()
         private const val TTS_ID = "VoiceCoach"
         private const val LOCATION_SAVE_NUMBER = 3
     }

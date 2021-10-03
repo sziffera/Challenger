@@ -32,6 +32,7 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.sziffer.challenger.R
 import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.model.challenge.PublicRouteItem
+import com.sziffer.challenger.utils.extensions.toGoogleLatLng
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -40,7 +41,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.math.roundToInt
 
 
 fun crossfade(image: ImageView, layers: ArrayList<Drawable?>, speedInMs: Int, context: Context) {
@@ -132,8 +132,8 @@ fun zoomAndRouteCreator(locations: ArrayList<MyLocation>): Pair<LatLngBounds, Ar
     val latLng: ArrayList<LatLng> = ArrayList()
     val builder = LatLngBounds.builder()
     for (item in locations) {
-        builder.include(item.latLng)
-        latLng.add(item.latLng)
+        builder.include(item.latLng.toGoogleLatLng())
+        latLng.add(item.latLng.toGoogleLatLng())
     }
     return Pair(builder.build(), latLng)
 }
@@ -237,7 +237,7 @@ fun databaseUpgradeDone(context: Context) =
 fun reduceArrayLength(
     route: ArrayList<MyLocation>,
     distanceInMetres: Double,
-    accuracyInMetres: Int = 90
+    accuracyInMetres: Int = 30
 ): ArrayList<PublicRouteItem> {
 
     var filter = distanceInMetres / accuracyInMetres
@@ -249,10 +249,9 @@ fun reduceArrayLength(
     } as ArrayList<MyLocation>
     return filtered.map {
         PublicRouteItem(
-            it.distance.roundToInt(),
+            it.latLng,
             it.time,
-            it.latLng.latitude,
-            it.latLng.longitude
+            it.distance
         )
     } as ArrayList<PublicRouteItem>
 }

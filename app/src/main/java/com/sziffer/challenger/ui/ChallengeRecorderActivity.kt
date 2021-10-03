@@ -50,6 +50,7 @@ import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChallengeRecorderBinding
 import com.sziffer.challenger.model.challenge.Challenge
 import com.sziffer.challenger.model.challenge.MyLocation
+import com.sziffer.challenger.model.challenge.RouteItemBase
 import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.services.LocationUpdatesService
 import com.sziffer.challenger.services.LocationUpdatesService.LocalBinder
@@ -237,7 +238,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
                 val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
                 val route =
-                    Gson().fromJson<ArrayList<MyLocation>>(
+                    Gson().fromJson<ArrayList<RouteItemBase>>(
                         recordedChallenge!!.routeAsString,
                         typeJson
                     )
@@ -384,6 +385,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
         }
 
         if (challenge) {
+            // TODO: - move list to a normal class, this is a chaos
             val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
             val route =
                 Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
