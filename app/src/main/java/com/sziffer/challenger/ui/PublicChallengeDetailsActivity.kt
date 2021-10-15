@@ -1,32 +1,24 @@
 package com.sziffer.challenger.ui
 
-import android.location.Location
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationServices
+import com.sziffer.challenger.State
 import com.sziffer.challenger.databinding.ActivityPublicChallengeDetailsBinding
-import com.sziffer.challenger.viewmodels.NearbyChallengesViewModel
-import com.sziffer.challenger.viewmodels.NearbyChallengesViewModelFactory
+import com.sziffer.challenger.viewmodels.PublicChallengeDetailsViewModel
+import com.sziffer.challenger.viewmodels.PublicChallengeDetailsViewModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 class PublicChallengeDetailsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityPublicChallengeDetailsBinding
-    private lateinit var viewModel: NearbyChallengesViewModel
+    private lateinit var viewModel: PublicChallengeDetailsViewModel
 
     // Coroutine Scope
     private val uiScope = CoroutineScope(Dispatchers.Main)
-
-    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-    private var locationRequest: LocationRequest? = null
-    private var locationCallback: LocationCallback? = null
-
-    private var currentLocation: Location? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,15 +26,35 @@ class PublicChallengeDetailsActivity : AppCompatActivity() {
         binding = ActivityPublicChallengeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-
-
-
-        viewModel = ViewModelProvider(this, NearbyChallengesViewModelFactory()).get(
-            NearbyChallengesViewModel::class.java
+        viewModel = ViewModelProvider(this, PublicChallengeDetailsViewModelFactory()).get(
+            PublicChallengeDetailsViewModel::class.java
         )
 
+        val challengeId = intent.getStringExtra(KEY_CHALLENGE_ID)
+        uiScope.launch {
+            if (challengeId != null) {
+                getChallenge(challengeId)
+            }
+        }
+    }
 
+
+    private suspend fun getChallenge(id: String) {
+        viewModel.getChallenge(id).collect { state ->
+            when (state) {
+                is State.Loading -> {
+                }
+                is State.Success -> {
+                }
+                is State.Failed -> {
+                }
+            }
+        }
+    }
+
+
+    companion object {
+        const val KEY_CHALLENGE_ID = "challengeId"
     }
 
 

@@ -17,12 +17,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.sziffer.challenger.AppConfig
 import com.sziffer.challenger.R
 import com.sziffer.challenger.adapters.ChallengeRecyclerViewAdapter
 import com.sziffer.challenger.databinding.FragmentFeedBinding
 import com.sziffer.challenger.sync.DATA_DOWNLOADER_TAG
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
 import com.sziffer.challenger.utils.*
+import com.sziffer.challenger.utils.extensions.toVisibility
 import com.sziffer.challenger.viewmodels.MainViewModel
 
 class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkStateListener {
@@ -60,6 +62,8 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.setHasFixedSize(true)
         binding.swipeRefreshLayout.setOnRefreshListener(this)
+
+        binding.findNearbyChallengesButton.visibility = AppConfig.PUBLIC_CHALLENGES.toVisibility()
 
         binding.findNearbyChallengesButton.setOnClickListener {
             startActivity(Intent(requireContext(), NearbyChallengesActivity::class.java))

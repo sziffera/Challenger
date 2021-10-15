@@ -5,14 +5,12 @@ import android.util.Log
 import androidx.preference.PreferenceManager
 import com.firebase.geofire.GeoFireUtils
 import com.firebase.geofire.GeoLocation
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.PolyUtil
 import com.sziffer.challenger.State
 import com.sziffer.challenger.model.challenge.PublicChallenge
-import com.sziffer.challenger.model.challenge.PublicChallengeHash
 import com.sziffer.challenger.utils.Constants
-import com.sziffer.challenger.utils.extensions.toGoogleLatLng
+import com.sziffer.challenger.utils.extensions.toPublicChallenge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
@@ -31,58 +29,74 @@ class PublicChallengesRepository {
     )
 
 
+    fun getChallenge(id: String) = flow {
+        emit(State.loading())
+        val snapshot = publicChallengesCollection.whereEqualTo("id", id).get().await()
+        // if the first() throws NoSuchElementException it will be caught below
+        val challenge = snapshot.first().data.toPublicChallenge()
+        emit(State.success(challenge))
+    }.catch {
+        emit(State.failed(it.stackTraceToString()))
+    }.flowOn(Dispatchers.IO)
+
     fun addPublicChallenge(
-        challenge: PublicChallengeHash,
+        challenge: PublicChallenge,
         context: Context,
         filter: Boolean = true
     ) =
-        flow<State<DocumentReference>> {
+        flow<State<String>> {
 
             emit(State.loading())
 
             // filter is turned off in case of test uploads
             if (filter) {
 
-                val firstItem = challenge.publicChallenge.route!!.first()
+                // getting the first item's location, this is the starting point of the route
+                val firstItem = challenge.route!!.first()
                 val center = GeoLocation(firstItem.latLng.latitude, firstItem.latLng.longitude)
 
+                // fetching challenges in RADIUS_UPLOAD_NEARBY from starting point
                 getPublicChallenges(
                     center,
-                    5000.0,
+                    Constants.PublicChallenge.RADIUS_UPLOAD_NEARBY,
                     context,
                     forceFetchFromCloud = true
                 ).collect { state ->
                     when (state) {
                         is State.Success -> {
                             Log.d(TAG, "Challenges fetched successfully, ${state.data.count()}")
+                            // checking each nearby challenge if they are similar or not
                             state.data.forEach {
                                 check(
                                     !isChallengeSimilarToOther(
                                         it,
-                                        challenge.publicChallenge
+                                        challenge
                                     )
                                 ) { "Challenge is not valid" }
                             }
-                            val ref = publicChallengesCollection.add(challenge).await()
-                            emit(State.success(ref))
+                            // if the challenge is not similar to the cloud challenges, uploading
+                            // TODO: set back to normal reference
+//                            val ref = publicChallengesCollection.add(challenge.toHash()).await()
+//                            emit(State.success(ref))
+
+                            emit(State.success("Challenge passed"))
                         }
                         is State.Loading -> Log.d(TAG, "Loading")
                         is State.Failed -> Log.e(TAG, state.message)
                     }
                 }
             } else {
-                val ref = publicChallengesCollection.add(challenge).await()
-                emit(State.success(ref))
+                // the filter is turned off, just uploading the challenge - for testing
+                //val ref = publicChallengesCollection.add(challenge.toHash()).await()
+                emit(State.success("ref"))
             }
-
-
         }.catch {
             Log.e("UPLOAD", it.message ?: "no error message")
             emit(State.failed(it.localizedMessage ?: "no error message"))
         }.flowOn(Dispatchers.IO)
 
     /**
-     * Checks if the new activity followed the chosen challenge's route
+     * Checks if the new activity followed the chosen challenge's route properly
      * returns false if not, true otherwise
      */
     private fun isChallengeValid(
@@ -92,32 +106,43 @@ class PublicChallengesRepository {
 
         // checking the type, just for safety
         if (currentChallenge.type != cloudChallenge.type) return false
-        Log.d(TAG, "Challenge check: type is ok")
+
 
         // checking length
         val validLength =
-            currentChallenge.distance * 0.95 > cloudChallenge.distance
-                    && currentChallenge.distance < cloudChallenge.distance * 1.05
+            currentChallenge.distance * (1.0 - DISTANCE_TOLERANCE_PERCENT) < cloudChallenge.distance
+                    && currentChallenge.distance < cloudChallenge.distance * (1.0 + DISTANCE_TOLERANCE_PERCENT)
         if (!validLength) return false
-        Log.d(TAG, "Challenge check: length is ok")
 
-        val cloudChallengeLatLng = currentChallenge.route?.map { it.latLng.toGoogleLatLng() }
+
+        val cloudChallengeLatLng = cloudChallenge.route?.map { it.latLng }
+        var pointsOnPath = 0
         // checking if all points of the current route are on the cloud challenge's path
         currentChallenge.route?.forEach {
-            if (!PolyUtil.isLocationOnPath(
-                    it.latLng.toGoogleLatLng(),
+            if (PolyUtil.isLocationOnPath(
+                    it.latLng,
                     cloudChallengeLatLng,
                     true,
-                    20.0
+                    200.0
                 )
-            ) return false
+            ) pointsOnPath++
         }
-        Log.d(TAG, "Challenge check: similarity is ok")
-
-        return true
+        val pointsOnPathPercent =
+            currentChallenge.route!!.count().toDouble() / pointsOnPath.toDouble()
+        Log.d(
+            TAG,
+            "isChallengeValid(): Points on path $pointsOnPath, similarity is ${pointsOnPathPercent * 100}"
+        )
+        return pointsOnPathPercent > 0.80
     }
 
-
+    /**
+     * We have to measure how many points of the current route are on the nearby cloud
+     * challenge's route. We compare the current challenge route to the cloud challenge's route,
+     * not vice versa. In this way, if the cloud challenge is longer, we can get a 100% match.
+     * So after getting the similarity percent, we have to compare the distances as well to avoid
+     * check fails with much shorter routes.
+     */
     private fun isChallengeSimilarToOther(
         cloudChallenge: PublicChallenge,
         currentChallenge: PublicChallenge
@@ -126,37 +151,41 @@ class PublicChallengesRepository {
         if (currentChallenge.type != cloudChallenge.type) return false
         Log.d(TAG, "Challenge check: type is ok")
 
-        // checking length
-        val validLength =
-            currentChallenge.distance * 0.95 > cloudChallenge.distance
-                    && currentChallenge.distance < cloudChallenge.distance * 1.05
-        if (!validLength) return false
-        Log.d(TAG, "Challenge check: length is ok")
-
-        val cloudChallengeLatLng = currentChallenge.route?.map { it.latLng.toGoogleLatLng() }
+        val cloudChallengeLatLng = cloudChallenge.route?.map { it.latLng }
         // checking if all points of the current route are on the cloud challenge's path
+
         var pointsOnPath = 0
         currentChallenge.route?.forEach {
             if (PolyUtil.isLocationOnPath(
-                    it.latLng.toGoogleLatLng(),
+                    it.latLng,
                     cloudChallengeLatLng,
                     true,
-                    20.0
+                    200.0
                 )
             ) pointsOnPath++
         }
-        val pointsOnPathRate = pointsOnPath.toDouble() / (currentChallenge.route?.count()
-            ?.toDouble() ?: 1.0)
+        val pointsOnPathRate = pointsOnPath.toDouble() / (currentChallenge.route!!.count()
+            .toDouble())
         val isSimilar = pointsOnPathRate > 0.80
 
         Log.d(
             TAG,
-            "Challenge check: similarity check is ${pointsOnPathRate.roundToInt()}%, so the check is $isSimilar"
+            "Challenge check: similarity check is ${(pointsOnPathRate * 100.0).roundToInt()}%, points on path $pointsOnPath, so the check is $isSimilar"
         )
 
+        // maybe length check should be added
+        // checking length if the routes are really similar, not just overlap each other on a shorter interval
+        if (isSimilar) {
+            val routeLengthRate = currentChallenge.distance / cloudChallenge.distance
+            val isLengthDifferent = routeLengthRate > 1.35 || routeLengthRate < 0.65
+            Log.d(
+                TAG,
+                "Challenge check: length rate is $routeLengthRate, so isLengthDifferent is $isLengthDifferent"
+            )
+            // the length is different, accept this challenge
+            if (isLengthDifferent) return false
+        }
         return isSimilar
-
-
     }
 
     fun getPublicChallenges(
@@ -185,12 +214,12 @@ class PublicChallengesRepository {
                         .startAt(bound.startHash)
                         .endAt(bound.endHash)
                     val snapshot = query.get().await()
-                    challenges!!.addAll(
-                        snapshot.toObjects(PublicChallengeHash::class.java)
-                            .map { it.getPublicChallenge })
+                    snapshot.documents.forEach {
+                        it.data?.let { map ->
+                            challenges!!.add(map.toPublicChallenge())
+                        }
+                    }
                 }
-//                val snapshot = publicChallengesCollection.get().await()
-//                challenges.addAll(snapshot.toObjects(PublicChallenge::class.java))
 
                 Log.d(TAG, "${challenges.count()} challenges fetched, filtering out false+")
 
@@ -262,6 +291,9 @@ class PublicChallengesRepository {
         private const val KEY_LNG = "com.sziffer.challenger.lng"
         private const val KEY_LAT = "com.sziffer.challenger.lat"
         private const val KEY_DATE = "com.sziffer.challenger.date"
+
+        private const val TOLERANCE_IN_METRES = 200.0
+        private const val DISTANCE_TOLERANCE_PERCENT = 0.10
 
     }
 }

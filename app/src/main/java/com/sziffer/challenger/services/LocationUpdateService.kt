@@ -23,7 +23,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.sziffer.challenger.R
-import com.sziffer.challenger.model.challenge.MyLatLng
 import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.model.challenge.RouteItemBase
 import com.sziffer.challenger.model.user.UserManager
@@ -509,7 +508,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                                 System.currentTimeMillis() - start + durationHelper,
                                 location.speed.round(1),
                                 correctedAltitude.round(1),
-                                MyLatLng(location)
+                                LatLng(location.latitude, location.longitude)
                             )
                         )
                     }

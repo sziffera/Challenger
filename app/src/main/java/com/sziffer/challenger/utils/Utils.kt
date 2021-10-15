@@ -27,12 +27,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.preference.PreferenceManager
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.sziffer.challenger.R
 import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.model.challenge.PublicRouteItem
-import com.sziffer.challenger.utils.extensions.toGoogleLatLng
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -40,9 +37,9 @@ import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.collections.ArrayList
 
 
+// TODO: its leaking memory
 fun crossfade(image: ImageView, layers: ArrayList<Drawable?>, speedInMs: Int, context: Context) {
     class BackgroundGradientThread(var mainContext: Context) : Runnable {
         var crossFader: TransitionDrawable? = null
@@ -114,6 +111,7 @@ fun setRequestingLocationUpdates(
 }
 
 fun getStringFromNumber(floatingPoint: Int, value: Number): String {
+    if (value is Int) return value.toString()
     return "%.${floatingPoint}f".format(value)
 }
 
@@ -128,15 +126,6 @@ fun isAirplaneModeOn(context: Context): Boolean {
     ) != 0
 }
 
-fun zoomAndRouteCreator(locations: ArrayList<MyLocation>): Pair<LatLngBounds, ArrayList<LatLng>> {
-    val latLng: ArrayList<LatLng> = ArrayList()
-    val builder = LatLngBounds.builder()
-    for (item in locations) {
-        builder.include(item.latLng.toGoogleLatLng())
-        latLng.add(item.latLng.toGoogleLatLng())
-    }
-    return Pair(builder.build(), latLng)
-}
 
 fun takeScreenshot(view: View): Bitmap {
     val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)

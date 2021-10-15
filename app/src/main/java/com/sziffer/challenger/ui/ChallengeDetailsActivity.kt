@@ -45,7 +45,6 @@ import com.sziffer.challenger.database.PublicChallengesRepository
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
 import com.sziffer.challenger.model.challenge.Challenge
 import com.sziffer.challenger.model.challenge.MyLocation
-import com.sziffer.challenger.model.challenge.PublicChallengeHash
 import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
@@ -116,27 +115,21 @@ class ChallengeDetailsActivity : AppCompatActivity() {
         val id = intent.getLongExtra(CHALLENGE_ID, 0)
         challenge = dbHelper.getChallenge(id.toInt())!!
 
-
-//        FirebaseFirestore.getInstance().collection(
-//            PublicChallengesRepository.PUBLIC_CHALLENGES_COLLECTION
-//        ).add(challenge.toPublic(this))
+        Log.d(TAG, challenge.elevGain.toString())
 
         CoroutineScope(Dispatchers.Default).launch {
             PublicChallengesRepository().addPublicChallenge(
-                PublicChallengeHash(challenge.toPublic(applicationContext)),
+                challenge.toPublic(this@ChallengeDetailsActivity),
                 applicationContext
             ).collect { state ->
                 when (state) {
                     is State.Loading -> Log.d(TAG, "Upload started")
-                    is State.Success -> Log.d(TAG, "Challenge uploaded: ${state.data.path}")
+                    is State.Success -> Log.d(TAG, "Challenge uploaded: ${state.data}")
                     is State.Failed -> Log.e(TAG, state.message)
                 }
 
             }
         }
-
-        Log.i("CHALLENGE DETAILS", challenge.toString())
-
 
         binding.elevationGainedTextView.text = challenge.elevGain.toString() + " m"
         binding.elevationLostTextView.text = challenge.elevLoss.toString() + " m"
@@ -555,6 +548,18 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
 
     //region for testing
+
+
+    private fun writeToFile(data: String) {
+
+        val outputStreamWriter =
+            OutputStreamWriter(openFileOutput("hash.json", Context.MODE_PRIVATE))
+        outputStreamWriter.write(data)
+        outputStreamWriter.flush()
+        outputStreamWriter.close()
+
+    }
+
     private fun writeToFile(testArray: DoubleArray) {
         val outputStreamWriter =
             OutputStreamWriter(openFileOutput("altitude_original.txt", Context.MODE_PRIVATE))
