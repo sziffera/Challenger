@@ -2,6 +2,7 @@ package com.sziffer.challenger.database
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.firebase.geofire.GeoFireUtils
 import com.firebase.geofire.GeoLocation
@@ -17,6 +18,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
@@ -230,6 +233,8 @@ class PublicChallengesRepository {
                     distanceInM <= radiusInM
                 } as ArrayList<PublicChallenge>
 
+                insertChallenges(context, center, challenges)
+
                 emit(State.success(challenges))
 
             } else {
@@ -241,6 +246,32 @@ class PublicChallengesRepository {
             // something went wrong
             emit(State.failed(it.message.toString()))
         }.flowOn(Dispatchers.IO)
+
+
+    private suspend fun insertChallenges(
+        context: Context,
+        location: GeoLocation,
+        challenges: ArrayList<PublicChallenge>
+    ) {
+        val dbHelperImpl =
+            PublicChallengeDbHelperImpl(PublicChallengeDbBuilder.getInstance(context))
+        dbHelperImpl.insertAll(challenges)
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+
+        val current = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
+        val currentDate: String = current.format(formatter)
+
+        sharedPreferences.edit {
+            putFloat(KEY_LAT, location.latitude.toFloat())
+            putFloat(KEY_LNG, location.longitude.toFloat())
+            putString(KEY_DATE, currentDate)
+        }
+        Log.d(
+            TAG,
+            "Local db updated successfully with ${challenges.count()} challenges on: $currentDate"
+        )
+    }
 
 
     /**
