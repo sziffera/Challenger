@@ -163,7 +163,7 @@ class PublicChallengesRepository {
                     it.latLng,
                     cloudChallengeLatLng,
                     true,
-                    200.0
+                    TOLERANCE_IN_METRES
                 )
             ) pointsOnPath++
         }
@@ -206,7 +206,7 @@ class PublicChallengesRepository {
             var challenges = fetchLocalChallenges(context, center)
 
             // the challenges are too old or the location is not ok or we force fetch from cloud
-            if (challenges == null || challenges.isEmpty() || forceFetchFromCloud) {
+            if (challenges.isEmpty() || forceFetchFromCloud) {
                 Log.d(TAG, "Challenges from cloud")
                 challenges = ArrayList()
                 val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
@@ -219,7 +219,7 @@ class PublicChallengesRepository {
                     val snapshot = query.get().await()
                     snapshot.documents.forEach {
                         it.data?.let { map ->
-                            challenges!!.add(map.toPublicChallenge())
+                            challenges.add(map.toPublicChallenge())
                         }
                     }
                 }
@@ -281,14 +281,14 @@ class PublicChallengesRepository {
     private suspend fun fetchLocalChallenges(
         context: Context,
         location: GeoLocation
-    ): ArrayList<PublicChallenge>? {
+    ): ArrayList<PublicChallenge> {
 
         // getting the saved values from sharedPreferences
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         val lat = sharedPreferences.getFloat(KEY_LAT, -1f)
         val lng = sharedPreferences.getFloat(KEY_LNG, -1f)
         val date = sharedPreferences.getString(KEY_DATE, null)
-        if (date == null || lng == -1f || lat == -1f) return null
+        if (date == null || lng == -1f || lat == -1f) return ArrayList()
 
         // checking the date difference
         val downloadDate = Constants.challengeDateFormat.parse(date)
@@ -296,13 +296,13 @@ class PublicChallengesRepository {
         val timeDifferenceInMinutes =
             (currentDate.time - (downloadDate?.time ?: 0)) / 1000 / 60
         Log.d(TAG, "Time difference from last fetch? $timeDifferenceInMinutes")
-        if (timeDifferenceInMinutes > 60) return null
+        if (timeDifferenceInMinutes > 60) return ArrayList()
 
         // checking the distance difference
         val downloadLocation = GeoLocation(lat.toDouble(), lng.toDouble())
         val distanceInMetres = GeoFireUtils.getDistanceBetween(location, downloadLocation)
         Log.d(TAG, "Distance to last fetch location: $distanceInMetres")
-        if (distanceInMetres > 3000) return null
+        if (distanceInMetres > 3000) return ArrayList()
 
         // the local data is fresh enough and the location was almost the same
         Log.d(TAG, "Local DB is ok, getting challenges")

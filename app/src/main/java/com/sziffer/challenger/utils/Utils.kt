@@ -26,8 +26,10 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.sziffer.challenger.R
+import com.sziffer.challenger.model.challenge.ChallengeType
 import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.model.challenge.PublicRouteItem
 import java.io.File
@@ -38,6 +40,16 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
+
+fun getDrawable(challengeType: ChallengeType, context: Context): Drawable? {
+    return ContextCompat.getDrawable(
+        context, context.resources.getIdentifier(
+            challengeType.drawableName(),
+            "drawable",
+            context.packageName
+        )
+    )
+}
 
 // TODO: its leaking memory
 fun crossfade(image: ImageView, layers: ArrayList<Drawable?>, speedInMs: Int, context: Context) {

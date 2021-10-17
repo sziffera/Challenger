@@ -55,12 +55,10 @@ fun MyLocation.geoHash(): String =
 fun MyLatLng.geohash(): String =
     GeoFireUtils.getGeoHashForLocation(GeoLocation(this.latitude, this.longitude))
 
-fun MyLatLng.toGoogleLatLng(): com.google.android.gms.maps.model.LatLng =
-    com.google.android.gms.maps.model.LatLng(this.latitude, this.longitude)
-
 fun PublicChallenge.toHash(): Map<String, Any> {
     return mapOf(
         "id" to id,
+        "attempts" to attempts,
         "lat" to lat,
         "lng" to lng,
         "user_id" to userId,
@@ -83,8 +81,11 @@ fun Map<String, Any>.toPublicChallenge(): PublicChallenge {
     val challengeType =
         if (get("type") as String == ChallengeType.CYCLING.name) ChallengeType.CYCLING else ChallengeType.RUNNING
 
+    val attempts: Int = if (get("attempts") == null) 0 else get("attempts") as Int
+
     return PublicChallenge(
         get("id") as String,
+        attempts,
         get("lat") as Double,
         get("lng") as Double,
         get("user_id") as String,
@@ -113,6 +114,7 @@ fun Challenge.toPublic(context: Context): PublicChallenge {
 
     return PublicChallenge(
         this.firebaseId,
+        0,
         startingPoint.latLng.latitude,
         startingPoint.latLng.longitude,
         FirebaseManager.mAuth.currentUser?.uid ?: "no_id",

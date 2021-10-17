@@ -42,6 +42,7 @@ class PublicChallengeUploader(
             challenge.apply {
                 publicChallenge = PublicChallenge(
                     firebaseId,
+                    0,
                     route[0].latLng.latitude,
                     route[0].latLng.longitude,
                     userId!!,

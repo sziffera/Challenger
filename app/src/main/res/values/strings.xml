@@ -264,5 +264,8 @@
     <string name="upgrade_description">Your current challenges need some upgrade to show you more precise data, please wait until the process finishes and do not close this screen</string>
     <string name="upgrade_failed_retry">Upgrade failed - retry</string>
     <string name="upgrading_challenges">Upgrading challenges</string>
+    <string name="away_from_you">" away from you"</string>
+    <string name="away">away</string>
+    <string name="attempt">Attempt</string>
 
 </resources>

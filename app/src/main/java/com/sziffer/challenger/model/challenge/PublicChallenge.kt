@@ -9,6 +9,7 @@ import java.util.*
 @Entity(tableName = Constants.Database.PUBLIC_CHALLENGES_TABLE_NAME)
 data class PublicChallenge(
     @PrimaryKey val id: String = "",
+    @ColumnInfo(name = "attempts") var attempts: Int = 0,
     @ColumnInfo(name = "lat") val lat: Double = 0.0,
     @ColumnInfo(name = "lng") val lng: Double = 0.0,
     @ColumnInfo(name = "user_id") val userId: String = "",
