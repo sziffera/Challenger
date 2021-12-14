@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+    android:layout_width="160dp"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="6dp"
+    android:layout_marginEnd="4dp"
     android:backgroundTint="#4D000000"
     app:cardCornerRadius="16dp">
 
@@ -25,22 +25,25 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="6dp"
                 android:layout_marginTop="12dp">
 
 
                 <ImageView
                     android:id="@+id/challengeTypeImageView"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:layout_marginStart="24dp"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:visibility="visible"
                     android:src="@drawable/cycling"
                     app:tint="@color/colorMinus" />
 
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="32dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:gravity="center"
                     android:orientation="vertical">
 
@@ -51,7 +54,7 @@
                         android:layout_gravity="center"
                         android:gravity="center"
                         android:text="11km"
-                        android:textSize="18sp"
+                        android:textSize="12sp"
                         android:visibility="visible" />
 
                     <TextView
@@ -64,12 +67,24 @@
                 </LinearLayout>
 
 
+                <ImageView
+                    android:id="@+id/favoriteButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:src="@drawable/favorite_unfilled"
+                    android:visibility="invisible"
+                    app:tint="@color/colorPlus" />
+
+
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginStart="32dp"
                     android:gravity="center"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
                     <TextView
                         android:id="@+id/attempts"
@@ -82,9 +97,10 @@
                         android:visibility="visible" />
 
                     <TextView
+                        android:id="@+id/attemptsDescription"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/attempt"
+                        android:text=""
                         android:textAllCaps="true"
                         android:textSize="10sp" />
 
@@ -98,7 +114,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="12dp"
-                android:layout_marginStart="12dp"
+                android:layout_marginHorizontal="6dp"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -113,14 +129,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="15km"
-                        android:textSize="18sp" />
+                        android:textSize="12sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/distance"
                         android:textAllCaps="true"
-                        android:textSize="10sp" />
+                        android:textSize="8sp" />
 
                 </LinearLayout>
 
@@ -137,7 +153,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="1:15:25"
-                        android:textSize="18sp" />
+                        android:textSize="12sp" />
 
 
                     <TextView
@@ -145,7 +161,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/duration"
                         android:textAllCaps="true"
-                        android:textSize="10sp" />
+                        android:textSize="8sp" />
 
                 </LinearLayout>
 
@@ -155,7 +171,8 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
 
                     <TextView
@@ -163,7 +180,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="25km/h"
-                        android:textSize="18sp" />
+                        android:textSize="12sp" />
 
 
                     <TextView
@@ -189,14 +206,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="125m"
-                        android:textSize="18sp" />
+                        android:textSize="12sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/elevation"
                         android:textAllCaps="true"
-                        android:textSize="10sp" />
+                        android:textSize="8sp" />
 
                 </LinearLayout>
 
@@ -209,6 +226,7 @@
             android:id="@+id/imageButton"
             android:layout_width="48dp"
             android:layout_height="match_parent"
+            android:visibility="gone"
             android:layout_gravity="end"
             android:layout_marginEnd="12dp"
             android:background="@android:color/transparent"

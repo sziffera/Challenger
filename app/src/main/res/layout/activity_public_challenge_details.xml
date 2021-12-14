@@ -1,21 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/colorDarkBlue"
     tools:context=".ui.PublicChallengeDetailsActivity">
 
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Toolbar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimaryDark"
+                android:elevation="4dp"
+                android:title="@string/challenge_do_it_faster"
+                app:layout_constraintEnd_toStartOf="@id/filterImageButton"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:titleTextColor="@android:color/white" />
+
+            <ImageView
+                android:id="@+id/filterImageButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:src="@drawable/ic_baseline_filter_list_24"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintBottom_toTopOf="@id/startButton"
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
 
             <com.mapbox.mapboxsdk.maps.MapView
                 android:id="@+id/mapView"
@@ -23,25 +63,18 @@
                 android:layout_height="350dp" />
 
 
-            <TextView
-                android:id="@+id/fastestTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
-                android:gravity="center"
-                android:text="Congratulations, you are the fastest on this route!"
-                android:textSize="15sp"
-                android:visibility="gone" />
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
                 android:layout_marginTop="12dp"
-                android:orientation="horizontal">
+                android:background="@drawable/round_16dp"
+                android:backgroundTint="#013B4D"
+                android:orientation="horizontal"
+                android:padding="12dp">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
@@ -52,19 +85,19 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="15km"
-                        android:textSize="18sp" />
+                        android:textSize="14sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/distance"
                         android:textAllCaps="true"
-                        android:textSize="10sp" />
+                        android:textSize="8sp" />
 
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
@@ -76,7 +109,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="1:15:25"
-                        android:textSize="18sp" />
+                        android:textSize="14sp" />
 
 
                     <TextView
@@ -84,21 +117,23 @@
                         android:layout_height="wrap_content"
                         android:text="@string/duration"
                         android:textAllCaps="true"
-                        android:textSize="10sp" />
+                        android:textSize="8sp" />
 
                 </LinearLayout>
 
+
                 <ImageView
                     android:id="@+id/challengeTypeImageView"
-                    android:layout_width="55dp"
-                    android:layout_height="match_parent"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginHorizontal="4dp"
                     android:layout_gravity="center"
                     android:src="@drawable/cycling"
                     app:tint="@color/colorMinus" />
 
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
@@ -110,7 +145,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="25km/h"
-                        android:textSize="18sp" />
+                        android:textSize="14sp" />
 
 
                     <TextView
@@ -118,13 +153,13 @@
                         android:layout_height="wrap_content"
                         android:text="@string/avgspeed"
                         android:textAllCaps="true"
-                        android:textSize="10sp" />
+                        android:textSize="8sp" />
 
                 </LinearLayout>
 
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
@@ -136,36 +171,123 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="125m"
-                        android:textSize="18sp" />
+                        android:textSize="14sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/elevation"
                         android:textAllCaps="true"
-                        android:textSize="10sp" />
+                        android:textSize="8sp" />
 
                 </LinearLayout>
 
 
             </LinearLayout>
 
-
-            <TextView
-                android:id="@+id/attempts"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="11"
-                android:textSize="45sp" />
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/round_16dp"
+                android:backgroundTint="#013B4D"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+
+                    <TextView
+                        android:id="@+id/attempts"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="11"
+                        android:textSize="20sp" />
+
+                    <TextView
+                        android:id="@+id/attemptsDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="attempt"
+                        android:textAllCaps="true"
+                        android:textSize="10sp" />
+
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/userStateOnChallengeHolder"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:visibility="invisible">
+
+                    <ImageView
+                        android:id="@+id/userStateOnChallengeImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="55dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/comeon"
+                        android:visibility="visible"
+                        app:tint="@color/colorMinus" />
+
+                    <TextView
+                        android:id="@+id/userStateOnChallengeText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/come_on_you_can_be_the_fastest_here"
+                        android:textAllCaps="true"
+                        android:textSize="10sp" />
+
+
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+
+                    <TextView
+                        android:id="@+id/distanceFromUserPosition"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="12km"
+                        android:textSize="20sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/away_from_you"
+                        android:textAllCaps="true"
+                        android:textSize="10sp" />
+
+
+                </LinearLayout>
+
+            </LinearLayout>
+
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginVertical="12dp"
                 android:gravity="center"
-                android:text="@string/attempt"
-                android:textAllCaps="true"
-                android:textSize="10sp" />
+                android:text="@string/elevation_profile" />
 
 
             <com.github.mikephil.charting.charts.LineChart
@@ -186,7 +308,7 @@
         android:layout_marginHorizontal="12dp"
         android:layout_marginBottom="16dp"
         android:background="@drawable/round_16dp"
-        android:text="I will do it faster!"
+        android:text="@string/i_will_be_the_fastest"
         android:textColor="@color/colorDarkBlue"
         app:layout_constraintBottom_toBottomOf="parent" />
 

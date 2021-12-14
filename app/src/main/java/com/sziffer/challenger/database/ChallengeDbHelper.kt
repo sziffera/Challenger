@@ -29,10 +29,13 @@ class ChallengeDbHelper(val context: Context) :
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("ALTER TABLE $DATABASE_NAME ADD COLUMN $KEY_ELEVATION_GAIN TEXT")
-        db.execSQL("ALTER TABLE $DATABASE_NAME ADD COLUMN $KEY_ELEVATION_LOSS TEXT")
-        db.execSQL("UPDATE $DATABASE_NAME SET $KEY_ELEVATION_GAIN = 0")
-        db.execSQL("UPDATE $DATABASE_NAME SET $KEY_ELEVATION_LOSS = 0")
+
+        if (oldVersion == 2 && newVersion == 3) {
+
+            db.execSQL("ALTER TABLE $DATABASE_NAME ADD COLUMN $KEY_ELEVATION_GAIN TEXT")
+            db.execSQL("ALTER TABLE $DATABASE_NAME ADD COLUMN $KEY_ELEVATION_LOSS TEXT")
+            db.execSQL("UPDATE $DATABASE_NAME SET $KEY_ELEVATION_GAIN = 0")
+            db.execSQL("UPDATE $DATABASE_NAME SET $KEY_ELEVATION_LOSS = 0")
 
 //        val challenges = getAllChallenges()
 //        val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
@@ -57,10 +60,13 @@ class ChallengeDbHelper(val context: Context) :
 //            updateChallenge(challenge.id.toInt(), challenge)
 //        }
 //
-        val sharedPref = PreferenceManager.getDefaultSharedPreferences(context)
-        sharedPref.edit()
-            .putBoolean(KEY_MIGRATION_DONE, true)
-            .apply()
+            val sharedPref = PreferenceManager.getDefaultSharedPreferences(context)
+            sharedPref.edit()
+                .putBoolean(KEY_MIGRATION_DONE, true)
+                .apply()
+        } else {
+            //todo
+        }
     }
 
     fun addChallenge(challenge: Challenge): Long {

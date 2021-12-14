@@ -6,11 +6,15 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.firebase.geofire.GeoFireUtils
 import com.firebase.geofire.GeoLocation
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.gson.Gson
 import com.google.maps.android.PolyUtil
 import com.sziffer.challenger.State
 import com.sziffer.challenger.model.challenge.PublicChallenge
 import com.sziffer.challenger.utils.Constants
+import com.sziffer.challenger.utils.extensions.toHash
 import com.sziffer.challenger.utils.extensions.toPublicChallenge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
@@ -42,18 +46,57 @@ class PublicChallengesRepository {
         emit(State.failed(it.stackTraceToString()))
     }.flowOn(Dispatchers.IO)
 
+
+    fun validateAndUploadChallenge(
+        challengeId: String,
+        cloudChallengeId: String,
+        context: Context
+    ) = flow<State<Boolean>> {
+        emit(State.loading())
+
+        val db = PublicChallengeDbHelperImpl(PublicChallengeDbBuilder.getInstance(context))
+        val snapshot =
+            publicChallengesCollection.whereEqualTo("id", cloudChallengeId).get().await()
+        val challenge = db.getChallenge(challengeId)
+        val cloudChallenge = snapshot.documents.firstOrNull()?.data?.toPublicChallenge()
+        // checking validity and if the new one is faster
+        check(cloudChallenge != null)
+        check(challenge != null)
+        check(isChallengeValid(cloudChallenge, challenge))
+        check(isFaster(cloudChallenge, challenge))
+        // this part throws an exception if the check is not true
+
+        // we can get here only if the upper part is ok
+
+        val reference = snapshot.documents.firstOrNull()?.reference
+        // increasing the number of attempts
+        reference?.update("attempts", FieldValue.increment(1))
+        // updating the required fields
+        reference?.update(
+            mapOf(
+                "timestamp" to challenge.timestamp,
+                "route" to Gson().toJson(challenge.route),
+                "duration" to challenge.duration,
+                "user_id" to challenge.userId
+            )
+        )
+    }.catch {
+        emit(State.failed("The challenge is not valid or slower"))
+    }.flowOn(Dispatchers.IO)
+
+    private fun isFaster(cloudChallenge: PublicChallenge, challenge: PublicChallenge) =
+        challenge.duration < cloudChallenge.duration
+
+
     fun addPublicChallenge(
         challenge: PublicChallenge,
         context: Context,
         filter: Boolean = true
     ) =
-        flow<State<String>> {
-
+        flow<State<DocumentReference>> {
             emit(State.loading())
-
             // filter is turned off in case of test uploads
             if (filter) {
-
                 // getting the first item's location, this is the starting point of the route
                 val firstItem = challenge.route!!.first()
                 val center = GeoLocation(firstItem.latLng.latitude, firstItem.latLng.longitude)
@@ -77,21 +120,20 @@ class PublicChallengesRepository {
                                     )
                                 ) { "Challenge is not valid" }
                             }
+                            // increasing the nr of attempts
+                            challenge.attempts++
                             // if the challenge is not similar to the cloud challenges, uploading
-                            // TODO: set back to normal reference
-//                            val ref = publicChallengesCollection.add(challenge.toHash()).await()
-//                            emit(State.success(ref))
-
-                            emit(State.success("Challenge passed"))
+                            val ref = publicChallengesCollection.add(challenge.toHash()).await()
+                            emit(State.success(ref))
                         }
                         is State.Loading -> Log.d(TAG, "Loading")
                         is State.Failed -> Log.e(TAG, state.message)
                     }
                 }
             } else {
-                // the filter is turned off, just uploading the challenge - for testing
-                //val ref = publicChallengesCollection.add(challenge.toHash()).await()
-                emit(State.success("ref"))
+                // the filter is turned off, just uploading the challenge - FOR TESTING PURPOSES
+                val ref = publicChallengesCollection.add(challenge.toHash()).await()
+                emit(State.success(ref))
             }
         }.catch {
             Log.e("UPLOAD", it.message ?: "no error message")
@@ -107,7 +149,7 @@ class PublicChallengesRepository {
         currentChallenge: PublicChallenge
     ): Boolean {
 
-        // checking the type, just for safety
+        // checking the type, just for safety, in theory it is impossible to happen
         if (currentChallenge.type != cloudChallenge.type) return false
 
 
@@ -203,14 +245,14 @@ class PublicChallengesRepository {
 
             Log.d(TAG, "Challenges started fetching")
 
-            var challenges = fetchLocalChallenges(context, center)
+            // getting the local challenges if they are ok
+            var challenges = ArrayList<PublicChallenge>()//fetchLocalChallenges(context, center)
 
             // the challenges are too old or the location is not ok or we force fetch from cloud
             if (challenges.isEmpty() || forceFetchFromCloud) {
                 Log.d(TAG, "Challenges from cloud")
                 challenges = ArrayList()
                 val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
-                Log.d(TAG, "Bounds length: ${bounds.count()}")
                 bounds.forEach { bound ->
                     val query = publicChallengesCollection
                         .orderBy(GEOHASH_FIELD)
@@ -218,15 +260,15 @@ class PublicChallengesRepository {
                         .endAt(bound.endHash)
                     val snapshot = query.get().await()
                     snapshot.documents.forEach {
-                        it.data?.let { map ->
-                            challenges.add(map.toPublicChallenge())
+                        it.data?.let { challengeHashMap ->
+                            challenges.add(challengeHashMap.toPublicChallenge())
                         }
                     }
                 }
 
                 Log.d(TAG, "${challenges.count()} challenges fetched, filtering out false+")
 
-                // filtering out false positive results by checking the distance
+                // filtering out false positive results by checking the distance - very unlikely
                 challenges = challenges.filter {
                     val location = GeoLocation(it.lat, it.lng)
                     val distanceInM = GeoFireUtils.getDistanceBetween(location, center)
@@ -255,6 +297,7 @@ class PublicChallengesRepository {
     ) {
         val dbHelperImpl =
             PublicChallengeDbHelperImpl(PublicChallengeDbBuilder.getInstance(context))
+        dbHelperImpl.deleteAll()
         dbHelperImpl.insertAll(challenges)
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
@@ -311,6 +354,12 @@ class PublicChallengesRepository {
         return dbHelperImpl.getAll() as ArrayList<PublicChallenge>
     }
 
+
+    suspend fun getChallengeFromRoom(id: String, context: Context): PublicChallenge? {
+        val dbHelperImpl =
+            PublicChallengeDbHelperImpl(PublicChallengeDbBuilder.getInstance(context))
+        return dbHelperImpl.getChallenge(id)
+    }
 
     companion object {
         const val PUBLIC_CHALLENGES_COLLECTION = "challenges"

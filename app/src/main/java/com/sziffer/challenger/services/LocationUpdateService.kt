@@ -507,7 +507,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                                 heartRate,
                                 System.currentTimeMillis() - start + durationHelper,
                                 location.speed.round(1),
-                                correctedAltitude.round(1),
+                                correctedAltitude,
                                 LatLng(location.latitude, location.longitude)
                             )
                         )

@@ -7,6 +7,7 @@ import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import com.sziffer.challenger.R
 import com.sziffer.challenger.databinding.ActivityCreateChallengeBinding
+import com.sziffer.challenger.model.challenge.RecordingType
 import com.sziffer.challenger.utils.getStringFromNumber
 import java.util.*
 
@@ -52,7 +53,7 @@ class CreateChallengeActivity : AppCompatActivity() {
             }
             val startRecordingIntent = Intent(this, ChallengeRecorderActivity::class.java)
             with(startRecordingIntent) {
-                putExtra(ChallengeRecorderActivity.CREATED_CHALLENGE_INTENT, true)
+                putExtra(ChallengeRecorderActivity.RECORDING_TYPE, RecordingType.TRAINING)
                 putExtra(ChallengeRecorderActivity.AVG_SPEED, avgSpeed)
                 putExtra(ChallengeRecorderActivity.DISTANCE, distance)
             }

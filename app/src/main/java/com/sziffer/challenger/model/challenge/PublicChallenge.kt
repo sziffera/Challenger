@@ -12,11 +12,12 @@ data class PublicChallenge(
     @ColumnInfo(name = "attempts") var attempts: Int = 0,
     @ColumnInfo(name = "lat") val lat: Double = 0.0,
     @ColumnInfo(name = "lng") val lng: Double = 0.0,
-    @ColumnInfo(name = "user_id") val userId: String = "",
+    @ColumnInfo(name = "user_id") var userId: String = "",
     @ColumnInfo(name = "geohash") val geoHash: String = "",
     @ColumnInfo(name = "distance") val distance: Double = 0.0, // in m
     @ColumnInfo(name = "duration") val duration: Long = 0, //in sec
     @ColumnInfo(name = "elevation_gained") val elevationGained: Int = 0,
+    @ColumnInfo(name = "elevation_loss") val elevationLoss: Int = 0,
     @ColumnInfo(name = "type") val type: ChallengeType = ChallengeType.CYCLING,
     @ColumnInfo(name = "timestamp") var timestamp: Date = Date(),
     @ColumnInfo(name = "route") var route: ArrayList<PublicRouteItem>? = null

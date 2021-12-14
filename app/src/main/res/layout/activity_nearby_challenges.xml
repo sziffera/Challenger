@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/gradient_background"
+    android:background="@color/colorDarkBlue"
     tools:context=".ui.NearbyChallengesActivity">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -12,42 +12,53 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:elevation="4dp"
+        android:background="@color/colorPrimaryDark"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <LinearLayout
+
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical">
+            android:layout_height="wrap_content">
 
             <Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:background="@color/colorPrimaryDark"
                 android:elevation="4dp"
-                android:title="Challenges nearby"
-                app:layout_constraintEnd_toEndOf="parent"
+                android:title="@string/nearby_challenges"
+                app:layout_constraintEnd_toStartOf="@id/filterImageButton"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/filterImageButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="4dp"
+                android:padding="12dp"
+                android:src="@drawable/ic_baseline_filter_list_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_marginHorizontal="12dp"
+    <LinearLayout
+        android:id="@+id/nearbyChallengesHolderLinearLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:paddingTop="12dp"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/nearbyChallengesAppBar" />
+        app:layout_constraintTop_toBottomOf="@id/nearbyChallengesAppBar">
+
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/progressBar"

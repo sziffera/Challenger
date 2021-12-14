@@ -39,6 +39,7 @@ import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.math.roundToInt
 
 
 fun getDrawable(challengeType: ChallengeType, context: Context): Drawable? {
@@ -245,14 +246,17 @@ fun reduceArrayLength(
     if (filter > 1200) filter = 1200.0
 
     filter = route.size.toDouble() / filter
+    val filterInt = if (filter.roundToInt() == 0) 1 else filter.roundToInt()
     val filtered = route.filterIndexed { index, _ ->
-        (index % filter.toInt()) == 0 || index == route.size - 1
+        (index % filterInt == 0 || index == route.size - 1)
     } as ArrayList<MyLocation>
+    Log.d("UTILS", "the filtered public challenge route length is: ${filtered.count()}")
     return filtered.map {
         PublicRouteItem(
             it.latLng,
             it.time,
-            it.distance
+            it.distance,
+            it.altitude.roundToInt()
         )
     } as ArrayList<PublicRouteItem>
 }

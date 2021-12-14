@@ -39,21 +39,16 @@ import com.mapbox.mapboxsdk.style.layers.Property
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.sziffer.challenger.R
-import com.sziffer.challenger.State
 import com.sziffer.challenger.database.ChallengeDbHelper
-import com.sziffer.challenger.database.PublicChallengesRepository
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
 import com.sziffer.challenger.model.challenge.Challenge
+import com.sziffer.challenger.model.challenge.ChallengeUpdateType
 import com.sziffer.challenger.model.challenge.MyLocation
+import com.sziffer.challenger.model.challenge.RecordingType
 import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
 import com.sziffer.challenger.utils.*
-import com.sziffer.challenger.utils.extensions.toPublic
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import java.io.*
 import java.util.*
 import java.util.concurrent.Executors
@@ -74,8 +69,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
     private var route: ArrayList<MyLocation>? = null
     private var sharingImageBitmap: Bitmap? = null
-    private var update: Boolean = false
-    private var isItAChallenge: Boolean = false
     private var avgSpeed: Double = 0.0
     private var maxHr = -1
     private var avgHr = -1
@@ -117,30 +110,22 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
         Log.d(TAG, challenge.elevGain.toString())
 
-        CoroutineScope(Dispatchers.Default).launch {
-            PublicChallengesRepository().addPublicChallenge(
-                challenge.toPublic(this@ChallengeDetailsActivity),
-                applicationContext
-            ).collect { state ->
-                when (state) {
-                    is State.Loading -> Log.d(TAG, "Upload started")
-                    is State.Success -> Log.d(TAG, "Challenge uploaded: ${state.data}")
-                    is State.Failed -> Log.e(TAG, state.message)
-                }
-
-            }
-        }
+        // todo: move it to sharing part
+//        CoroutineScope(Dispatchers.Default).launch {
+//            PublicChallengesRepository().addPublicChallenge(
+//                challenge.toPublic(this@ChallengeDetailsActivity),
+//                applicationContext
+//            ).collect { state ->
+//                when (state) {
+//                    is State.Loading -> Log.d(TAG, "Upload started")
+//                    is State.Success -> Log.d(TAG, "Challenge uploaded: ${state.data}")
+//                    is State.Failed -> Log.e(TAG, state.message)
+//                }
+//            }
+//        }
 
         binding.elevationGainedTextView.text = challenge.elevGain.toString() + " m"
         binding.elevationLostTextView.text = challenge.elevLoss.toString() + " m"
-
-
-        isItAChallenge = intent.getBooleanExtra(IS_IT_A_CHALLENGE, false).also {
-            Log.i(TAG, "$IS_IT_A_CHALLENGE is $it")
-        }
-        update = intent.getBooleanExtra(UPDATE, false).also {
-            Log.i(TAG, "$UPDATE is $it")
-        }
 
         binding.discardButton.setOnClickListener {
             showDiscardAlertDialog()
@@ -196,9 +181,9 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
         } //just for testing and car analysis for my brother
 
-        when {
-            //the user chose a Challenge to do it better, and wants to start recording
-            isItAChallenge -> {
+        when (intent.getSerializableExtra(UPDATE_TYPE) as ChallengeUpdateType) {
+            // the user chose a Challenge to do it better, and wants to start recording
+            ChallengeUpdateType.VIEW_CHALLENGE -> {
                 binding.discardButton.visibility = View.GONE
                 binding.buttonDivSpace.visibility = View.GONE
                 binding.saveChallengeInDetailsButton.text =
@@ -213,18 +198,29 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                 supportActionBar?.title = challenge.name.capitalize(Locale.ROOT)
 
             }
-            //the user finished recording a challenged activity, update data with new values
-            update -> {
+            // the user finished recording a challenged activity, update data with new values
+            ChallengeUpdateType.LOCAL_CHALLENGE_FINISHED -> {
                 binding.saveChallengeInDetailsButton.text = getString(R.string.update_challenge)
                 binding.challengeDetailsNameEditText.visibility = View.GONE
-                supportActionBar?.title = previousChallenge?.name?.capitalize(Locale.ROOT)
+                supportActionBar?.title = previousChallenge?.name?.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(
+                        Locale.ROOT
+                    ) else it.toString()
+                }
 
                 binding.saveChallengeInDetailsButton.setOnClickListener {
                     updateChallenge()
                 }
             }
-            //this is just a normal recorded challenge
-            else -> {
+            // the user finished a public challenge
+            ChallengeUpdateType.PUBLIC_CHALLENGE_FINISHED -> {
+                binding.saveChallengeInDetailsButton.setOnClickListener {
+                    saveChallenge()
+                    uploadChallengeToPublicDb()
+                }
+            }
+            // this is just a normal recorded challenge
+            ChallengeUpdateType.NORMAL_RECORDING_FINISHED -> {
                 binding.saveChallengeInDetailsButton.setOnClickListener {
                     saveChallenge()
                 }
@@ -302,7 +298,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
     private fun startChallenge() {
         val intent = Intent(this, ChallengeRecorderActivity::class.java)
-        intent.putExtra(ChallengeRecorderActivity.CHALLENGE, true)
+        intent.putExtra(ChallengeRecorderActivity.RECORDING_TYPE, RecordingType.LOCAL_CHALLENGE)
         intent.putExtra(ChallengeRecorderActivity.RECORDED_CHALLENGE_ID, challenge.id.toInt())
         dbHelper.close()
         startActivity(intent)
@@ -329,6 +325,10 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.cant_save), Toast.LENGTH_LONG).show()
         }
         startMainActivity()
+    }
+
+    private fun uploadChallengeToPublicDb() {
+        // TODO: not implemented
     }
 
     private fun saveChallenge() {
@@ -602,8 +602,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
         private const val REQUEST = 112
         private const val CHALLENGE_DETAILS = "challengeDetails"
         const val CHALLENGE_ID = "$CHALLENGE_DETAILS.id"
-        const val IS_IT_A_CHALLENGE = "$CHALLENGE_DETAILS.isChallenge"
-        const val UPDATE = "$CHALLENGE_DETAILS.update"
+        const val UPDATE_TYPE = "com.sziffer.challenger.challengeUpdateType"
         const val PREVIOUS_CHALLENGE_ID = "$CHALLENGE_DETAILS.previousChallengeId"
     }
 }

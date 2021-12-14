@@ -100,7 +100,7 @@ class DatabaseUpgradeActivity : AppCompatActivity() {
                 val route =
                     Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
                 if (route.size > Constants.MIN_ROUTE_SIZE) {
-                    val doubleArray = route.map { it.altitude }
+                    val doubleArray = route.map { it.altitude.toDouble() }
                     val elevationArray = doubleArray.toDoubleArray()
                     var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
                     if (windowSize > Constants.MAX_WINDOW_SIZE)

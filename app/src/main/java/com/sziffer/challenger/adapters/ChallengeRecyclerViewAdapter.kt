@@ -14,6 +14,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.sziffer.challenger.R
 import com.sziffer.challenger.model.challenge.Challenge
+import com.sziffer.challenger.model.challenge.ChallengeUpdateType
 import com.sziffer.challenger.ui.ChallengeDetailsActivity
 import com.sziffer.challenger.utils.getStringFromNumber
 
@@ -68,7 +69,10 @@ class ChallengeRecyclerViewAdapter(
             override fun itemClicked(v: View, pos: Int) {
                 val intent = Intent(context, ChallengeDetailsActivity::class.java)
                 intent.putExtra(ChallengeDetailsActivity.CHALLENGE_ID, challenges[pos].id.toLong())
-                intent.putExtra(ChallengeDetailsActivity.IS_IT_A_CHALLENGE, true)
+                intent.putExtra(
+                    ChallengeDetailsActivity.UPDATE_TYPE,
+                    ChallengeUpdateType.VIEW_CHALLENGE
+                )
                 context.startActivity(intent)
             }
 

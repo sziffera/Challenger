@@ -35,8 +35,6 @@ private fun startWorkManager(context: Context) {
 fun startPublicChallengeUploader(
     challengeId: Int,
     userId: String,
-    geohash: String,
-    type: Int,
     context: Context
 ) {
     val constraints = Constraints.Builder()
@@ -46,11 +44,8 @@ fun startPublicChallengeUploader(
         .setConstraints(constraints)
         .setInputData(
             Data.Builder()
-                .putString(PublicChallengeUploader.KEY_GEOHASH, geohash)
                 .putString(PublicChallengeUploader.KEY_USER_ID, userId)
-                .putInt(PublicChallengeUploader.KEY_TYPE, type)
                 .putInt(PublicChallengeUploader.KEY_CHALLENGE_ID, challengeId).build()
-
         )
         .setBackoffCriteria(
             BackoffPolicy.LINEAR,

@@ -22,6 +22,7 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import com.github.psambit9791.jdsp.signal.Smooth
@@ -47,10 +48,9 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.sziffer.challenger.R
 import com.sziffer.challenger.R.*
 import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.database.PublicChallengesRepository
 import com.sziffer.challenger.databinding.ActivityChallengeRecorderBinding
-import com.sziffer.challenger.model.challenge.Challenge
-import com.sziffer.challenger.model.challenge.MyLocation
-import com.sziffer.challenger.model.challenge.RouteItemBase
+import com.sziffer.challenger.model.challenge.*
 import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.services.LocationUpdatesService
 import com.sziffer.challenger.services.LocationUpdatesService.LocalBinder
@@ -58,6 +58,7 @@ import com.sziffer.challenger.utils.*
 import com.sziffer.challenger.utils.dialogs.CustomListDialog
 import com.sziffer.challenger.utils.dialogs.DataAdapter
 import com.welie.blessed.*
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -184,54 +185,12 @@ class ChallengeRecorderActivity : AppCompatActivity(),
             }
 
         }
-        createdChallenge = intent.getBooleanExtra(CREATED_CHALLENGE_INTENT, false).also {
-            Log.i(TAG, "$it is the created challenge bool")
-        }
 
-        binding.setUpHeartRateSensor.setOnClickListener {
 
-            if (bluetoothAdapter.isEnabled) {
-                if (gpsService?.isHeartRateConnected == true) {
-                    gpsService?.disconnect()
-                } else {
-                    gpsService?.startHeartRateScan()
-                    binding.setUpHeartRateSensor.text = getString(R.string.connecting)
-                    binding.setUpHeartRateSensor.isEnabled = false
-                }
-            } else {
-                //TODO(show normal alert with open action)
-                Toast.makeText(this, getString(R.string.enable_bluetooth), Toast.LENGTH_SHORT)
-                    .show()
-            }
-        }
-
-        if (intent.getBooleanExtra(SHOW_UV_ALERT, false)) {
-            buildAlertMessageHighUv()
-        }
-
-        if (intent.getBooleanExtra(SHOW_WIND_ALERT, false)) {
-            buildAlertMessageStrongWind()
-        }
-
-        if (createdChallenge) {
-            distance = intent.getIntExtra(DISTANCE, 0).also {
-                Log.i(TAG, "$it is the got distance")
-            }
-            avgSpeed = intent.getDoubleExtra(AVG_SPEED, 0.0).also {
-                Log.i(TAG, "$it is the got avgSpeed")
-            }
-            avgSpeed = avgSpeed.div(3.6)
-
-        } else {
-
-            challenge = intent.getBooleanExtra(CHALLENGE, false).also {
-                Log.i(TAG, "$it is the bool")
-            }
-
-            if (challenge) {
-
+        when (intent.getSerializableExtra(RECORDING_TYPE) as RecordingType) {
+            RecordingType.LOCAL_CHALLENGE -> {
                 binding.activityChooserChipGroup.visibility = View.GONE
-                binding.chooseAnActivity.visibility = View.GONE
+                binding.chooseAnActivity.visibility = View.INVISIBLE
 
                 val recordedChallengeId = intent.getIntExtra(RECORDED_CHALLENGE_ID, -1)
                 recordedChallenge = dbHelper.getChallenge(recordedChallengeId)
@@ -244,10 +203,60 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                     )
                 activityType = recordedChallenge?.type
                 LocationUpdatesService.previousChallenge = route
-
-            } else {
+            }
+            RecordingType.NORMAL_RECORDING -> {
                 this.binding.differenceTextView.visibility = View.GONE
             }
+            RecordingType.PUBLIC_CHALLENGE -> {
+
+                binding.activityChooserChipGroup.visibility = View.GONE
+                binding.chooseAnActivity.visibility = View.INVISIBLE
+
+                val challengeId = intent.getStringExtra(RECORDED_CHALLENGE_ID)
+                lifecycleScope.launch {
+                    val challenge = PublicChallengesRepository().getChallengeFromRoom(
+                        challengeId!!,
+                        this@ChallengeRecorderActivity
+                    )
+                    activityType = challenge!!.type.name.lowercase()
+                    LocationUpdatesService.previousChallenge =
+                        challenge.route!! as ArrayList<RouteItemBase>
+                }
+            }
+            RecordingType.TRAINING -> {
+                // getting the training data from intents
+                distance = intent.getIntExtra(DISTANCE, 0).also {
+                    Log.i(TAG, "$it is the got distance")
+                }
+                avgSpeed = intent.getDoubleExtra(AVG_SPEED, 0.0).also {
+                    Log.i(TAG, "$it is the got avgSpeed")
+                }
+                avgSpeed = avgSpeed.div(3.6)
+            }
+        }
+        binding.setUpHeartRateSensor.setOnClickListener {
+
+            if (bluetoothAdapter.isEnabled) {
+                if (gpsService?.isHeartRateConnected == true) {
+                    gpsService?.disconnect()
+                } else {
+                    gpsService?.startHeartRateScan()
+                    binding.setUpHeartRateSensor.text = getString(R.string.connecting)
+                    binding.setUpHeartRateSensor.isEnabled = false
+                }
+            } else {
+                // TODO(show normal alert with open action)
+                Toast.makeText(this, getString(R.string.enable_bluetooth), Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+
+        if (intent.getBooleanExtra(SHOW_UV_ALERT, false)) {
+            buildAlertMessageHighUv()
+        }
+
+        if (intent.getBooleanExtra(SHOW_WIND_ALERT, false)) {
+            buildAlertMessageStrongWind()
         }
 
         if (!locationPermissionCheck(this)) {
@@ -394,7 +403,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                 Point.fromLngLat(
                     it.latLng.longitude,
                     it.latLng.latitude,
-                    it.altitude
+                    it.altitude.toDouble()
                 )
             } as ArrayList<Point>
 
@@ -447,8 +456,8 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
                 val currentDate: String = current.format(formatter)
                 val gson = Gson()
-                val doubleList = gpsService?.myRoute?.map { it.altitude }
-                val elevationArray = doubleList!!.toDoubleArray()
+                val doubleList = gpsService!!.myRoute.map { it.altitude }
+                val elevationArray = doubleList.toDoubleArray()
                 var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
                 if (windowSize > Constants.MAX_WINDOW_SIZE)
                     windowSize = Constants.MAX_WINDOW_SIZE
@@ -465,7 +474,8 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                         elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
                     }
                 }
-                gpsService!!.myRoute[filteredElevation.size - 1].altitude = filteredElevation.last()
+                gpsService!!.myRoute[filteredElevation.size - 1].altitude =
+                    filteredElevation.last()
                 val myLocationArrayString = gson.toJson(gpsService?.myRoute)
                 val duration: Long = gpsService!!.durationHelper.div(1000)
                 val distance = gpsService!!.distance.div(1000.0)
@@ -499,13 +509,19 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                     )
                 if (challenge) {
                     with(myIntent) {
-                        putExtra(ChallengeDetailsActivity.UPDATE, true)
+                        putExtra(
+                            ChallengeDetailsActivity.UPDATE_TYPE,
+                            ChallengeUpdateType.LOCAL_CHALLENGE_FINISHED
+                        )
                         putExtra(
                             ChallengeDetailsActivity.PREVIOUS_CHALLENGE_ID,
                             recordedChallenge!!.id.toLong()
                         )
                     }
-                }
+                } else myIntent.putExtra(
+                    ChallengeDetailsActivity.UPDATE_TYPE,
+                    ChallengeUpdateType.NORMAL_RECORDING_FINISHED
+                )
                 dbHelper.close()
                 startActivity(myIntent)
             }
@@ -548,14 +564,10 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                 binding.countDownTextView.visibility = View.GONE
 
                 val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator.vibrate(
-                        VibrationEffect
-                            .createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
-                    )
-                } else {
-                    vibrator.vibrate(500)
-                }
+                vibrator.vibrate(
+                    VibrationEffect
+                        .createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
+                )
 
                 if (autoPause) {
                     binding.startStopChallengeRecording.visibility = View.GONE
@@ -968,14 +980,10 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                     )
                 ) {
                     val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        vibrator.vibrate(
-                            VibrationEffect
-                                .createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE)
-                        )
-                    } else {
-                        vibrator.vibrate(200)
-                    }
+                    vibrator.vibrate(
+                        VibrationEffect
+                            .createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE)
+                    )
                     binding.setUpHeartRateSensor.apply {
                         text = getString(R.string.connected)
                         isEnabled = true
@@ -1105,9 +1113,8 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     }
 
     companion object {
-        const val CHALLENGE = "challenge"
-        const val RECORDED_CHALLENGE_ID = "recorded"
-        const val CREATED_CHALLENGE_INTENT = "createdChallenge"
+        const val RECORDED_CHALLENGE_ID = "recordedChallengeId"
+        const val RECORDING_TYPE = "com.sziffer.challenge.RecordingType"
         var createdChallenge: Boolean = false
             private set
         const val AVG_SPEED = "avgSpeed"

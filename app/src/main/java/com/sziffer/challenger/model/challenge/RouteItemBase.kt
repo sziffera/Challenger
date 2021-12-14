@@ -6,4 +6,5 @@ abstract class RouteItemBase {
     abstract val latLng: LatLng
     abstract val time: Long
     abstract val distance: Float
+    abstract val altitude: Number
 }

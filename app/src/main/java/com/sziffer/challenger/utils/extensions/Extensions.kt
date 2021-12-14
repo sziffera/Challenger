@@ -2,6 +2,7 @@ package com.sziffer.challenger.utils.extensions
 
 import android.content.Context
 import android.content.res.Resources
+import android.location.Location
 import android.util.Log
 import android.view.View
 import com.firebase.geofire.GeoFireUtils
@@ -49,6 +50,11 @@ fun Number.toPace(): String {
     return "${minutes.toInt()}:$secondsFormatted"
 }
 
+fun com.google.android.gms.maps.model.LatLng.asGeoLocation(): GeoLocation =
+    GeoLocation(this.latitude, this.longitude)
+
+fun Location.asGeoLocation(): GeoLocation = GeoLocation(this.latitude, this.longitude)
+
 fun MyLocation.geoHash(): String =
     GeoFireUtils.getGeoHashForLocation(GeoLocation(this.latLng.latitude, this.latLng.longitude))
 
@@ -66,6 +72,7 @@ fun PublicChallenge.toHash(): Map<String, Any> {
         "distance" to distance,
         "duration" to duration,
         "elevation_gained" to elevationGained,
+        "elevation_loss" to elevationLoss,
         "type" to type,
         "timestamp" to timestamp,
         "route" to Gson().toJson(route)
@@ -81,11 +88,11 @@ fun Map<String, Any>.toPublicChallenge(): PublicChallenge {
     val challengeType =
         if (get("type") as String == ChallengeType.CYCLING.name) ChallengeType.CYCLING else ChallengeType.RUNNING
 
-    val attempts: Int = if (get("attempts") == null) 0 else get("attempts") as Int
+    val attempts: Long = if (get("attempts") == null) 1 else get("attempts") as Long
 
     return PublicChallenge(
         get("id") as String,
-        attempts,
+        attempts.toInt(),
         get("lat") as Double,
         get("lng") as Double,
         get("user_id") as String,
@@ -93,6 +100,7 @@ fun Map<String, Any>.toPublicChallenge(): PublicChallenge {
         get("distance") as Double,
         get("duration") as Long,
         (get("elevation_gained") as Long).toInt(), //Int is stored as a Long (?)
+        (get("elevation_loss") as Long).toInt(),
         challengeType,
         (get("timestamp") as Timestamp).toDate(),
         Gson().fromJson<ArrayList<PublicRouteItem>>
@@ -122,6 +130,7 @@ fun Challenge.toPublic(context: Context): PublicChallenge {
         (this.dst * 1000).round(0),
         this.dur,
         this.elevGain,
+        this.elevLoss,
         type,
         Constants.challengeDateFormat.parse(this.date) ?: Date(),
         reduceArrayLength(route, this.dst * 1000)

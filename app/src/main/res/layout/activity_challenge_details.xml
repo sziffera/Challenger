@@ -66,7 +66,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="20dp"
-                android:autofillHints=""
                 android:background="@drawable/round_16dp"
                 android:gravity="center"
                 android:hint="@string/add_a_name"
@@ -103,12 +102,19 @@
             </RelativeLayout>
 
 
+            <CheckBox
+                android:id="@+id/publicChallengeCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginVertical="12dp"
+                android:gravity="center"
+                android:text="Public challenge" />
 
 
             <androidx.gridlayout.widget.GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
                 android:layout_marginHorizontal="20dp"
                 android:background="@drawable/round_16dp"
                 android:backgroundTint="@color/colorDarkBlue"
@@ -447,6 +453,4 @@
             android:textColor="@color/colorAccent" />
 
     </LinearLayout>
-
-
 </LinearLayout>

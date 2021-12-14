@@ -19,7 +19,6 @@ import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.IFillFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
-import com.github.psambit9791.jdsp.signal.Smooth
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.R
@@ -253,12 +252,6 @@ class ChartsActivity : AppCompatActivity() {
         executor.execute {
 
 
-            val elevationData = challengeData.map { it.altitude }.toDoubleArray()
-            val mode = "triangular"
-            val windowSize = 11
-            val s1 = Smooth(elevationData, windowSize, mode)
-            val filteredElevation = s1.smoothSignal()
-
             val elevationEntries = ArrayList<Entry>()
             val speedEntries = ArrayList<Entry>()
             val hrEntries = ArrayList<Entry>()
@@ -270,7 +263,7 @@ class ChartsActivity : AppCompatActivity() {
 
             val paceChartLabels = ArrayList<String>(paces.size)
 
-            for (i in filteredElevation!!.indices) {
+            for (i in challengeData.indices) {
 
                 if (challengeData[i].distance - lastSavedMetres > 1000) {
                     kmCounter++
@@ -289,7 +282,7 @@ class ChartsActivity : AppCompatActivity() {
                 elevationEntries.add(
                     Entry(
                         challengeData[i].distance,
-                        filteredElevation[i].toFloat()
+                        challengeData[i].altitude.toFloat()
                     )
                 )
                 speedEntries.add(

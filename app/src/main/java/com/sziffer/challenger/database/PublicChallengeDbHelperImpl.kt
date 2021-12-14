@@ -9,4 +9,11 @@ class PublicChallengeDbHelperImpl(private val database: PublicChallengesDatabase
 
     override suspend fun insertAll(challenges: List<PublicChallenge>) =
         database.challengeDao().insertAll(challenges)
+
+    override suspend fun getChallenge(id: String): PublicChallenge? =
+        database.challengeDao().getChallengeById(id)
+
+    override suspend fun deleteAll() {
+        database.challengeDao().deleteAll()
+    }
 }

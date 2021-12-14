@@ -17,7 +17,7 @@ object Constants {
     val publicChallengeType = object : TypeToken<PublicChallenge>() {}.type
     val publicChallengeHashType = object : TypeToken<PublicChallengeHash>() {}.type
 
-    const val WINDOW_SIZE_HELPER = 40
+    const val WINDOW_SIZE_HELPER = 30
     const val MAX_WINDOW_SIZE = 130
     const val SMOOTH_MODE = "triangular"
 
