@@ -4,14 +4,13 @@
     android:layout_width="160dp"
     android:layout_height="wrap_content"
     android:layout_marginEnd="4dp"
-    android:backgroundTint="#4D000000"
+    android:backgroundTint="@color/colorDarkerBlue"
     app:cardCornerRadius="16dp">
 
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:backgroundTint="#4D000000"
         android:orientation="horizontal">
 
 

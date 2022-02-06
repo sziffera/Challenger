@@ -25,7 +25,6 @@ import kotlinx.coroutines.tasks.await
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
 
@@ -128,6 +127,7 @@ class PublicChallengesRepository {
                         }
                         is State.Loading -> Log.d(TAG, "Loading")
                         is State.Failed -> Log.e(TAG, state.message)
+                        else -> {} //cannot happen
                     }
                 }
             } else {

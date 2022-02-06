@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import android.text.format.DateUtils
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AlphaAnimation
 import android.widget.Toast
@@ -62,6 +63,7 @@ class PublicChallengeDetailsActivity : AppCompatActivity() {
     private var currentLatLng: LatLng? = null
 
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -74,13 +76,36 @@ class PublicChallengeDetailsActivity : AppCompatActivity() {
             PublicChallengeDetailsViewModel::class.java
         )
 
-        viewModel.challenge.observe(this, { state ->
+        binding.transparentImageView.setOnTouchListener(object : View.OnTouchListener {
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                when (event?.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        binding.challengeDetailsScrollView
+                            .requestDisallowInterceptTouchEvent(true)
+                        return false
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        binding.challengeDetailsScrollView
+                            .requestDisallowInterceptTouchEvent(false)
+                        return true
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        binding.challengeDetailsScrollView
+                            .requestDisallowInterceptTouchEvent(true)
+                        return false
+                    }
+                    else -> return true
+                }
+            }
+        })
+
+        viewModel.challenge.observe(this) { state ->
             when (state) {
                 is State.Loading -> loading()
                 is State.Success -> challengeFetched(state.data)
                 is State.Failed -> shorError(state.message)
             }
-        })
+        }
 
         intent.getStringExtra(KEY_CHALLENGE_ID)?.let {
             Log.d(TAG, "The challenge id is $it")
@@ -90,8 +115,8 @@ class PublicChallengeDetailsActivity : AppCompatActivity() {
 
         currentLatLng = intent.getParcelableExtra(KEY_USER_LOCATION) as LatLng?
 
-        binding.mapView.onCreate(savedInstanceState)
-        binding.mapView.getMapAsync {
+        binding.challengeDetailsMap.onCreate(savedInstanceState)
+        binding.challengeDetailsMap.getMapAsync {
             this.mapBox = it
             mapBox!!.setStyle(Style.OUTDOORS) { style ->
                 this.style = style
@@ -326,23 +351,26 @@ class PublicChallengeDetailsActivity : AppCompatActivity() {
                 )
             } as ArrayList<Point>
 
+
+            Log.d(TAG, points.count().toString())
+
             handler.post {
                 val lineString: LineString = LineString.fromLngLats(points)
                 val feature = Feature.fromGeometry(lineString)
-                val geoJsonSource = GeoJsonSource("geojson-public-route", feature)
-                val lineLayer =
-                    LineLayer("challenge-route-layer", "geojson-public-route").withProperties(
-                        PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
-                        PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
-                        PropertyFactory.lineOpacity(1f),
-                        PropertyFactory.lineWidth(4f),
-                        PropertyFactory.lineColor(
-                            resources.getColor(
-                                R.color.colorPrimaryDark,
-                                null
-                            )
+                val geoJsonSource = GeoJsonSource("geojson-source", feature)
+                val lineLayer = LineLayer("linelayer", "geojson-source").withProperties(
+                    PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
+                    PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
+                    PropertyFactory.lineOpacity(1f),
+                    PropertyFactory.lineWidth(4f),
+                    PropertyFactory.lineColor(
+                        resources.getColor(
+                            R.color.colorPrimaryDark,
+                            null
                         )
                     )
+                )
+
 
                 style.addSource(geoJsonSource)
                 style.addLayer(lineLayer)

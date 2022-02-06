@@ -46,6 +46,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
+        android:id="@+id/challengeDetailsScrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginBottom="12dp"
@@ -57,10 +58,23 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <com.mapbox.mapboxsdk.maps.MapView
-                android:id="@+id/mapView"
+
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="350dp" />
+                android:layout_height="350dp">
+
+                <com.mapbox.mapboxsdk.maps.MapView
+                    android:id="@+id/challengeDetailsMap"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <ImageView
+                    android:id="@+id/transparentImageView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@android:color/transparent" />
+
+            </RelativeLayout>
 
 
             <LinearLayout

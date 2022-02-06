@@ -4,7 +4,8 @@ import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
@@ -48,12 +49,14 @@ import com.sziffer.challenger.model.challenge.RecordingType
 import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
-import com.sziffer.challenger.utils.*
-import java.io.*
+import com.sziffer.challenger.utils.MAPBOX_ACCESS_TOKEN
+import com.sziffer.challenger.utils.getStringFromNumber
+import com.sziffer.challenger.utils.locationPermissionCheck
+import com.sziffer.challenger.utils.locationPermissionRequest
+import java.io.OutputStream
+import java.io.OutputStreamWriter
 import java.util.*
 import java.util.concurrent.Executors
-import kotlin.collections.ArrayList
-import kotlin.time.ExperimentalTime
 
 
 class ChallengeDetailsActivity : AppCompatActivity() {
@@ -79,7 +82,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChallengeDetailsBinding
 
     //region lifecycle
-    @ExperimentalTime
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
