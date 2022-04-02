@@ -1,7 +1,8 @@
 package com.sziffer.challenger.ui
 
 import android.annotation.SuppressLint
-import android.bluetooth.*
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -51,12 +52,10 @@ import com.sziffer.challenger.model.UserManager
 import com.sziffer.challenger.utils.*
 import com.sziffer.challenger.utils.dialogs.CustomListDialog
 import com.sziffer.challenger.utils.dialogs.DataAdapter
-import com.welie.blessed.*
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.absoluteValue
 
 
@@ -370,6 +369,11 @@ class ChallengeRecorderActivity : AppCompatActivity(),
         binding.mapbox.gestures.addOnMoveListener(onMoveListener)
     }
 
+    private fun zoomToRoute(route: ArrayList<MyLocation>) {
+
+
+    }
+
     private fun initLocationComponent() {
         val locationComponentPlugin = binding.mapbox.location
         locationComponentPlugin.updateSettings {
@@ -415,54 +419,6 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
         binding.recenterButton.visibility = View.VISIBLE
     }
-
-    /*
-
-       @SuppressLint("MissingPermission") //checked
-       private fun styleLoaded(style: Style) {
-
-           this.style = style
-
-           if (locationPermissionCheck(this)) {
-               startLocationTracking()
-           }
-
-           if (challenge) {
-               val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
-               val route =
-                   Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
-
-               val points = route.map {
-                   Point.fromLngLat(
-                       it.latLng.longitude,
-                       it.latLng.latitude,
-                       it.altitude
-                   )
-               } as ArrayList<Point>
-
-               val lineString: LineString = LineString.fromLngLats(points)
-               val feature = Feature.fromGeometry(lineString)
-               val geoJsonSource = GeoJsonSource("geojson-source", feature)
-               style.addSource(geoJsonSource)
-               style.addLayer(
-                   LineLayer("linelayer", "geojson-source").withProperties(
-                       PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
-                       PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
-                       PropertyFactory.lineOpacity(1f),
-                       PropertyFactory.lineWidth(4f),
-                       PropertyFactory.lineColor(
-                           resources.getColor(
-                               R.color.colorAccent,
-                               null
-                           )
-                       )
-                   )
-               )
-
-           }
-       }
-
-     */
 
     //endregion map
 

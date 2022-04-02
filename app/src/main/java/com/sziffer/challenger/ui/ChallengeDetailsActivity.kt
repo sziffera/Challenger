@@ -4,7 +4,8 @@ import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
@@ -23,8 +24,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.github.psambit9791.jdsp.signal.Smooth
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.mapbox.geojson.Feature
@@ -32,7 +31,7 @@ import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
 import com.mapbox.geojson.Polygon
 import com.mapbox.maps.CameraBoundsOptions
-import com.mapbox.maps.CoordinateBounds
+import com.mapbox.maps.EdgeInsets
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.style.layers.generated.lineLayer
 import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
@@ -41,6 +40,8 @@ import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
 import com.mapbox.maps.extension.style.sources.getSource
 import com.mapbox.maps.extension.style.style
+import com.mapbox.maps.plugin.animation.MapAnimationOptions
+import com.mapbox.maps.plugin.animation.flyTo
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
@@ -50,11 +51,14 @@ import com.sziffer.challenger.model.HeartRateZones
 import com.sziffer.challenger.model.MyLocation
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
-import com.sziffer.challenger.utils.*
-import java.io.*
+import com.sziffer.challenger.utils.Constants
+import com.sziffer.challenger.utils.getStringFromNumber
+import com.sziffer.challenger.utils.locationPermissionCheck
+import com.sziffer.challenger.utils.locationPermissionRequest
+import java.io.OutputStream
+import java.io.OutputStreamWriter
 import java.util.*
 import java.util.concurrent.Executors
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -411,7 +415,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
             val elevationArray = DoubleArray(route!!.size)
             val points = ArrayList<Point>()
-            val latLngBoundsBuilder = LatLngBounds.Builder()
 
             var hrSum = 0
             var hr = false
@@ -421,12 +424,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                     points.add(
                         Point.fromLngLat(
                             i.latLng.longitude, i.latLng.latitude, i.altitude
-                        )
-                    )
-                    latLngBoundsBuilder.include(
-                        LatLng(
-                            i.latLng.latitude,
-                            i.latLng.longitude
                         )
                     )
                 }
@@ -444,12 +441,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                         else -> heartRateZones!!.vo2Max++
                     }
 
-                    latLngBoundsBuilder.include(
-                        LatLng(
-                            myLocation.latLng.latitude,
-                            myLocation.latLng.longitude
-                        )
-                    )
                     points.add(
                         Point.fromLngLat(
                             myLocation.latLng.longitude,
@@ -494,36 +485,16 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                 }
             }
 
-            val build = latLngBoundsBuilder.build()
-            val myBuilder = CameraBoundsOptions.Builder()
-                .bounds(
-                    CoordinateBounds(
-                        Point.fromLngLat(build.southwest.longitude, build.southwest.longitude),
-                        Point.fromLngLat(build.northeast.longitude, build.northeast.longitude),
-                        false
-                    )
-                )
-                .minZoom(10.0)
-                .build()
+
 
 
             handler.post {
                 val lineString: LineString = LineString.fromLngLats(points)
                 val feature = Feature.fromGeometry(lineString)
-                val bounds = latLngBoundsBuilder.build()
-                val southWest =
-                    Point.fromLngLat(bounds.southwest.longitude, bounds.southwest.latitude)
-                val northEast =
-                    Point.fromLngLat(bounds.northeast.longitude, bounds.northeast.latitude)
-                val northWest = Point.fromLngLat(southWest.longitude(), northEast.latitude())
-                val southEast = Point.fromLngLat(northEast.longitude(), southWest.latitude())
-                val list = mutableListOf<List<Point>>()
-                list.add(
-                    mutableListOf(northEast, southEast, southWest, northWest, northEast)
-                )
 
-                binding.challengeDetailsMap.getMapboxMap()
-                    .loadStyle(style(styleUri = Style.OUTDOORS) {
+
+                binding.challengeDetailsMap.getMapboxMap().apply {
+                    loadStyle(style(styleUri = Style.OUTDOORS) {
                         +geoJsonSource(id = "geojson-source") {
                             feature(feature)
                         }
@@ -539,9 +510,17 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                                 )
                             )
                         }
+
                     })
-
-
+                    this.addOnStyleLoadedListener {
+                        val cameraPosition = cameraForCoordinates(
+                            points, EdgeInsets(50.0, 50.0, 50.0, 50.0)
+                        )
+                        flyTo(cameraPosition, MapAnimationOptions.mapAnimationOptions {
+                            duration(5000)
+                        })
+                    }
+                }
 
                 binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
                 binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
