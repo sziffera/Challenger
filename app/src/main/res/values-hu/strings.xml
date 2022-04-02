@@ -224,4 +224,5 @@
     <string name="passwords_not_match">A két jelszó nem egyezik</string>
     <string name="google_sign_in">Google bejelentkezés</string>
     <string name="pace">Tempó</string>
+    <string name="alerts">Riasztások</string>
 </resources>

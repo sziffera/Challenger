@@ -28,17 +28,19 @@ import com.google.gson.reflect.TypeToken
 import com.mapbox.geojson.Feature
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.exceptions.InvalidLatLngBoundsException
-import com.mapbox.mapboxsdk.geometry.LatLng
-import com.mapbox.mapboxsdk.geometry.LatLngBounds
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.snapshotter.MapSnapshotter
-import com.mapbox.mapboxsdk.style.layers.LineLayer
-import com.mapbox.mapboxsdk.style.layers.Property
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+import com.mapbox.geojson.Polygon
+import com.mapbox.maps.CameraBoundsOptions
+import com.mapbox.maps.EdgeInsets
+import com.mapbox.maps.Style
+import com.mapbox.maps.extension.style.layers.generated.lineLayer
+import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
+import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
+import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
+import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
+import com.mapbox.maps.extension.style.sources.getSource
+import com.mapbox.maps.extension.style.style
+import com.mapbox.maps.plugin.animation.MapAnimationOptions
+import com.mapbox.maps.plugin.animation.flyTo
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
@@ -49,7 +51,7 @@ import com.sziffer.challenger.model.challenge.RecordingType
 import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.sync.KEY_UPLOAD
 import com.sziffer.challenger.sync.updateSharedPrefForSync
-import com.sziffer.challenger.utils.MAPBOX_ACCESS_TOKEN
+import com.sziffer.challenger.utils.Constants
 import com.sziffer.challenger.utils.getStringFromNumber
 import com.sziffer.challenger.utils.locationPermissionCheck
 import com.sziffer.challenger.utils.locationPermissionRequest
@@ -63,8 +65,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
     //private lateinit var mMap: GoogleMap
 
-    private var mapBox: MapboxMap? = null
-    private var snapshotter: MapSnapshotter? = null
+    //private var mapBox: MapboxMap? = null
+
 
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var challenge: Challenge
@@ -86,18 +88,16 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Mapbox.getInstance(this, MAPBOX_ACCESS_TOKEN)
+
 
         binding = ActivityChallengeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.challengeDetailsMap.onCreate(savedInstanceState)
-        binding.challengeDetailsMap.getMapAsync { mapboxMap ->
-            this.mapBox = mapboxMap
-            mapBox!!.setStyle(Style.OUTDOORS) {
-                runProcessThread(it)
-            }
-        }
+
+        //binding.challengeDetailsMap.getMapboxMap().loadStyleUri(Style.OUTDOORS) {
+
+        // }
+
 
         setSupportActionBar(binding.challengeDetailsToolbar)
 
@@ -266,31 +266,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             )
         }
 
-    }
+        runProcessThread()
 
-    override fun onStart() {
-        super.onStart()
-        binding.challengeDetailsMap.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        binding.challengeDetailsMap.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        binding.challengeDetailsMap.onPause()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        binding.challengeDetailsMap.onDestroy()
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        binding.challengeDetailsMap.onLowMemory()
     }
 
 
@@ -423,7 +400,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
      * alos filter calculates the elevation data
      * - the filtering will be remooved as soon as the method is final, will be moved to the saving part
      **/
-    private fun runProcessThread(style: Style) {
+    private fun runProcessThread() {
         val executor = Executors.newSingleThreadExecutor()
         val handler = Handler(Looper.getMainLooper())
 
@@ -432,8 +409,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
             route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
             val points = ArrayList<Point>()
-            val latLngBoundsBuilder = LatLngBounds.Builder()
-
 
             var hrSum = 0
             var hr = false
@@ -442,13 +417,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                     points.add(
                         Point.fromLngLat(
                             i.latLng.longitude, i.latLng.latitude, i.altitude
-                        )
-                    )
-                    latLngBoundsBuilder.include(
-                        LatLng(
-                            i.latLng.latitude,
-                            i.latLng.longitude,
-                            i.altitude
                         )
                     )
                 }
@@ -466,13 +434,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                         else -> heartRateZones!!.vo2Max++
                     }
 
-                    latLngBoundsBuilder.include(
-                        LatLng(
-                            myLocation.latLng.latitude,
-                            myLocation.latLng.longitude,
-                            myLocation.altitude
-                        )
-                    )
                     points.add(
                         Point.fromLngLat(
                             myLocation.latLng.longitude,
@@ -502,33 +463,35 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             handler.post {
                 val lineString: LineString = LineString.fromLngLats(points)
                 val feature = Feature.fromGeometry(lineString)
-                val geoJsonSource = GeoJsonSource("geojson-source", feature)
-                val lineLayer = LineLayer("linelayer", "geojson-source").withProperties(
-                    PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
-                    PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
-                    PropertyFactory.lineOpacity(1f),
-                    PropertyFactory.lineWidth(4f),
-                    PropertyFactory.lineColor(
-                        resources.getColor(
-                            R.color.colorPrimaryDark,
-                            null
+
+
+                binding.challengeDetailsMap.getMapboxMap().apply {
+                    loadStyle(style(styleUri = Style.OUTDOORS) {
+                        +geoJsonSource(id = "geojson-source") {
+                            feature(feature)
+                        }
+                        +lineLayer("linelayer", "geojson-source") {
+                            lineCap(LineCap.ROUND)
+                            lineJoin(LineJoin.MITER)
+                            lineOpacity(1.0)
+                            lineWidth(4.0)
+                            lineColor(
+                                resources.getColor(
+                                    R.color.colorPrimaryDark,
+                                    null
+                                )
+                            )
+                        }
+
+                    })
+                    this.addOnStyleLoadedListener {
+                        val cameraPosition = cameraForCoordinates(
+                            points, EdgeInsets(50.0, 50.0, 50.0, 50.0)
                         )
-                    )
-                )
-
-
-                style.addSource(geoJsonSource)
-                style.addLayer(lineLayer)
-
-                try {
-                    mapBox?.animateCamera(
-                        com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(
-                            latLngBoundsBuilder.build(),
-                            100
-                        ), 2000
-                    )
-                } catch (e: InvalidLatLngBoundsException) {
-                    e.printStackTrace()
+                        flyTo(cameraPosition, MapAnimationOptions.mapAnimationOptions {
+                            duration(5000)
+                        })
+                    }
                 }
 
                 if (hr) {
