@@ -154,7 +154,7 @@ dependencies {
 
     //MAPBOX
     //implementation 'com.mapbox.maps:android:10.0.0-beta.18'
-    implementation "com.mapbox.maps:android:10.0.0-rc.8"
+    implementation 'com.mapbox.maps:android:10.4.0'
     implementation 'com.mapbox.mapboxsdk:mapbox-sdk-services:5.9.0-alpha.1'
 
     // SplashScreen API
@@ -179,4 +179,5 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     androidTestImplementation 'androidx.test:runner:1.4.0'
     implementation 'androidx.test.espresso:espresso-idling-resource:3.4.0'
+
 }

@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.firebase.geofire.GeoFireUtils
 import com.firebase.geofire.GeoLocation
-import com.mapbox.mapboxsdk.geometry.LatLng
+import com.google.android.gms.maps.model.LatLng
 import com.sziffer.challenger.R
 import com.sziffer.challenger.databinding.ItemPublicChallengeBinding
 import com.sziffer.challenger.model.challenge.PublicChallenge

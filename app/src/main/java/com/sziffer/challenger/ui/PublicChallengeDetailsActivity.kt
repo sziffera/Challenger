@@ -3,8 +3,6 @@ package com.sziffer.challenger.ui
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.MotionEvent
@@ -20,38 +18,31 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IFillFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
+import com.google.android.gms.maps.model.LatLng
 import com.mapbox.geojson.Feature
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.exceptions.InvalidLatLngBoundsException
-import com.mapbox.mapboxsdk.geometry.LatLng
-import com.mapbox.mapboxsdk.geometry.LatLngBounds
-import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
-import com.mapbox.mapboxsdk.location.LocationComponentOptions
-import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.location.modes.RenderMode
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.style.layers.LineLayer
-import com.mapbox.mapboxsdk.style.layers.Property
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+import com.mapbox.maps.EdgeInsets
+import com.mapbox.maps.Style
+import com.mapbox.maps.extension.style.layers.generated.lineLayer
+import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
+import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
+import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
+import com.mapbox.maps.plugin.animation.MapAnimationOptions
+import com.mapbox.maps.plugin.animation.flyTo
 import com.sziffer.challenger.R
 import com.sziffer.challenger.State
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityPublicChallengeDetailsBinding
 import com.sziffer.challenger.model.challenge.PublicChallenge
 import com.sziffer.challenger.model.challenge.RecordingType
-import com.sziffer.challenger.utils.MAPBOX_ACCESS_TOKEN
 import com.sziffer.challenger.utils.getStringFromNumber
 import com.sziffer.challenger.viewmodels.PublicChallengeDetailsViewModel
 import com.sziffer.challenger.viewmodels.PublicChallengeDetailsViewModelFactory
-import java.util.concurrent.Executors
 
 class PublicChallengeDetailsActivity : AppCompatActivity() {
 
-    private var mapBox: MapboxMap? = null
+
     private var style: Style? = null
     private var isRouteAdded = false
 
@@ -66,8 +57,6 @@ class PublicChallengeDetailsActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        Mapbox.getInstance(this, MAPBOX_ACCESS_TOKEN)
 
         binding = ActivityPublicChallengeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -115,17 +104,17 @@ class PublicChallengeDetailsActivity : AppCompatActivity() {
 
         currentLatLng = intent.getParcelableExtra(KEY_USER_LOCATION) as LatLng?
 
-        binding.challengeDetailsMap.onCreate(savedInstanceState)
-        binding.challengeDetailsMap.getMapAsync {
-            this.mapBox = it
-            mapBox!!.setStyle(Style.OUTDOORS) { style ->
-                this.style = style
-                if (challenge != null) {
-                    addRouteToMap(style)
-                    enableLocationComponent(style)
-                }
-            }
-        }
+//        binding.challengeDetailsMap.onCreate(savedInstanceState)
+//        binding.challengeDetailsMap.getMapAsync {
+//            this.mapBox = it
+//            mapBox!!.setStyle(Style.OUTDOORS) { style ->
+//                this.style = style
+//                if (challenge != null) {
+//                    addRouteToMap(style)
+//                    enableLocationComponent(style)
+//                }
+//            }
+//        }
 
         binding.distanceFromUserPosition.text =
             "${intent.getIntExtra(KEY_DISTANCE_FROM_USER, 0)} km"
@@ -158,11 +147,6 @@ class PublicChallengeDetailsActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun challengeFetched(challenge: PublicChallenge) {
-
-        if (style != null && !isRouteAdded) {
-            addRouteToMap(style!!)
-            enableLocationComponent(style!!)
-        }
 
         binding.progressBar.visibility = View.GONE
         this.challenge = challenge
@@ -206,6 +190,9 @@ class PublicChallengeDetailsActivity : AppCompatActivity() {
             resources.getQuantityText(R.plurals.attempt, challenge.attempts)
 
         setUpElevationProfileChart()
+
+        // TODO: the map style should be started loading before the challenge fetch ends
+        addRouteToMap()
 
     }
 
@@ -300,94 +287,45 @@ class PublicChallengeDetailsActivity : AppCompatActivity() {
         }
     }
 
+    private fun addRouteToMap() {
 
-    @SuppressLint("MissingPermission")
-    private fun enableLocationComponent(style: Style) {
-        val customLocationComponentOptions = LocationComponentOptions.builder(this)
-            .trackingGesturesManagement(true)
-            .accuracyColor(ContextCompat.getColor(this, R.color.colorGreen))
-            .build()
+        challenge?.route?.let { route ->
 
-        val locationComponentActivationOptions =
-            LocationComponentActivationOptions.builder(this, style)
-                .locationComponentOptions(customLocationComponentOptions)
-                .build()
+            val points = route.map {
+                Point.fromLngLat(it.latLng.longitude,it.latLng.latitude)
+            }
+            val lineString: LineString = LineString.fromLngLats(points)
+            val feature = Feature.fromGeometry(lineString)
 
-        this.mapBox?.locationComponent?.apply {
-            activateLocationComponent(locationComponentActivationOptions)
-            isLocationComponentEnabled = true
-            cameraMode = CameraMode.NONE
-            renderMode = RenderMode.NORMAL
-        }
-    }
-
-
-    private fun addRouteToMap(style: Style) {
-
-        val handler = Handler(Looper.myLooper()!!)
-
-        if (challenge == null) return
-
-        isRouteAdded = true
-
-        Executors.newSingleThreadExecutor().execute {
-
-            val latLngBoundsBuilder = LatLngBounds.Builder()
-
-            latLngBoundsBuilder.includes(challenge!!.route!!.map {
-                LatLng(
-                    it.latLng.latitude,
-                    it.latLng.longitude,
-                    it.altitude.toDouble()
-                )
-            })
-            // todo: include user's location as well
-
-            val points: ArrayList<Point> = challenge!!.route!!.map {
-                Point.fromLngLat(
-                    it.latLng.latitude,
-                    it.latLng.longitude,
-                    it.altitude.toDouble()
-                )
-            } as ArrayList<Point>
-
-
-            Log.d(TAG, points.count().toString())
-
-            handler.post {
-                val lineString: LineString = LineString.fromLngLats(points)
-                val feature = Feature.fromGeometry(lineString)
-                val geoJsonSource = GeoJsonSource("geojson-source", feature)
-                val lineLayer = LineLayer("linelayer", "geojson-source").withProperties(
-                    PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
-                    PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
-                    PropertyFactory.lineOpacity(1f),
-                    PropertyFactory.lineWidth(4f),
-                    PropertyFactory.lineColor(
-                        resources.getColor(
-                            R.color.colorPrimaryDark,
-                            null
+            binding.challengeDetailsMap.getMapboxMap().apply {
+                loadStyle(com.mapbox.maps.extension.style.style(styleUri = Style.OUTDOORS) {
+                    +geoJsonSource(id = "geojson-source") {
+                        feature(feature)
+                    }
+                    +lineLayer("linelayer", "geojson-source") {
+                        lineCap(LineCap.ROUND)
+                        lineJoin(LineJoin.MITER)
+                        lineOpacity(1.0)
+                        lineWidth(4.0)
+                        lineColor(
+                            resources.getColor(
+                                R.color.colorPrimaryDark,
+                                null
+                            )
                         )
+                    }
+
+                })
+                this.addOnStyleLoadedListener {
+                    val cameraPosition = cameraForCoordinates(
+                        points, EdgeInsets(50.0, 50.0, 50.0, 50.0)
                     )
-                )
-
-
-                style.addSource(geoJsonSource)
-                style.addLayer(lineLayer)
-
-                try {
-                    mapBox?.animateCamera(
-                        com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(
-                            latLngBoundsBuilder.build(),
-                            100
-                        ), 2000
-                    )
-                } catch (e: InvalidLatLngBoundsException) {
-                    e.printStackTrace()
+                    flyTo(cameraPosition, MapAnimationOptions.mapAnimationOptions {
+                        duration(5000)
+                    })
                 }
             }
         }
-
     }
 
 
