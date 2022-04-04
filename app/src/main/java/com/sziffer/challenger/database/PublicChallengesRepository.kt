@@ -127,7 +127,6 @@ class PublicChallengesRepository {
                         }
                         is State.Loading -> Log.d(TAG, "Loading")
                         is State.Failed -> Log.e(TAG, state.message)
-                        else -> {} //cannot happen
                     }
                 }
             } else {

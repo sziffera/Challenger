@@ -39,7 +39,7 @@ class UserSettingsActivity : AppCompatActivity() {
         binding = ActivityUserSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.backImageButton?.setOnClickListener {
+        binding.backImageButton.setOnClickListener {
             onBackPressed()
         }
 
@@ -127,7 +127,7 @@ class UserSettingsActivity : AppCompatActivity() {
     private fun calculateAndSetBmi() {
         isDataDownloaded = true
         val heightInMetres: Double = height.div(100.0)
-        val bmi = weight.div(heightInMetres * heightInMetres)
+        //val bmi = weight.div(heightInMetres * heightInMetres)
     }
 
     private fun getBmiInfo(bmi: Double): String {
@@ -222,8 +222,8 @@ class UserSettingsActivity : AppCompatActivity() {
             durationSwitch.isChecked = userManager.duration
             distanceSwitch.isChecked = userManager.distance
             startStopSwitch.isChecked = userManager.startStop
-            uvAlert?.isChecked = userManager.uvAlert
-            windAlert?.isChecked = userManager.windAlert
+            uvAlert.isChecked = userManager.uvAlert
+            windAlert.isChecked = userManager.windAlert
 
 
             autoPauseSwitch.setOnCheckedChangeListener { _, isChecked ->
@@ -248,10 +248,10 @@ class UserSettingsActivity : AppCompatActivity() {
             avgSpeedSwitch.setOnCheckedChangeListener { _, isChecked ->
                 userManager.avgSpeed = isChecked
             }
-            uvAlert?.setOnCheckedChangeListener { _, isChecked ->
+            uvAlert.setOnCheckedChangeListener { _, isChecked ->
                 userManager.uvAlert = isChecked
             }
-            windAlert?.setOnCheckedChangeListener { _, isChecked ->
+            windAlert.setOnCheckedChangeListener { _, isChecked ->
                 userManager.windAlert = isChecked
             }
         }

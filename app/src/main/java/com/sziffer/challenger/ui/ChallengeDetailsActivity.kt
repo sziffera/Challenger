@@ -197,7 +197,11 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                         locationPermissionRequest(this, this)
                 }
                 binding.challengeDetailsNameEditText.visibility = View.GONE
-                supportActionBar?.title = challenge.name.capitalize(Locale.ROOT)
+                supportActionBar?.title = challenge.name.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(
+                        Locale.ROOT
+                    ) else it.toString()
+                }
 
             }
             // the user finished recording a challenged activity, update data with new values
@@ -410,7 +414,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
             val points = ArrayList<Point>()
 
-            var hrSum = 0
+            var hrSum: Int
             var hr = false
             if (route?.get(0)?.hr == -1) {
                 for (i in route!!) {

@@ -70,16 +70,16 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
         }
         viewModel.fetchChallenges(requireContext())
 
-        viewModel.callObserveWork.observe(viewLifecycleOwner, {
+        viewModel.callObserveWork.observe(viewLifecycleOwner) {
             Log.d("OBSERVE", it.toString())
             if (it) {
                 observeWork()
                 viewModel.turnOfObserver()
             }
 
-        })
+        }
 
-        viewModel.challengesLiveData.observe(viewLifecycleOwner, {
+        viewModel.challengesLiveData.observe(viewLifecycleOwner) {
             with(binding) {
                 if (it.isEmpty()) return@observe
                 swipeRefreshLayout.visibility = View.VISIBLE
@@ -95,7 +95,7 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
                     )
                 }
             }
-        })
+        }
 
 
         return binding.root
@@ -154,14 +154,14 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
     private fun observeWork() {
         WorkManager.getInstance(requireContext())
             .getWorkInfosByTagLiveData(DATA_DOWNLOADER_TAG)
-            .observe(viewLifecycleOwner, { workInfo ->
+            .observe(viewLifecycleOwner) { workInfo ->
                 if (workInfo != null && workInfo[0].state == WorkInfo.State.SUCCEEDED) {
                     Log.i("MAIN", "WorkManager succeeded")
                     binding.swipeRefreshLayout.isRefreshing = false
                     viewModel.fetchChallenges(requireContext(), startDownloader = false)
                     updateRefreshDate(UpdateTypes.DATA_SYNC, requireContext())
                 }
-            })
+            }
     }
 
     companion object {

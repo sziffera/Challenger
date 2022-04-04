@@ -384,11 +384,6 @@ class ChallengeRecorderActivity : AppCompatActivity(),
         binding.mapbox.gestures.addOnMoveListener(onMoveListener)
     }
 
-    private fun zoomToRoute(route: ArrayList<MyLocation>) {
-
-
-    }
-
     private fun initLocationComponent() {
         val locationComponentPlugin = binding.mapbox.location
         locationComponentPlugin.updateSettings {
@@ -1018,8 +1013,6 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                 }
 
                 val altitude = intent.getIntExtra(LocationUpdatesService.ALTITUDE, 0)
-                val elevationGained = intent
-                    .getIntExtra(LocationUpdatesService.ELEVATION_GAINED, 0)
 
                 binding.altitudeTextView.text = "${altitude}m"
                 val hr = intent.getIntExtra(LocationUpdatesService.HEART_RATE, -1)
@@ -1102,7 +1095,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                 } km/h"
 
                 if (location != null) {
-                    val latLng = LatLng(location.latitude, location.longitude)
+                    //val latLng = LatLng(location.latitude, location.longitude)
                     //mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
 
                     if (autoPauseActive) {

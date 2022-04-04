@@ -33,8 +33,6 @@ class SplashScreenActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         mDatabase = FirebaseDatabase.getInstance()
-        val analytics = Firebase.analytics
-
 
         usersDatabase = mDatabase.getReference(USERS)
         challengesDatabase = mDatabase.getReference(CHALLENGES)

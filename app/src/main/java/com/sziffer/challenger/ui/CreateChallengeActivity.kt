@@ -67,7 +67,7 @@ class CreateChallengeActivity : AppCompatActivity() {
         if (distance != 0 && seconds != 0) {
             avgSpeed = distance.times(3600.0).div(seconds)
             binding.avgSpeedTextView.text =
-                "${getString(R.string.avgspeed).toUpperCase(Locale.ROOT)}:" +
+                "${getString(R.string.avgspeed).uppercase(Locale.ROOT)}:" +
                         " ${getStringFromNumber(1, avgSpeed)}KM/H"
         }
     }

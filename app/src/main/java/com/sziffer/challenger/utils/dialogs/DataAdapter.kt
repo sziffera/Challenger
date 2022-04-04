@@ -39,7 +39,7 @@ class DataAdapter(
         }
 
         override fun onClick(v: View) {
-            recyclerViewItemClickListener.clickOnVoiceCoachItem(mDataSet[this.adapterPosition])
+            recyclerViewItemClickListener.clickOnVoiceCoachItem(mDataSet[this.bindingAdapterPosition])
         }
     }
 

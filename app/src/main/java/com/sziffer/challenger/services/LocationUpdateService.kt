@@ -864,7 +864,6 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             currentTime = currentTime.div(1000)
             val desiredDistance = ChallengeRecorderActivity.avgSpeed.times(currentTime)
             val distanceDifference = (distance - desiredDistance)
-            val avg = distance.div(currentTime)
             difference = distanceDifference.div(currentSpeed / 1000).toLong()
 
         } else {

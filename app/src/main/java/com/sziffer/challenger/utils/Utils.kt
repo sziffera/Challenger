@@ -109,18 +109,22 @@ fun crossfade(image: ImageView, layers: ArrayList<Drawable?>, speedInMs: Int, co
 const val KEY_REQUESTING_LOCATION_UPDATES = "requestingLocationUpdates"
 
 fun requestingLocationUpdates(context: Context?): Boolean {
-    return PreferenceManager.getDefaultSharedPreferences(context)
-        .getBoolean(KEY_REQUESTING_LOCATION_UPDATES, false)
+    return context?.let {
+        PreferenceManager.getDefaultSharedPreferences(it)
+            .getBoolean(KEY_REQUESTING_LOCATION_UPDATES, false)
+    } == true
 }
 
 fun setRequestingLocationUpdates(
     context: Context?,
     requestingLocationUpdates: Boolean
 ) {
-    PreferenceManager.getDefaultSharedPreferences(context)
-        .edit()
-        .putBoolean(KEY_REQUESTING_LOCATION_UPDATES, requestingLocationUpdates)
-        .apply()
+    if (context != null) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .edit()
+            .putBoolean(KEY_REQUESTING_LOCATION_UPDATES, requestingLocationUpdates)
+            .apply()
+    }
 }
 
 fun getStringFromNumber(floatingPoint: Int, value: Number): String {
@@ -309,8 +313,7 @@ fun showDialog(
     text: String,
     buttonText: String,
     context: Context,
-    layoutInflater: LayoutInflater,
-    drawable: Drawable
+    layoutInflater: LayoutInflater
 ) {
 
     Log.d("UTILS", "Dialog called")
@@ -336,9 +339,7 @@ fun showDialog(
     }
 }
 
-fun getColorForBPM(hr: Int) {
 
-}
 
 fun getMapBitmapFromInternalStorage(firebaseId: String, context: Context): Bitmap? {
     return try {

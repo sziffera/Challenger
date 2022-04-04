@@ -145,7 +145,7 @@ class ChartsActivity : AppCompatActivity() {
         binding.speedLineChart.axisLeft.addLimitLine(limitLine)
 
         if (showHr) {
-            setHeartRateZonesData(challengeData)
+            setHeartRateZonesData()
         }
         setUpLineCharts(showHr, challengeData)
     }
@@ -184,7 +184,7 @@ class ChartsActivity : AppCompatActivity() {
         startActivity(Intent.createChooser(intent, getString(R.string.share_challenge)))
     }
 
-    private fun setHeartRateZonesData(challengeData: ArrayList<MyLocation>) {
+    private fun setHeartRateZonesData() {
 
 
         val data = ArrayList<PieEntry>().apply {
@@ -235,7 +235,6 @@ class ChartsActivity : AppCompatActivity() {
             legend.isWordWrapEnabled = true
             this.data.setDrawValues(true)
             setDrawEntryLabels(false)
-            setDrawSliceText(false)
             holeRadius = 0f
             transparentCircleRadius = 0f
             legend.textColor = Color.WHITE
@@ -302,7 +301,7 @@ class ChartsActivity : AppCompatActivity() {
 
             handler.post {
 
-                setUpPaceBarChart(paces, paceChartLabels)
+                setUpPaceBarChart(paces)
 
 
                 addDataToChart(
@@ -333,7 +332,7 @@ class ChartsActivity : AppCompatActivity() {
         }
     }
 
-    private fun setUpPaceBarChart(paces: ArrayList<BarEntry>, paceLabels: ArrayList<String>) {
+    private fun setUpPaceBarChart(paces: ArrayList<BarEntry>) {
 
         binding.paceHorizontalBarChart.apply {
             layoutParams = LinearLayout.LayoutParams(
