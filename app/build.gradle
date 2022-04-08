@@ -7,7 +7,8 @@ plugins {
     id 'kotlin-kapt'
 }
 android {
-    compileSdkVersion 32
+    //compileSdkPreview = "Tiramisu"
+    compileSdkVersion = 32
     //buildToolsVersion "29.0.3"
 
     compileOptions {
@@ -24,7 +25,7 @@ android {
         targetSdkVersion 32
         versionCode 36
         versionName "1.4.2"
-
+        ///targetSdkPreview = "Tiramisu"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 

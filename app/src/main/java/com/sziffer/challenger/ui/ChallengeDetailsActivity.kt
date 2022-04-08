@@ -28,21 +28,19 @@ import com.google.gson.reflect.TypeToken
 import com.mapbox.geojson.Feature
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
-import com.mapbox.geojson.Polygon
-import com.mapbox.maps.CameraBoundsOptions
 import com.mapbox.maps.EdgeInsets
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.style.layers.generated.lineLayer
 import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
 import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
-import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
-import com.mapbox.maps.extension.style.sources.getSource
 import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
 import com.mapbox.maps.plugin.animation.flyTo
+import com.sziffer.challenger.AppConfig
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
 import com.sziffer.challenger.model.challenge.Challenge
 import com.sziffer.challenger.model.challenge.ChallengeUpdateType
@@ -50,8 +48,9 @@ import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.model.challenge.RecordingType
 import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.sync.KEY_UPLOAD
+import com.sziffer.challenger.sync.startPublicChallengeUploader
 import com.sziffer.challenger.sync.updateSharedPrefForSync
-import com.sziffer.challenger.utils.Constants
+import com.sziffer.challenger.utils.calculateElevations
 import com.sziffer.challenger.utils.getStringFromNumber
 import com.sziffer.challenger.utils.locationPermissionCheck
 import com.sziffer.challenger.utils.locationPermissionRequest
@@ -71,6 +70,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var challenge: Challenge
     private var previousChallenge: Challenge? = null
+    private var shareChallengeToPublicDb = false
 
     private var route: ArrayList<MyLocation>? = null
     private var sharingImageBitmap: Bitmap? = null
@@ -88,15 +88,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
-
         binding = ActivityChallengeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-
-        //binding.challengeDetailsMap.getMapboxMap().loadStyleUri(Style.OUTDOORS) {
-
-        // }
 
 
         setSupportActionBar(binding.challengeDetailsToolbar)
@@ -110,27 +103,28 @@ class ChallengeDetailsActivity : AppCompatActivity() {
         val id = intent.getLongExtra(CHALLENGE_ID, 0)
         challenge = dbHelper.getChallenge(id.toInt())!!
 
-        Log.d(TAG, challenge.elevGain.toString())
+        Log.d(TAG, challenge.toString())
 
-        // todo: move it to sharing part
-//        CoroutineScope(Dispatchers.Default).launch {
-//            PublicChallengesRepository().addPublicChallenge(
-//                challenge.toPublic(this@ChallengeDetailsActivity),
-//                applicationContext
-//            ).collect { state ->
-//                when (state) {
-//                    is State.Loading -> Log.d(TAG, "Upload started")
-//                    is State.Success -> Log.d(TAG, "Challenge uploaded: ${state.data}")
-//                    is State.Failed -> Log.e(TAG, state.message)
-//                }
-//            }
-//        }
 
-        binding.elevationGainedTextView.text = challenge.elevGain.toString() + " m"
-        binding.elevationLostTextView.text = challenge.elevLoss.toString() + " m"
-
-        binding.discardButton.setOnClickListener {
-            showDiscardAlertDialog()
+        if (challenge.elevGain == 0) {
+            // the challenge was recorded long time ago without elevation data
+            val elevation = calculateElevations(challenge)
+            binding.elevationGainedTv.text = elevation.first.toString() + " m"
+            binding.elevationLostTextView.text = elevation.second.toString() + " m"
+            challenge.elevGain = elevation.first
+            challenge.elevLoss = elevation.second
+            ChallengeDbHelper(this).apply {
+                // updating the challenge in db to avoid future elevation processing
+                updateChallenge(challenge.id.toInt(), challenge)
+                // updating the challenge in firebase as well
+                updateSharedPrefForSync(
+                    this@ChallengeDetailsActivity, challenge.firebaseId,
+                    KEY_UPLOAD
+                )
+            }
+        } else {
+            binding.elevationGainedTv.text = challenge.elevGain.toString() + " m"
+            binding.elevationLostTextView.text = challenge.elevLoss.toString() + " m"
         }
 
         //can be null
@@ -186,6 +180,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
         when (intent.getSerializableExtra(UPDATE_TYPE) as ChallengeUpdateType) {
             // the user chose a Challenge to do it better, and wants to start recording
             ChallengeUpdateType.VIEW_CHALLENGE -> {
+                // user just views this challenge, hiding checkbox
+                binding.publicChallengeCheckBox.visibility = View.GONE
                 binding.discardButton.visibility = View.GONE
                 binding.buttonDivSpace.visibility = View.GONE
                 binding.saveChallengeInDetailsButton.text =
@@ -206,6 +202,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             }
             // the user finished recording a challenged activity, update data with new values
             ChallengeUpdateType.LOCAL_CHALLENGE_FINISHED -> {
+                // the user can share this challenge with others, so enabling checkbox
+                binding.publicChallengeCheckBox.visibility = View.VISIBLE
                 binding.saveChallengeInDetailsButton.text = getString(R.string.update_challenge)
                 binding.challengeDetailsNameEditText.visibility = View.GONE
                 supportActionBar?.title = previousChallenge?.name?.replaceFirstChar {
@@ -215,11 +213,14 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                 }
 
                 binding.saveChallengeInDetailsButton.setOnClickListener {
+                    uploadChallengeToPublicDb()
                     updateChallenge()
                 }
             }
             // the user finished a public challenge
             ChallengeUpdateType.PUBLIC_CHALLENGE_FINISHED -> {
+                // the challenge has already been shared, no need to show checkbox
+                binding.publicChallengeCheckBox.visibility = View.GONE
                 binding.saveChallengeInDetailsButton.setOnClickListener {
                     saveChallenge()
                     uploadChallengeToPublicDb()
@@ -227,12 +228,25 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             }
             // this is just a normal recorded challenge
             ChallengeUpdateType.NORMAL_RECORDING_FINISHED -> {
+                // the user can share this challenge with others, so enabling checkbox
+                binding.publicChallengeCheckBox.visibility = View.VISIBLE
                 binding.saveChallengeInDetailsButton.setOnClickListener {
                     saveChallenge()
                 }
             }
         }
         initVariables()
+
+        if (AppConfig.PUBLIC_CHALLENGES)
+            binding.publicChallengeCheckBox.setOnCheckedChangeListener { button, _ ->
+                shareChallengeToPublicDb = button.isChecked
+            }
+        else
+            binding.publicChallengeCheckBox.visibility = View.GONE
+
+        binding.discardButton.setOnClickListener {
+            showDiscardAlertDialog()
+        }
 
         //solving the Google Maps touch error caused by ScrollView
         binding.transparentImageView.setOnTouchListener(object : View.OnTouchListener {
@@ -311,7 +325,17 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     }
 
     private fun uploadChallengeToPublicDb() {
-        // TODO: not implemented
+
+        if (!shareChallengeToPublicDb || !AppConfig.PUBLIC_CHALLENGES) return // the user unchecked the sharing checkbox
+
+        // starting the public challenge uploader worker that does the validation and the upload
+        FirebaseManager.mAuth.currentUser?.uid?.let {
+            startPublicChallengeUploader(
+                challenge.id.toInt(),
+                it,
+                this
+            )
+        }
     }
 
     private fun saveChallenge() {
@@ -341,9 +365,9 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
         with(challenge) {
 
-            binding.challengeDetailsDurationTextView.text = DateUtils.formatElapsedTime(dur)
-            binding.challengeDetailsAvgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
-            binding.challengeDetailsDistanceTextView.text = getStringFromNumber(1, dst) + " km"
+            binding.duration.text = DateUtils.formatElapsedTime(dur)
+            binding.avgSpeed.text = getStringFromNumber(1, avg) + " km/h"
+            binding.distance.text = getStringFromNumber(1, dst) + " km"
 
             avgSpeed = this.avg
             binding.challengeDetailsMaxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
@@ -567,7 +591,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     //endregion for testing
 
     companion object {
-        private val TAG = this::class.java.simpleName
+        private const val TAG = "ChallengeDetailsActivity"
         private const val REQUEST = 112
         private const val CHALLENGE_DETAILS = "challengeDetails"
         const val CHALLENGE_ID = "$CHALLENGE_DETAILS.id"

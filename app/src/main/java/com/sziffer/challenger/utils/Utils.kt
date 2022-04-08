@@ -28,7 +28,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
+import com.github.psambit9791.jdsp.signal.Smooth
+import com.google.gson.Gson
 import com.sziffer.challenger.R
+import com.sziffer.challenger.model.challenge.Challenge
 import com.sziffer.challenger.model.challenge.ChallengeType
 import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.model.challenge.PublicRouteItem
@@ -39,6 +42,7 @@ import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 
@@ -307,6 +311,58 @@ fun updateRefreshDate(type: UpdateTypes, context: Context) {
     }
 }
 
+fun calculateElevations(route: List<MyLocation>): Pair<Int, Int> {
+
+    val doubleList = route.map { it.altitude }
+    val elevationArray = doubleList.toDoubleArray()
+    var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
+    if (windowSize > Constants.MAX_WINDOW_SIZE)
+        windowSize = Constants.MAX_WINDOW_SIZE
+    Log.d("ELEVATION", "the calculated window size is: $windowSize")
+    val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
+    val filteredElevation = s1.smoothSignal()
+    var elevGain = 0.0
+    var elevLoss = 0.0
+    for (i in 0..filteredElevation.size - 2) {
+        if (filteredElevation[i] < filteredElevation[i + 1]) {
+            elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
+        } else {
+            elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+        }
+    }
+    route[filteredElevation.size - 1].altitude =
+        filteredElevation.last()
+
+    return Pair(elevGain.roundToInt(), elevLoss.roundToInt())
+}
+
+fun calculateElevations(challenge: Challenge): Pair<Int, Int> {
+    val route: ArrayList<MyLocation> = Gson().fromJson(
+        challenge.routeAsString,
+        Constants.typeJson
+    )
+    val doubleList = route.map { it.altitude }
+    val elevationArray = doubleList.toDoubleArray()
+    var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
+    if (windowSize > Constants.MAX_WINDOW_SIZE)
+        windowSize = Constants.MAX_WINDOW_SIZE
+    Log.d("ELEVATION", "the calculated window size is: $windowSize")
+    val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
+    val filteredElevation = s1.smoothSignal()
+    var elevGain = 0.0
+    var elevLoss = 0.0
+    for (i in 0..filteredElevation.size - 2) {
+        if (filteredElevation[i] < filteredElevation[i + 1]) {
+            elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
+        } else {
+            elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+        }
+    }
+    route[filteredElevation.size - 1].altitude =
+        filteredElevation.last()
+
+    return Pair(elevGain.roundToInt(), elevLoss.roundToInt())
+}
 
 fun showDialog(
     title: String,
@@ -338,7 +394,6 @@ fun showDialog(
         alertDialog.dismiss()
     }
 }
-
 
 
 fun getMapBitmapFromInternalStorage(firebaseId: String, context: Context): Bitmap? {

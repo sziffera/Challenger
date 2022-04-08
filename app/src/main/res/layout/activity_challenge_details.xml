@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".ui.ChallengeDetailsActivity"
-    android:background="@drawable/gradient_background"
+    android:background="@color/colorDarkBlue"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -66,15 +66,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="20dp"
-                android:background="@drawable/round_16dp"
                 android:gravity="center"
                 android:hint="@string/add_a_name"
                 android:inputType="text"
                 android:padding="10dp"
                 android:layout_marginBottom="16dp"
                 android:text=""
-                android:textColor="@color/colorDarkBlue"
-                android:textColorHint="@color/colorDarkBlue" />
+                android:textColor="@android:color/white"
+                android:textColorHint="#4DFFFFFF" />
 
             <Button
                 android:visibility="gone"
@@ -107,111 +106,145 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginVertical="12dp"
+                android:layout_marginTop="6dp"
+                android:checked="true"
                 android:gravity="center"
-                android:text="Public challenge" />
+                android:text="Upload activity to public challenges" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/round_16dp"
+                android:backgroundTint="@color/colorDarkerBlue"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/distance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="15km"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/distance"
+                        android:textAllCaps="true"
+                        android:textSize="8sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+
+                    <TextView
+                        android:id="@+id/duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1:15:25"
+                        android:textSize="14sp" />
+
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/duration"
+                        android:textAllCaps="true"
+                        android:textSize="8sp" />
+
+                </LinearLayout>
+
+
+                <ImageView
+                    android:id="@+id/challengeTypeImageView"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginHorizontal="4dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/cycling"
+                    app:tint="@color/colorMinus" />
+
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+
+                    <TextView
+                        android:id="@+id/avgSpeed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="25km/h"
+                        android:textSize="14sp" />
+
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/avgspeed"
+                        android:textAllCaps="true"
+                        android:textSize="8sp" />
+
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+
+                    <TextView
+                        android:id="@+id/elevationGainedTv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="125m"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/elevation"
+                        android:textAllCaps="true"
+                        android:textSize="8sp" />
+
+                </LinearLayout>
+
+
+            </LinearLayout>
 
 
             <androidx.gridlayout.widget.GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginHorizontal="12dp"
                 android:background="@drawable/round_16dp"
-                android:backgroundTint="@color/colorDarkBlue"
+                android:backgroundTint="@color/colorPrimaryDark"
                 android:padding="10dp"
                 app:columnCount="2"
                 app:rowCount="9">
 
-
-                <TextView
-                    android:id="@+id/challengeDetailsDistanceTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="3dp"
-                    android:gravity="fill"
-                    android:text="@string/_0_0_km"
-                    android:textAllCaps="true"
-                    android:textSize="15sp"
-                    app:layout_column="1"
-                    app:layout_columnWeight="1"
-                    app:layout_gravity="right"
-                    app:layout_row="0"
-                    app:layout_rowWeight="1" />
-
-                <TextView
-                    android:id="@+id/textview6"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="3dp"
-                    android:gravity="fill"
-                    android:text="@string/distance"
-                    android:textAllCaps="true"
-                    android:textSize="15sp"
-                    app:layout_column="0"
-                    app:layout_columnWeight="1"
-                    app:layout_gravity="center|left"
-                    app:layout_row="0"
-                    app:layout_rowWeight="1" />
-
-                <TextView
-                    android:id="@+id/challengeDetailsDurationTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="3dp"
-                    android:gravity="fill"
-                    android:text="@string/_00_00"
-                    android:textAllCaps="true"
-                    android:textSize="15sp"
-                    app:layout_column="1"
-                    app:layout_columnWeight="1"
-                    app:layout_gravity="right"
-                    app:layout_row="1"
-                    app:layout_rowWeight="1" />
-
-                <TextView
-                    android:id="@+id/textView4"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="3dp"
-                    android:gravity="fill"
-                    android:text="@string/duration"
-                    android:textAllCaps="true"
-                    android:textSize="15sp"
-                    app:layout_column="0"
-                    app:layout_columnWeight="1"
-                    app:layout_gravity="center|left"
-                    app:layout_row="1"
-                    app:layout_rowWeight="1" />
-
-                <TextView
-                    android:id="@+id/challengeDetailsAvgSpeedTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="3dp"
-                    android:gravity="fill"
-                    android:text="@string/_0_0_km_h"
-                    android:textAllCaps="true"
-                    android:textSize="15sp"
-                    app:layout_column="1"
-                    app:layout_columnWeight="1"
-                    app:layout_gravity="right"
-                    app:layout_row="2"
-                    app:layout_rowWeight="1" />
-
-                <TextView
-                    android:id="@+id/textView6"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="3dp"
-                    android:gravity="fill"
-                    android:text="@string/avgspeed"
-                    android:textAllCaps="true"
-                    android:textSize="15sp"
-                    app:layout_column="0"
-                    app:layout_columnWeight="1"
-                    app:layout_gravity="center|left"
-                    app:layout_row="2"
-                    app:layout_rowWeight="1" />
 
                 <TextView
                     android:id="@+id/challengeDetailsMaxSpeedTextView"
@@ -274,36 +307,7 @@
                     app:layout_row="4"
                     app:layout_rowWeight="1" />
 
-                <TextView
 
-                    android:id="@+id/elevationGainedTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="3dp"
-                    android:gravity="fill"
-                    android:text="@string/_0_00_min_km"
-                    android:textAllCaps="true"
-                    android:textSize="15sp"
-                    app:layout_column="1"
-                    app:layout_columnWeight="1"
-                    app:layout_gravity="right"
-                    app:layout_row="5"
-                    app:layout_rowWeight="1" />
-
-                <TextView
-
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="3dp"
-                    android:gravity="fill"
-                    android:text="@string/elevation_gained"
-                    android:textAllCaps="true"
-                    android:textSize="15sp"
-                    app:layout_column="0"
-                    app:layout_columnWeight="1"
-                    app:layout_gravity="center|left"
-                    app:layout_row="5"
-                    app:layout_rowWeight="1" />
 
                 <TextView
 
@@ -404,15 +408,15 @@
 
             <Button
                 android:id="@+id/showChartsButton"
+                style="?android:attr/borderlessButtonStyle"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="36dp"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="6dp"
-                style="?android:attr/borderlessButtonStyle"
                 android:background="@drawable/round_16dp"
                 android:text="@string/show_charts"
-                android:textColor="@color/colorAccent" />
+                android:textColor="@color/colorDarkerBlue" />
 
 
         </LinearLayout>
@@ -431,7 +435,7 @@
             android:id="@+id/discardButton"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content"
+            android:layout_height="36dp"
             android:background="@drawable/round_16dp"
             android:text="@string/discard"
             style="?android:attr/borderlessButtonStyle"
@@ -446,11 +450,11 @@
             android:id="@+id/saveChallengeInDetailsButton"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content"
+            android:layout_height="36dp"
             android:background="@drawable/round_16dp"
             android:text="@string/save"
             style="?android:attr/borderlessButtonStyle"
-            android:textColor="@color/colorAccent" />
+            android:textColor="@color/colorDarkerBlue" />
 
     </LinearLayout>
 </LinearLayout>
