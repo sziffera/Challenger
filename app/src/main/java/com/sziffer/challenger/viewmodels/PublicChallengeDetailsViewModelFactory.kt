@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.sziffer.challenger.database.PublicChallengesRepository
 
 class PublicChallengeDetailsViewModelFactory() : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return modelClass.getConstructor(PublicChallengesRepository::class.java)
             .newInstance(PublicChallengesRepository())
     }

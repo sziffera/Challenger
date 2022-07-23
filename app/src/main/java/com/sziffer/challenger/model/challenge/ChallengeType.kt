@@ -10,6 +10,11 @@ enum class ChallengeType {
         override fun drawableName(): String {
             return "cycling"
         }
+    },
+    ANY {
+        override fun drawableName(): String {
+            return "any" // unused
+        }
     };
 
     abstract fun drawableName(): String

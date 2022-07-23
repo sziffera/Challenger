@@ -58,6 +58,8 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
     ): View {
         // Inflate the layout for this fragment
 
+        //showing loading UI
+
         _binding = FragmentFeedBinding.inflate(layoutInflater, container, false)
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.setHasFixedSize(true)
@@ -84,6 +86,7 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
                 if (it.isEmpty()) return@observe
                 swipeRefreshLayout.visibility = View.VISIBLE
                 emptyViewLinearLayout.visibility = View.GONE
+                bikeLoadingAnimationView.visibility = View.GONE
                 with(recyclerView) {
                     challengeAdapter = ChallengeRecyclerViewAdapter(it, requireContext())
                     adapter = challengeAdapter

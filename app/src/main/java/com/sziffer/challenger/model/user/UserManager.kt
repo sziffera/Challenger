@@ -2,6 +2,9 @@ package com.sziffer.challenger.model.user
 
 import android.content.Context
 import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.sziffer.challenger.model.challenge.ChallengeType
 
 class UserManager(
     private val context: Context
@@ -213,6 +216,20 @@ class UserManager(
             field = value
         }
 
+    var routesFilterChallengeType: ChallengeType = ChallengeType.ANY
+        get() {
+            val stringValue = sharedPreferences.getString(KEY_FILTER_CHALLENGE_TYPE, null)
+            val typeJson = object : TypeToken<ChallengeType>() {}.type
+            return Gson().fromJson(stringValue, typeJson)
+        }
+        set(value) {
+            with(sharedPreferences.edit()) {
+                putString(KEY_FILTER_CHALLENGE_TYPE, Gson().toJson(value))
+                apply()
+            }
+            field = value
+        }
+
     companion object {
         private const val NAME = "UserManager"
         private const val KEY_USER = "$NAME.user"
@@ -233,5 +250,6 @@ class UserManager(
         private const val KEY_UV_ALERT = "$NAME.uvAlert"
         private const val KEY_WIND_ALERT = "$NAME.windAlert"
         private const val KEY_WALKTHROUGH_SEEN = "$NAME.walkthroughSeen"
+        private const val KEY_FILTER_CHALLENGE_TYPE = "$NAME.challengeTypeFilter"
     }
 }

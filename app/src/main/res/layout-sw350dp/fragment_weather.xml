@@ -317,6 +317,24 @@
 
             </LinearLayout>
 
+
+            <TextView
+                android:id="@+id/chanceOfWithinOneHourTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:visibility="gone"
+                android:textSize="15sp"
+                android:text="@string/minutelyPrecipitation" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/minutelyPrecipitationLineChart"
+                android:layout_width="match_parent"
+                android:visibility="gone"
+                android:layout_height="150dp" />
+
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -327,6 +345,7 @@
                 android:text="@string/next_48_hours"
                 android:textAllCaps="true"
                 android:textSize="15sp" />
+
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/weatherForecastRecyclerView"

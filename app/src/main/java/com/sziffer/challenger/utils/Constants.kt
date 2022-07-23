@@ -1,6 +1,7 @@
 package com.sziffer.challenger.utils
 
 import com.google.gson.reflect.TypeToken
+import com.sziffer.challenger.AppConfig
 import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.model.challenge.PublicChallengeHash
 import com.sziffer.challenger.model.challenge.PublicRouteItem
@@ -25,7 +26,8 @@ object Constants {
 
     object PublicChallenge {
         const val RADIUS_UPLOAD_NEARBY = 5000.0 // in metres
-        const val RADIUS_NEARBY_CHALLENGES = 150000.0 // in metres
+        val RADIUS_NEARBY_CHALLENGES = if (AppConfig.TESTING) 150000.0 else 15000.0 // in metres
+        const val DISTANCE_FILTER_MAX = 150 // in km
     }
 
     object Database {

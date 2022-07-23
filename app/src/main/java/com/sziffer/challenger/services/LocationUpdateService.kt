@@ -35,7 +35,6 @@ import com.sziffer.challenger.utils.requestingLocationUpdates
 import com.sziffer.challenger.utils.setRequestingLocationUpdates
 import com.welie.blessed.*
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.absoluteValue
 
 
@@ -179,7 +178,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
                 Log.i(TAG, "location callback new location")
-                onNewLocation(locationResult.lastLocation)
+                locationResult.lastLocation?.let { onNewLocation(it) }
             }
         }
 
@@ -196,7 +195,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         val mChannel = NotificationChannel(
             CHANNEL_ID,
             name,
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_DEFAULT
         )
         mChannel.lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
         mChannel.setShowBadge(true)
@@ -373,7 +372,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         try {
             mFusedLocationClient!!.requestLocationUpdates(
                 mLocationRequest,
-                mLocationCallback, Looper.myLooper()!!
+                mLocationCallback, Looper.getMainLooper()
             )
             Log.i(TAG, "location request done")
         } catch (unlikely: SecurityException) {
@@ -551,10 +550,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                         if (utteranceId == TTS_ID) {
                             played = true
                             Log.i(TAG, "TTS finished")
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                audioManager.abandonAudioFocusRequest(audioFocusRequest)
-                            } else
-                                audioManager.abandonAudioFocus(this@LocationUpdatesService)
+                            audioManager.abandonAudioFocusRequest(audioFocusRequest)
                         }
                     }
 
@@ -717,10 +713,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                 if (textToSpeech.isSpeaking) {
                     played = false
                     textToSpeech.stop()
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        audioManager.abandonAudioFocusRequest(audioFocusRequest)
-                    } else
-                        audioManager.abandonAudioFocus(this)
+                    audioManager.abandonAudioFocusRequest(audioFocusRequest)
                 }
 
             }
@@ -734,15 +727,8 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         if (!ChallengeRecorderActivity.isVoiceCoachEnabled)
             return
 
-        val focusRequest: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val focusRequest: Int =
             audioManager.requestAudioFocus(audioFocusRequest)
-        } else {
-            audioManager.requestAudioFocus(
-                this,
-                AudioManager.STREAM_NOTIFICATION,
-                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
-            )
-        }
 
         val map = HashMap<String, String>()
         map[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = TTS_ID

@@ -10,10 +10,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.IFillFormatter
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.sziffer.challenger.R
 import com.sziffer.challenger.adapters.WeatherForecastRecyclerViewAdapter
 import com.sziffer.challenger.databinding.FragmentWeatherBinding
@@ -25,6 +32,7 @@ import com.sziffer.challenger.viewmodels.MainViewModel
 import com.sziffer.challenger.viewmodels.NearbyChallengesViewModelFactory
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 
 class WeatherFragment : Fragment(), NetworkStateListener {
@@ -44,7 +52,7 @@ class WeatherFragment : Fragment(), NetworkStateListener {
         viewModel = ViewModelProvider(
             requireActivity(),
             NearbyChallengesViewModelFactory()
-        ).get(MainViewModel::class.java)
+        )[MainViewModel::class.java]
 
         connectivityManager = requireActivity().getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
@@ -55,10 +63,10 @@ class WeatherFragment : Fragment(), NetworkStateListener {
 
         Log.d("WEATHER", "oncreate")
 
-        viewModel.weatherLiveData.observe(this, {
+        viewModel.weatherLiveData.observe(this) {
             Log.d("VIEW_MODEL_OBSERVER", "CALLED")
             setWeather(it)
-        })
+        }
     }
 
     override fun onCreateView(
@@ -92,6 +100,8 @@ class WeatherFragment : Fragment(), NetworkStateListener {
 
     @SuppressLint("SetTextI18n")
     private fun setWeather(weatherData: OneCallWeather) {
+
+        checkPrecipitation(weatherData)
 
         binding.weatherForecastLinearLayout
             .animate()
@@ -160,6 +170,15 @@ class WeatherFragment : Fragment(), NetworkStateListener {
         //setOneHourPrecipitation(weatherData.minutely)
     }
 
+    private fun checkPrecipitation(weatherData: OneCallWeather) {
+        // precipitation in the next hour
+        if (weatherData.minutely.any { it.precipitation > 0 }) {
+            binding.minutelyPrecipitationLineChart.visibility = View.VISIBLE
+            binding.chanceOfWithinOneHourTextView.visibility = View.VISIBLE
+            setUpPrecipitationChart(weatherData.minutely)
+        }
+    }
+
     private fun setWeatherAlert(alerts: ArrayList<AlertData>) {
         if (alerts.isEmpty()) {
             binding.weatherAlertLinearLayout?.visibility = View.GONE
@@ -175,21 +194,98 @@ class WeatherFragment : Fragment(), NetworkStateListener {
     }
 
 
-    private fun setOneHourPrecipitation(minutely: ArrayList<MinuteData>) {
+    // region precipitation chart
 
-        //TODO(not implemented)
-        var shouldShowForecast: Boolean = false
+    private fun setUpPrecipitationChart(minutelyData: ArrayList<MinuteData>) {
+        initLineCharts(binding.minutelyPrecipitationLineChart)
+        val entries = ArrayList<Entry>()
 
-        for (minuteData in minutely) {
-            if (minuteData.precipitation > 0) {
-                shouldShowForecast = true
-                break
-            }
+        minutelyData.forEachIndexed { index, minuteData ->
+            entries.add(
+                Entry(
+                    (index + 1).toFloat(),
+                    minuteData.precipitation.times(100).roundToInt().toFloat()
+                )
+            )
         }
-        if (!shouldShowForecast)
-            return
 
+        addDataToChart(
+            entries,
+            binding.minutelyPrecipitationLineChart,
+            getString(R.string.elevation),
+            ContextCompat.getColor(requireContext(), R.color.colorPlus),
+            ContextCompat.getColor(requireContext(), R.color.colorMinus)
+        )
     }
+
+
+    private fun initLineCharts(lineChart: LineChart) {
+        with(lineChart) {
+            isDragEnabled = false
+            setPinchZoom(false)
+            setTouchEnabled(false)
+            extraBottomOffset = -50f
+            legend.textColor = ContextCompat.getColor(context, android.R.color.white)
+            description.isEnabled = false
+            xAxis.apply {
+                //enableAxisLineDashedLine(10f, 10f, 0f)
+                axisMinimum = 0f
+                textColor = ContextCompat.getColor(context, android.R.color.white)
+                mAxisMaximum = 60f
+            }
+            axisRight.isEnabled = false
+            animateX(2000)
+        }
+    }
+
+    private fun addDataToChart(
+        entries: ArrayList<Entry>,
+        lineChart: LineChart,
+        title: String,
+        lineColor: Int,
+        chartFillColor: Int
+    ) {
+
+        val max = entries.maxOf { it.y } + 10f
+
+        lineChart.axisLeft.apply {
+            textColor =
+                ContextCompat.getColor(requireContext(), android.R.color.white)
+            enableAxisLineDashedLine(10f, 10f, 0f)
+            axisMaximum = max
+        }
+        lineChart.setVisibleYRange(max, max, lineChart.axisLeft.axisDependency)
+
+        val set: LineDataSet
+
+        if (lineChart.data != null && lineChart.data.dataSetCount > 0) {
+            set = lineChart.data.getDataSetByIndex(0) as LineDataSet
+            set.values = entries
+            set.notifyDataSetChanged()
+            lineChart.data.notifyDataChanged()
+            lineChart.notifyDataSetChanged()
+        } else {
+            set = LineDataSet(entries, title)
+            with(set) {
+                setDrawIcons(false)
+                color = lineColor
+                lineWidth = 2f
+                setDrawValues(false)
+                setDrawCircles(false)
+                setDrawFilled(true)
+                fillColor = chartFillColor
+                fillFormatter =
+                    IFillFormatter { _, _ -> lineChart.axisLeft.mAxisMinimum }
+
+            }
+            val dataSets: ArrayList<ILineDataSet> = ArrayList()
+            dataSets.add(set)
+            val data = LineData(dataSets)
+            lineChart.data = data
+        }
+    }
+
+    // endregion
 
     override fun noInternetConnection() {
         requireActivity().runOnUiThread {

@@ -35,10 +35,10 @@ import com.sziffer.challenger.model.challenge.RecordingType
 import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.ui.*
 import com.sziffer.challenger.ui.user.UserSettingsActivity
-import com.sziffer.challenger.utils.*
+import com.sziffer.challenger.utils.WEATHER_KEY
+import com.sziffer.challenger.utils.locationPermissionCheck
+import com.sziffer.challenger.utils.locationPermissionRequest
 import com.sziffer.challenger.viewmodels.MainViewModel
-import okhttp3.*
-import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -72,13 +72,13 @@ class MainActivity : AppCompatActivity() {
 //        }
 
 
-        viewModel.isTrainingLiveData.observe(this, { isTraining ->
+        viewModel.isTrainingLiveData.observe(this) { isTraining ->
             if (isTraining) {
                 binding.recordTextView.text = "Start"
             } else {
                 binding.recordTextView.text = getString(R.string.record)
             }
-        })
+        }
 
         //setProfilePhoto()
 
@@ -265,7 +265,7 @@ class MainActivity : AppCompatActivity() {
         }
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
-                fetchWeatherData(p0.lastLocation)
+                p0.lastLocation?.let { fetchWeatherData(it) }
             }
         }
         fusedLocationProviderClient.requestLocationUpdates(

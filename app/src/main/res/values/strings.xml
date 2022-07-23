@@ -288,6 +288,11 @@
         <item>Uphill routes</item>
     </string-array>
 
+
     <string name="mapbox_access_token" translatable="false">pk.eyJ1Ijoic3ppZmZlcmEiLCJhIjoiY2tubHd6a3dlMG13dDJvbjB1cDk0Z3lqciJ9.pFSPVz4-icft9PBQpIG6pw</string>
+    <string name="title_activity_nearby_challenge_browser">ActivityNearbyChallengeBrowser</string>
+    <string name="filter">Filter</string>
+    <string name="apply">Apply</string>
+    <string name="minutelyPrecipitation">Chance of rain within 1 hour</string>
 
 </resources>

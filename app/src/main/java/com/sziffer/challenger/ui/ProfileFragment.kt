@@ -38,7 +38,7 @@ class ProfileFragment : Fragment() {
         viewModel = ViewModelProvider(
             requireActivity(),
             NearbyChallengesViewModelFactory()
-        ).get(MainViewModel::class.java)
+        )[MainViewModel::class.java]
     }
 
     @SuppressLint("SetTextI18n")
@@ -60,12 +60,12 @@ class ProfileFragment : Fragment() {
             }
         }
 
-        viewModel.profilePhotoUriLiveData.observe(viewLifecycleOwner, {
+        viewModel.profilePhotoUriLiveData.observe(viewLifecycleOwner) {
             binding.profileImageView.visibility = View.VISIBLE
             Picasso.get().load(it).into(binding.profileImageView)
-        })
+        }
 
-        viewModel.statisticsLiveData.observe(viewLifecycleOwner, {
+        viewModel.statisticsLiveData.observe(viewLifecycleOwner) {
             val cyclingStatistics = it[STAT_CYCLING_INDEX]
             val runningStatistics = it[STAT_RUNNING_INDEX]
 
@@ -93,7 +93,7 @@ class ProfileFragment : Fragment() {
                 binding.runningThisYearTextView.text = getStringFromNumber(1, thisYear) + " km"
             }
 
-        })
+        }
 
         with(binding) {
             bodyFatCalculatorButton.setOnClickListener {

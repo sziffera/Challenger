@@ -31,7 +31,7 @@ class WeatherForecastRecyclerViewAdapter(
         val windSpeed: TextView = itemView.findViewById(R.id.forecastWindSpeedTextView)
         val date: TextView = itemView.findViewById(R.id.forecastDateTextView)
         val weatherImageView: ImageView = itemView.findViewById(R.id.weatherImageView)
-        val popTextView: TextView = itemView.findViewById(R.id.chanceOfRainTextView)
+        val precipitationTextView: TextView = itemView.findViewById(R.id.chanceOfRainTextView)
         //val description: TextView = itemView.findViewById(R.id.forecastWeatherDescriptionTextView)
     }
 
@@ -45,19 +45,19 @@ class WeatherForecastRecyclerViewAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val data = weatherData[position]
+        val weatherDataItem = weatherData[position]
         with(holder) {
-            degrees.text = "${getStringFromNumber(0, data.temp)}°"
-            windSpeed.text = "${getStringFromNumber(0, data.wind_speed.times(3.6))} km/h"
-            popTextView.text = data.pop.popToPercent()
+            degrees.text = "${getStringFromNumber(0, weatherDataItem.temp)}°"
+            windSpeed.text = "${getStringFromNumber(0, weatherDataItem.wind_speed.times(3.6))} km/h"
+            precipitationTextView.text = weatherDataItem.pop.popToPercent()
             //description.text = data.weather[0].description
-            val tempTime = data.dt.times(1000)
+            val tempTime = weatherDataItem.dt.times(1000)
             val time = Date(tempTime)
             val dateFormat = SimpleDateFormat("HH:mm");
             date.text = dateFormat.format(time)
-            windImageView.rotation = (-90f + data.wind_deg).toFloat()
-            setBeaufortWindColor(data.wind_speed.times(3.6).toInt(), windImageView)
-            setWeatherIcon(data.weather[0].id, weatherImageView, context, false)
+            windImageView.rotation = (-90f + weatherDataItem.wind_deg).toFloat()
+            setBeaufortWindColor(weatherDataItem.wind_speed.times(3.6).toInt(), windImageView)
+            setWeatherIcon(weatherDataItem.weather[0].id, weatherImageView, context, false)
         }
     }
 
