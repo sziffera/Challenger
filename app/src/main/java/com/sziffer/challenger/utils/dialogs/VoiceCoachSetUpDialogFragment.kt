@@ -13,7 +13,7 @@ class VoiceCoachSetUpDialogFragment : DialogFragment() {
             val builder = AlertDialog.Builder(it)
             builder.setTitle(R.string.choose_an_item)
                 .setItems(R.array.voice_coach_items,
-                    DialogInterface.OnClickListener { dialog, which ->
+                    DialogInterface.OnClickListener { _, _ ->
                         // The 'which' argument contains the index position
                         // of the selected item
                     })

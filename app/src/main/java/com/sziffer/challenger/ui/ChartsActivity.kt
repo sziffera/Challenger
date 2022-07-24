@@ -19,14 +19,13 @@ import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.IFillFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
-import com.github.psambit9791.jdsp.signal.Smooth
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityChartsBinding
-import com.sziffer.challenger.model.HeartRateZones
-import com.sziffer.challenger.model.MyLocation
+import com.sziffer.challenger.model.challenge.MyLocation
+import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.utils.extensions.dp
 import com.sziffer.challenger.utils.extensions.toPace
 import com.sziffer.challenger.utils.getStringFromNumber
@@ -37,8 +36,8 @@ import kotlin.collections.ArrayList
 
 class ChartsActivity : AppCompatActivity() {
 
-    private var elevationGain = 0.0
-    private var elevationLoss = 0.0
+    private var elevationGain = 0
+    private var elevationLoss = 0
 
     private var maxHr = 0
     private var avgHr = 0
@@ -92,8 +91,8 @@ class ChartsActivity : AppCompatActivity() {
 
         avgSpeed = intent.getDoubleExtra(AVG_SPEED, 0.0)
 
-        elevationGain = intent.getDoubleExtra(ELEVATION_GAIN, 0.0)
-        elevationLoss = intent.getDoubleExtra(ELEVATION_LOSS, 0.0)
+        elevationGain = challenge?.elevGain ?: 0
+        elevationLoss = challenge?.elevLoss ?: 0
 
         avgHr = intent.getIntExtra(AVG_HR, 0)
         maxHr = intent.getIntExtra(MAX_HR, 0)
@@ -146,7 +145,7 @@ class ChartsActivity : AppCompatActivity() {
         binding.speedLineChart.axisLeft.addLimitLine(limitLine)
 
         if (showHr) {
-            setHeartRateZonesData(challengeData)
+            setHeartRateZonesData()
         }
         setUpLineCharts(showHr, challengeData)
     }
@@ -185,7 +184,7 @@ class ChartsActivity : AppCompatActivity() {
         startActivity(Intent.createChooser(intent, getString(R.string.share_challenge)))
     }
 
-    private fun setHeartRateZonesData(challengeData: ArrayList<MyLocation>) {
+    private fun setHeartRateZonesData() {
 
 
         val data = ArrayList<PieEntry>().apply {
@@ -236,7 +235,6 @@ class ChartsActivity : AppCompatActivity() {
             legend.isWordWrapEnabled = true
             this.data.setDrawValues(true)
             setDrawEntryLabels(false)
-            setDrawSliceText(false)
             holeRadius = 0f
             transparentCircleRadius = 0f
             legend.textColor = Color.WHITE
@@ -253,12 +251,6 @@ class ChartsActivity : AppCompatActivity() {
         executor.execute {
 
 
-            val elevationData = challengeData.map { it.altitude }.toDoubleArray()
-            val mode = "triangular"
-            val windowSize = 11
-            val s1 = Smooth(elevationData, windowSize, mode)
-            val filteredElevation = s1.smoothSignal()
-
             val elevationEntries = ArrayList<Entry>()
             val speedEntries = ArrayList<Entry>()
             val hrEntries = ArrayList<Entry>()
@@ -270,7 +262,7 @@ class ChartsActivity : AppCompatActivity() {
 
             val paceChartLabels = ArrayList<String>(paces.size)
 
-            for (i in filteredElevation!!.indices) {
+            for (i in challengeData.indices) {
 
                 if (challengeData[i].distance - lastSavedMetres > 1000) {
                     kmCounter++
@@ -289,7 +281,7 @@ class ChartsActivity : AppCompatActivity() {
                 elevationEntries.add(
                     Entry(
                         challengeData[i].distance,
-                        filteredElevation[i].toFloat()
+                        challengeData[i].altitude.toFloat()
                     )
                 )
                 speedEntries.add(
@@ -309,7 +301,7 @@ class ChartsActivity : AppCompatActivity() {
 
             handler.post {
 
-                setUpPaceBarChart(paces, paceChartLabels)
+                setUpPaceBarChart(paces)
 
 
                 addDataToChart(
@@ -340,7 +332,7 @@ class ChartsActivity : AppCompatActivity() {
         }
     }
 
-    private fun setUpPaceBarChart(paces: ArrayList<BarEntry>, paceLabels: ArrayList<String>) {
+    private fun setUpPaceBarChart(paces: ArrayList<BarEntry>) {
 
         binding.paceHorizontalBarChart.apply {
             layoutParams = LinearLayout.LayoutParams(

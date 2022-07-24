@@ -4,7 +4,8 @@ import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
@@ -22,58 +23,57 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.github.psambit9791.jdsp.signal.Smooth
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.mapbox.geojson.Feature
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.exceptions.InvalidLatLngBoundsException
-import com.mapbox.mapboxsdk.geometry.LatLng
-import com.mapbox.mapboxsdk.geometry.LatLngBounds
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.snapshotter.MapSnapshotter
-import com.mapbox.mapboxsdk.style.layers.LineLayer
-import com.mapbox.mapboxsdk.style.layers.Property
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+import com.mapbox.maps.EdgeInsets
+import com.mapbox.maps.Style
+import com.mapbox.maps.extension.style.layers.generated.lineLayer
+import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
+import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
+import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
+import com.mapbox.maps.extension.style.style
+import com.mapbox.maps.plugin.animation.MapAnimationOptions
+import com.mapbox.maps.plugin.animation.flyTo
+import com.sziffer.challenger.AppConfig
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityChallengeDetailsBinding
-import com.sziffer.challenger.model.Challenge
-import com.sziffer.challenger.model.ChallengeDetailsViewModel
-import com.sziffer.challenger.model.HeartRateZones
-import com.sziffer.challenger.model.MyLocation
+import com.sziffer.challenger.model.challenge.Challenge
+import com.sziffer.challenger.model.challenge.ChallengeUpdateType
+import com.sziffer.challenger.model.challenge.MyLocation
+import com.sziffer.challenger.model.challenge.RecordingType
+import com.sziffer.challenger.model.heartrate.HeartRateZones
 import com.sziffer.challenger.sync.KEY_UPLOAD
+import com.sziffer.challenger.sync.startPublicChallengeUploader
 import com.sziffer.challenger.sync.updateSharedPrefForSync
-import com.sziffer.challenger.utils.*
-import java.io.*
+import com.sziffer.challenger.utils.calculateElevations
+import com.sziffer.challenger.utils.getStringFromNumber
+import com.sziffer.challenger.utils.locationPermissionCheck
+import com.sziffer.challenger.utils.locationPermissionRequest
+import java.io.OutputStream
+import java.io.OutputStreamWriter
 import java.util.*
 import java.util.concurrent.Executors
-import kotlin.collections.ArrayList
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 
 class ChallengeDetailsActivity : AppCompatActivity() {
 
     //private lateinit var mMap: GoogleMap
 
-    private var mapBox: MapboxMap? = null
-    private var snapshotter: MapSnapshotter? = null
+    //private var mapBox: MapboxMap? = null
+
 
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var challenge: Challenge
     private var previousChallenge: Challenge? = null
+    private var shareChallengeToPublicDb = false
 
     private var route: ArrayList<MyLocation>? = null
-    private var elevGain = 0.0
-    private var elevLoss = 0.0
     private var sharingImageBitmap: Bitmap? = null
-    private var update: Boolean = false
-    private var isItAChallenge: Boolean = false
     private var avgSpeed: Double = 0.0
     private var maxHr = -1
     private var avgHr = -1
@@ -88,18 +88,9 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Mapbox.getInstance(this, MAPBOX_ACCESS_TOKEN)
-
         binding = ActivityChallengeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.challengeDetailsMap.onCreate(savedInstanceState)
-        binding.challengeDetailsMap.getMapAsync { mapboxMap ->
-            this.mapBox = mapboxMap
-            mapBox!!.setStyle(Style.OUTDOORS) {
-                runProcessThread(it)
-            }
-        }
 
         setSupportActionBar(binding.challengeDetailsToolbar)
 
@@ -112,18 +103,28 @@ class ChallengeDetailsActivity : AppCompatActivity() {
         val id = intent.getLongExtra(CHALLENGE_ID, 0)
         challenge = dbHelper.getChallenge(id.toInt())!!
 
-        Log.i("CHALLENGE DETAILS", challenge.toString())
+        Log.d(TAG, challenge.toString())
 
 
-        isItAChallenge = intent.getBooleanExtra(IS_IT_A_CHALLENGE, false).also {
-            Log.i(TAG, "$IS_IT_A_CHALLENGE is $it")
-        }
-        update = intent.getBooleanExtra(UPDATE, false).also {
-            Log.i(TAG, "$UPDATE is $it")
-        }
-
-        binding.discardButton.setOnClickListener {
-            showDiscardAlertDialog()
+        if (challenge.elevGain == 0) {
+            // the challenge was recorded long time ago without elevation data
+            val elevation = calculateElevations(challenge)
+            binding.elevationGainedTv.text = elevation.first.toString() + " m"
+            binding.elevationLostTextView.text = elevation.second.toString() + " m"
+            challenge.elevGain = elevation.first
+            challenge.elevLoss = elevation.second
+            ChallengeDbHelper(this).apply {
+                // updating the challenge in db to avoid future elevation processing
+                updateChallenge(challenge.id.toInt(), challenge)
+                // updating the challenge in firebase as well
+                updateSharedPrefForSync(
+                    this@ChallengeDetailsActivity, challenge.firebaseId,
+                    KEY_UPLOAD
+                )
+            }
+        } else {
+            binding.elevationGainedTv.text = challenge.elevGain.toString() + " m"
+            binding.elevationLostTextView.text = challenge.elevLoss.toString() + " m"
         }
 
         //can be null
@@ -143,8 +144,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                 Intent(this, ChartsActivity::class.java)
                     .putExtra(ChartsActivity.CHALLENGE_ID, id)
                     .putExtra(ChartsActivity.AVG_SPEED, challenge.avg)
-                    .putExtra(ChartsActivity.ELEVATION_GAIN, elevGain)
-                    .putExtra(ChartsActivity.ELEVATION_LOSS, elevLoss)
+                    .putExtra(ChartsActivity.ELEVATION_GAIN, challenge.elevGain)
+                    .putExtra(ChartsActivity.ELEVATION_LOSS, challenge.elevLoss)
                     .putExtra(ChartsActivity.SHOW_HR, maxHr > 0)
                     .putExtra(ChartsActivity.HEART_RATE_ZONES, heartRateZones)
                     .putExtra(ChartsActivity.MAX_HR, maxHr)
@@ -176,9 +177,11 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
         } //just for testing and car analysis for my brother
 
-        when {
-            //the user chose a Challenge to do it better, and wants to start recording
-            isItAChallenge -> {
+        when (intent.getSerializableExtra(UPDATE_TYPE) as ChallengeUpdateType) {
+            // the user chose a Challenge to do it better, and wants to start recording
+            ChallengeUpdateType.VIEW_CHALLENGE -> {
+                // user just views this challenge, hiding checkbox
+                binding.publicChallengeCheckBox.visibility = View.GONE
                 binding.discardButton.visibility = View.GONE
                 binding.buttonDivSpace.visibility = View.GONE
                 binding.saveChallengeInDetailsButton.text =
@@ -190,27 +193,60 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                         locationPermissionRequest(this, this)
                 }
                 binding.challengeDetailsNameEditText.visibility = View.GONE
-                supportActionBar?.title = challenge.name.capitalize(Locale.ROOT)
+                supportActionBar?.title = challenge.name.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(
+                        Locale.ROOT
+                    ) else it.toString()
+                }
 
             }
-            //the user finished recording a challenged activity, update data with new values
-            update -> {
+            // the user finished recording a challenged activity, update data with new values
+            ChallengeUpdateType.LOCAL_CHALLENGE_FINISHED -> {
+                // the user can share this challenge with others, so enabling checkbox
+                binding.publicChallengeCheckBox.visibility = View.VISIBLE
                 binding.saveChallengeInDetailsButton.text = getString(R.string.update_challenge)
                 binding.challengeDetailsNameEditText.visibility = View.GONE
-                supportActionBar?.title = previousChallenge?.name?.capitalize(Locale.ROOT)
+                supportActionBar?.title = previousChallenge?.name?.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(
+                        Locale.ROOT
+                    ) else it.toString()
+                }
 
                 binding.saveChallengeInDetailsButton.setOnClickListener {
+                    uploadChallengeToPublicDb()
                     updateChallenge()
                 }
             }
-            //this is just a normal recorded challenge
-            else -> {
+            // the user finished a public challenge
+            ChallengeUpdateType.PUBLIC_CHALLENGE_FINISHED -> {
+                // the challenge has already been shared, no need to show checkbox
+                binding.publicChallengeCheckBox.visibility = View.GONE
+                binding.saveChallengeInDetailsButton.setOnClickListener {
+                    saveChallenge()
+                    uploadChallengeToPublicDb()
+                }
+            }
+            // this is just a normal recorded challenge
+            ChallengeUpdateType.NORMAL_RECORDING_FINISHED -> {
+                // the user can share this challenge with others, so enabling checkbox
+                binding.publicChallengeCheckBox.visibility = View.VISIBLE
                 binding.saveChallengeInDetailsButton.setOnClickListener {
                     saveChallenge()
                 }
             }
         }
         initVariables()
+
+        if (AppConfig.PUBLIC_CHALLENGES)
+            binding.publicChallengeCheckBox.setOnCheckedChangeListener { button, _ ->
+                shareChallengeToPublicDb = button.isChecked
+            }
+        else
+            binding.publicChallengeCheckBox.visibility = View.GONE
+
+        binding.discardButton.setOnClickListener {
+            showDiscardAlertDialog()
+        }
 
         //solving the Google Maps touch error caused by ScrollView
         binding.transparentImageView.setOnTouchListener(object : View.OnTouchListener {
@@ -248,31 +284,8 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             )
         }
 
-    }
+        runProcessThread()
 
-    override fun onStart() {
-        super.onStart()
-        binding.challengeDetailsMap.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        binding.challengeDetailsMap.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        binding.challengeDetailsMap.onPause()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        binding.challengeDetailsMap.onDestroy()
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        binding.challengeDetailsMap.onLowMemory()
     }
 
 
@@ -282,7 +295,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
     private fun startChallenge() {
         val intent = Intent(this, ChallengeRecorderActivity::class.java)
-        intent.putExtra(ChallengeRecorderActivity.CHALLENGE, true)
+        intent.putExtra(ChallengeRecorderActivity.RECORDING_TYPE, RecordingType.LOCAL_CHALLENGE)
         intent.putExtra(ChallengeRecorderActivity.RECORDED_CHALLENGE_ID, challenge.id.toInt())
         dbHelper.close()
         startActivity(intent)
@@ -309,6 +322,20 @@ class ChallengeDetailsActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.cant_save), Toast.LENGTH_LONG).show()
         }
         startMainActivity()
+    }
+
+    private fun uploadChallengeToPublicDb() {
+
+        if (!shareChallengeToPublicDb || !AppConfig.PUBLIC_CHALLENGES) return // the user unchecked the sharing checkbox
+
+        // starting the public challenge uploader worker that does the validation and the upload
+        FirebaseManager.mAuth.currentUser?.uid?.let {
+            startPublicChallengeUploader(
+                challenge.id.toInt(),
+                it,
+                this
+            )
+        }
     }
 
     private fun saveChallenge() {
@@ -338,9 +365,9 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
         with(challenge) {
 
-            binding.challengeDetailsDurationTextView.text = DateUtils.formatElapsedTime(dur)
-            binding.challengeDetailsAvgSpeedTextView.text = getStringFromNumber(1, avg) + " km/h"
-            binding.challengeDetailsDistanceTextView.text = getStringFromNumber(1, dst) + " km"
+            binding.duration.text = DateUtils.formatElapsedTime(dur)
+            binding.avgSpeed.text = getStringFromNumber(1, avg) + " km/h"
+            binding.distance.text = getStringFromNumber(1, dst) + " km"
 
             avgSpeed = this.avg
             binding.challengeDetailsMaxSpeedTextView.text = getStringFromNumber(1, mS) + " km/h"
@@ -401,7 +428,7 @@ class ChallengeDetailsActivity : AppCompatActivity() {
      * alos filter calculates the elevation data
      * - the filtering will be remooved as soon as the method is final, will be moved to the saving part
      **/
-    private fun runProcessThread(style: Style) {
+    private fun runProcessThread() {
         val executor = Executors.newSingleThreadExecutor()
         val handler = Handler(Looper.getMainLooper())
 
@@ -409,33 +436,22 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
             val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
             route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
-            val elevationArray = DoubleArray(route!!.size)
             val points = ArrayList<Point>()
-            val latLngBoundsBuilder = LatLngBounds.Builder()
 
-
-            var hrSum = 0
+            var hrSum: Int
             var hr = false
             if (route?.get(0)?.hr == -1) {
-                for ((index, i) in route!!.withIndex()) {
-                    elevationArray[index] = i.altitude
+                for (i in route!!) {
                     points.add(
                         Point.fromLngLat(
                             i.latLng.longitude, i.latLng.latitude, i.altitude
-                        )
-                    )
-                    latLngBoundsBuilder.include(
-                        LatLng(
-                            i.latLng.latitude,
-                            i.latLng.longitude,
-                            i.altitude
                         )
                     )
                 }
             } else {
                 heartRateZones = HeartRateZones()
                 hr = true
-                for ((index, myLocation) in route!!.withIndex()) {
+                for (myLocation in route!!) {
 
                     when (myLocation.hr) {
                         in 0..97 -> heartRateZones!!.relaxed++
@@ -446,13 +462,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                         else -> heartRateZones!!.vo2Max++
                     }
 
-                    latLngBoundsBuilder.include(
-                        LatLng(
-                            myLocation.latLng.latitude,
-                            myLocation.latLng.longitude,
-                            myLocation.altitude
-                        )
-                    )
                     points.add(
                         Point.fromLngLat(
                             myLocation.latLng.longitude,
@@ -460,7 +469,6 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                             myLocation.altitude
                         )
                     )
-                    elevationArray[index] = myLocation.altitude
                 }
 
                 heartRateZones!!.apply {
@@ -480,65 +488,39 @@ class ChallengeDetailsActivity : AppCompatActivity() {
                 avgHr = hrSum.div(route!!.size)
             }
 
-            if (elevationArray.size > Constants.MIN_ROUTE_SIZE) {
-
-
-                var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
-                if (windowSize > Constants.MAX_WINDOW_SIZE)
-                    windowSize = Constants.MAX_WINDOW_SIZE
-                Log.d("ELEVATION", "the calculated window size is: $windowSize")
-                val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
-                val filteredElevation = s1.smoothSignal()
-
-                for (i in 0..filteredElevation.size - 2) {
-                    if (filteredElevation[i] < filteredElevation[i + 1]) {
-                        elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
-                    } else {
-                        elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
-                    }
-                }
-            }
-
-
             handler.post {
                 val lineString: LineString = LineString.fromLngLats(points)
                 val feature = Feature.fromGeometry(lineString)
-                val geoJsonSource = GeoJsonSource("geojson-source", feature)
-                val lineLayer = LineLayer("linelayer", "geojson-source").withProperties(
-                    PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
-                    PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
-                    PropertyFactory.lineOpacity(1f),
-                    PropertyFactory.lineWidth(4f),
-                    PropertyFactory.lineColor(
-                        resources.getColor(
-                            R.color.colorPrimaryDark,
-                            null
+
+
+                binding.challengeDetailsMap.getMapboxMap().apply {
+                    loadStyle(style(styleUri = Style.OUTDOORS) {
+                        +geoJsonSource(id = "geojson-source") {
+                            feature(feature)
+                        }
+                        +lineLayer("linelayer", "geojson-source") {
+                            lineCap(LineCap.ROUND)
+                            lineJoin(LineJoin.MITER)
+                            lineOpacity(1.0)
+                            lineWidth(4.0)
+                            lineColor(
+                                resources.getColor(
+                                    R.color.colorPrimaryDark,
+                                    null
+                                )
+                            )
+                        }
+
+                    })
+                    this.addOnStyleLoadedListener {
+                        val cameraPosition = cameraForCoordinates(
+                            points, EdgeInsets(50.0, 50.0, 50.0, 50.0)
                         )
-                    )
-                )
-
-
-                style.addSource(geoJsonSource)
-                style.addLayer(lineLayer)
-
-                try {
-                    mapBox?.animateCamera(
-                        com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(
-                            latLngBoundsBuilder.build(),
-                            100
-                        ), 2000
-                    )
-                } catch (e: InvalidLatLngBoundsException) {
-                    e.printStackTrace()
+                        flyTo(cameraPosition, MapAnimationOptions.mapAnimationOptions {
+                            duration(5000)
+                        })
+                    }
                 }
-
-                binding.elevationGainedTextView.text = getStringFromNumber(0, elevGain) + " m"
-                binding.elevationLostTextView.text = getStringFromNumber(0, elevLoss) + " m"
-
-                ChallengeDetailsViewModel.shared.setElevationData(
-                    elevGain.roundToInt(),
-                    elevLoss.roundToInt()
-                )
 
                 if (hr) {
                     binding.apply {
@@ -559,6 +541,18 @@ class ChallengeDetailsActivity : AppCompatActivity() {
 
 
     //region for testing
+
+
+    private fun writeToFile(data: String) {
+
+        val outputStreamWriter =
+            OutputStreamWriter(openFileOutput("hash.json", Context.MODE_PRIVATE))
+        outputStreamWriter.write(data)
+        outputStreamWriter.flush()
+        outputStreamWriter.close()
+
+    }
+
     private fun writeToFile(testArray: DoubleArray) {
         val outputStreamWriter =
             OutputStreamWriter(openFileOutput("altitude_original.txt", Context.MODE_PRIVATE))
@@ -597,12 +591,11 @@ class ChallengeDetailsActivity : AppCompatActivity() {
     //endregion for testing
 
     companion object {
-        private val TAG = this::class.java.simpleName
+        private const val TAG = "ChallengeDetailsActivity"
         private const val REQUEST = 112
         private const val CHALLENGE_DETAILS = "challengeDetails"
         const val CHALLENGE_ID = "$CHALLENGE_DETAILS.id"
-        const val IS_IT_A_CHALLENGE = "$CHALLENGE_DETAILS.isChallenge"
-        const val UPDATE = "$CHALLENGE_DETAILS.update"
+        const val UPDATE_TYPE = "com.sziffer.challenger.challengeUpdateType"
         const val PREVIOUS_CHALLENGE_ID = "$CHALLENGE_DETAILS.previousChallengeId"
     }
 }

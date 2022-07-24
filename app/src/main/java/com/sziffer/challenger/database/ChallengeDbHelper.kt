@@ -5,9 +5,10 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
-import com.sziffer.challenger.model.Challenge
+import androidx.preference.PreferenceManager
+import com.sziffer.challenger.model.challenge.Challenge
 
-class ChallengeDbHelper(context: Context) :
+class ChallengeDbHelper(val context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -21,13 +22,51 @@ class ChallengeDbHelper(context: Context) :
                 "$KEY_MAX_SPEED TEXT," +
                 "$KEY_AVG_SPEED TEXT," +
                 "$KEY_DURATION TEXT," +
+                "$KEY_ELEVATION_GAIN," +
+                "$KEY_ELEVATION_LOSS," +
                 "$KEY_STRING_ROUTE TEXT)"
         db.execSQL(createTable)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS $DATABASE_NAME")
-        onCreate(db)
+
+        if (oldVersion == 2 && newVersion == 3) {
+
+            db.execSQL("ALTER TABLE $DATABASE_NAME ADD COLUMN $KEY_ELEVATION_GAIN TEXT")
+            db.execSQL("ALTER TABLE $DATABASE_NAME ADD COLUMN $KEY_ELEVATION_LOSS TEXT")
+            db.execSQL("UPDATE $DATABASE_NAME SET $KEY_ELEVATION_GAIN = 0")
+            db.execSQL("UPDATE $DATABASE_NAME SET $KEY_ELEVATION_LOSS = 0")
+
+//        val challenges = getAllChallenges()
+//        val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+//        for (challenge in challenges) {
+//            val route = Gson().fromJson<ArrayList<MyLocation>>(challenge.routeAsString, typeJson)
+//            val elevationArray = DoubleArray(route!!.size)
+//            var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
+//            if (windowSize > Constants.MAX_WINDOW_SIZE)
+//                windowSize = Constants.MAX_WINDOW_SIZE
+//            Log.d("ELEVATION", "the calculated window size is: $windowSize")
+//            val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
+//            val filteredElevation = s1.smoothSignal()
+//            var elevGain = 0.0
+//            var elevLoss = 0.0
+//            for (i in 0..filteredElevation.size - 2) {
+//                if (filteredElevation[i] < filteredElevation[i + 1])
+//                    elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
+//                else elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+//            }
+//            challenge.elevGain = elevGain.roundToInt()
+//            challenge.elevLoss = elevLoss.roundToInt()
+//            updateChallenge(challenge.id.toInt(), challenge)
+//        }
+//
+            val sharedPref = PreferenceManager.getDefaultSharedPreferences(context)
+            sharedPref.edit()
+                .putBoolean(KEY_MIGRATION_DONE, true)
+                .apply()
+        } else {
+            //todo
+        }
     }
 
     fun addChallenge(challenge: Challenge): Long {
@@ -43,6 +82,8 @@ class ChallengeDbHelper(context: Context) :
             put(KEY_AVG_SPEED, challenge.avg)
             put(KEY_MAX_SPEED, challenge.mS)
             put(KEY_STRING_ROUTE, challenge.routeAsString)
+            put(KEY_ELEVATION_GAIN, challenge.elevGain)
+            put(KEY_ELEVATION_LOSS, challenge.elevLoss)
         }
         Log.i(TAG, "Challenge wiht id ${challenge.id} was added")
         return db.insert(DATABASE_NAME, null, contentValues)
@@ -67,7 +108,9 @@ class ChallengeDbHelper(context: Context) :
                         getDouble(getColumnIndex(KEY_MAX_SPEED)),
                         getDouble(getColumnIndex(KEY_AVG_SPEED)),
                         getLong(getColumnIndex(KEY_DURATION)),
-                        getString(getColumnIndex(KEY_STRING_ROUTE))
+                        getString(getColumnIndex(KEY_STRING_ROUTE)),
+                        getInt(getColumnIndex(KEY_ELEVATION_GAIN)),
+                        getInt(getColumnIndex(KEY_ELEVATION_LOSS))
                     )
                 }
                 challenges.add(challenge)
@@ -93,7 +136,9 @@ class ChallengeDbHelper(context: Context) :
                 KEY_DISTANCE,
                 KEY_MAX_SPEED,
                 KEY_AVG_SPEED,
-                KEY_STRING_ROUTE
+                KEY_STRING_ROUTE,
+                KEY_ELEVATION_GAIN,
+                KEY_ELEVATION_LOSS
             ),
             "$KEY_ID=?",
             arrayOf(
@@ -116,7 +161,9 @@ class ChallengeDbHelper(context: Context) :
                     getDouble(getColumnIndex(KEY_MAX_SPEED)),
                     getDouble(getColumnIndex(KEY_AVG_SPEED)),
                     getLong(getColumnIndex(KEY_DURATION)),
-                    getString(getColumnIndex(KEY_STRING_ROUTE))
+                    getString(getColumnIndex(KEY_STRING_ROUTE)),
+                    getInt(getColumnIndex(KEY_ELEVATION_GAIN)),
+                    getInt(getColumnIndex(KEY_ELEVATION_LOSS))
                 )
             }
         }
@@ -136,6 +183,8 @@ class ChallengeDbHelper(context: Context) :
             put(KEY_AVG_SPEED, challenge.avg)
             put(KEY_MAX_SPEED, challenge.mS)
             put(KEY_STRING_ROUTE, challenge.routeAsString)
+            put(KEY_ELEVATION_GAIN, challenge.elevGain)
+            put(KEY_ELEVATION_LOSS, challenge.elevLoss)
         }
         Log.i(TAG, "challenge with id: $id was updated")
         return db.update(DATABASE_NAME, contentValues, "$KEY_ID = ?", arrayOf(id.toString()))
@@ -156,7 +205,9 @@ class ChallengeDbHelper(context: Context) :
                 KEY_DISTANCE,
                 KEY_MAX_SPEED,
                 KEY_AVG_SPEED,
-                KEY_STRING_ROUTE
+                KEY_STRING_ROUTE,
+                KEY_ELEVATION_GAIN,
+                KEY_ELEVATION_LOSS
             ),
             "$KEY_FIREBASE_ID=?",
             arrayOf(
@@ -179,7 +230,9 @@ class ChallengeDbHelper(context: Context) :
                     getDouble(getColumnIndex(KEY_MAX_SPEED)),
                     getDouble(getColumnIndex(KEY_AVG_SPEED)),
                     getLong(getColumnIndex(KEY_DURATION)),
-                    getString(getColumnIndex(KEY_STRING_ROUTE))
+                    getString(getColumnIndex(KEY_STRING_ROUTE)),
+                    getInt(getColumnIndex(KEY_ELEVATION_GAIN)),
+                    getInt(getColumnIndex(KEY_ELEVATION_LOSS))
                 )
             }
         }
@@ -210,7 +263,8 @@ class ChallengeDbHelper(context: Context) :
 
     companion object {
         private const val TAG = "ChallengeDbHelper"
-        const val DATABASE_VERSION = 2
+        const val KEY_MIGRATION_DONE = "com.sziffer.challenger.Migration"
+        const val DATABASE_VERSION = 3
         const val DATABASE_NAME = "MyChallenges"
         const val KEY_ID = "challengeId"
         const val KEY_NAME = "challengeName"
@@ -224,7 +278,5 @@ class ChallengeDbHelper(context: Context) :
         const val KEY_DATE = "date"
         const val KEY_FIREBASE_ID = "firebaseId"
         const val KEY_TYPE = "type"
-        const val KEY_HEART_RATE = "heartRate"
-        const val KEY_CADENCE = "cadence"
     }
 }

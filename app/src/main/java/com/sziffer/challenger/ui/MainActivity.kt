@@ -31,14 +31,14 @@ import com.squareup.picasso.Picasso
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.ActivityMainBinding
-import com.sziffer.challenger.model.ActivityMainViewModel
-import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.model.challenge.RecordingType
+import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.ui.*
 import com.sziffer.challenger.ui.user.UserSettingsActivity
-import com.sziffer.challenger.ui.weather.WeatherFragment
-import com.sziffer.challenger.utils.*
-import okhttp3.*
-import java.util.*
+import com.sziffer.challenger.utils.WEATHER_KEY
+import com.sziffer.challenger.utils.locationPermissionCheck
+import com.sziffer.challenger.utils.locationPermissionRequest
+import com.sziffer.challenger.viewmodels.MainViewModel
 
 
 class MainActivity : AppCompatActivity() {
@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var userManager: UserManager
 
-    private val viewModel: ActivityMainViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels()
 
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -58,16 +58,27 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         userManager = UserManager(this)
 
+        // if the db upgrade is done, but the data not processed yet
+//        if (PreferenceManager.getDefaultSharedPreferences(this)
+//                .getBoolean(ChallengeDbHelper.KEY_MIGRATION_DONE, false) && !isDatabaseUpgradeDone(
+//                this
+//            )
+//        ) {
+//            startActivity(Intent(this, DatabaseUpgradeActivity::class.java))
+//            this.finish()
+//        }
 
-        viewModel.isTrainingLiveData.observe(this, { isTraining ->
+
+        viewModel.isTrainingLiveData.observe(this) { isTraining ->
             if (isTraining) {
                 binding.recordTextView.text = "Start"
             } else {
                 binding.recordTextView.text = getString(R.string.record)
             }
-        })
+        }
 
         //setProfilePhoto()
 
@@ -125,7 +136,7 @@ class MainActivity : AppCompatActivity() {
 
                 val startRecordingIntent =
                     Intent(this, ChallengeRecorderActivity::class.java).apply {
-                        putExtra(ChallengeRecorderActivity.CREATED_CHALLENGE_INTENT, true)
+                        putExtra(ChallengeRecorderActivity.RECORDING_TYPE, RecordingType.TRAINING)
                         putExtra(ChallengeRecorderActivity.AVG_SPEED, viewModel.avgSpeed.value)
                         putExtra(ChallengeRecorderActivity.DISTANCE, viewModel.distance.value)
                         putExtra(
@@ -151,6 +162,10 @@ class MainActivity : AppCompatActivity() {
                         putExtra(
                             ChallengeRecorderActivity.SHOW_WIND_ALERT,
                             viewModel.shouldShowWindAlert
+                        )
+                        putExtra(
+                            ChallengeRecorderActivity.RECORDING_TYPE,
+                            RecordingType.NORMAL_RECORDING
                         )
                     }
                 )
@@ -250,7 +265,7 @@ class MainActivity : AppCompatActivity() {
         }
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
-                fetchWeatherData(p0.lastLocation)
+                p0.lastLocation?.let { fetchWeatherData(it) }
             }
         }
         fusedLocationProviderClient.requestLocationUpdates(

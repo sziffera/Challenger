@@ -15,7 +15,7 @@
         android:layout_weight="1"
         android:layout_marginBottom="5dp">
 
-        <com.mapbox.mapboxsdk.maps.MapView
+        <com.mapbox.maps.MapView
             android:id="@+id/mapbox"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />

@@ -26,11 +26,15 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
+import com.github.psambit9791.jdsp.signal.Smooth
+import com.google.gson.Gson
 import com.sziffer.challenger.R
-import com.sziffer.challenger.model.MyLocation
+import com.sziffer.challenger.model.challenge.Challenge
+import com.sziffer.challenger.model.challenge.ChallengeType
+import com.sziffer.challenger.model.challenge.MyLocation
+import com.sziffer.challenger.model.challenge.PublicRouteItem
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -38,9 +42,21 @@ import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.collections.ArrayList
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 
+fun getDrawable(challengeType: ChallengeType, context: Context): Drawable? {
+    return ContextCompat.getDrawable(
+        context, context.resources.getIdentifier(
+            challengeType.drawableName(),
+            "drawable",
+            context.packageName
+        )
+    )
+}
+
+// TODO: its leaking memory
 fun crossfade(image: ImageView, layers: ArrayList<Drawable?>, speedInMs: Int, context: Context) {
     class BackgroundGradientThread(var mainContext: Context) : Runnable {
         var crossFader: TransitionDrawable? = null
@@ -97,21 +113,26 @@ fun crossfade(image: ImageView, layers: ArrayList<Drawable?>, speedInMs: Int, co
 const val KEY_REQUESTING_LOCATION_UPDATES = "requestingLocationUpdates"
 
 fun requestingLocationUpdates(context: Context?): Boolean {
-    return PreferenceManager.getDefaultSharedPreferences(context)
-        .getBoolean(KEY_REQUESTING_LOCATION_UPDATES, false)
+    return context?.let {
+        PreferenceManager.getDefaultSharedPreferences(it)
+            .getBoolean(KEY_REQUESTING_LOCATION_UPDATES, false)
+    } == true
 }
 
 fun setRequestingLocationUpdates(
     context: Context?,
     requestingLocationUpdates: Boolean
 ) {
-    PreferenceManager.getDefaultSharedPreferences(context)
-        .edit()
-        .putBoolean(KEY_REQUESTING_LOCATION_UPDATES, requestingLocationUpdates)
-        .apply()
+    if (context != null) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .edit()
+            .putBoolean(KEY_REQUESTING_LOCATION_UPDATES, requestingLocationUpdates)
+            .apply()
+    }
 }
 
 fun getStringFromNumber(floatingPoint: Int, value: Number): String {
+    if (value is Int) return value.toString()
     return "%.${floatingPoint}f".format(value)
 }
 
@@ -126,15 +147,6 @@ fun isAirplaneModeOn(context: Context): Boolean {
     ) != 0
 }
 
-fun zoomAndRouteCreator(locations: ArrayList<MyLocation>): Pair<LatLngBounds, ArrayList<LatLng>> {
-    val latLng: ArrayList<LatLng> = ArrayList()
-    val builder = LatLngBounds.builder()
-    for (item in locations) {
-        builder.include(item.latLng)
-        latLng.add(item.latLng)
-    }
-    return Pair(builder.build(), latLng)
-}
 
 fun takeScreenshot(view: View): Bitmap {
     val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
@@ -219,7 +231,42 @@ fun sameYear(date: Date): Boolean {
 }
 
 enum class UpdateTypes {
-    WEATHER, DATA_SYNC
+    WEATHER, DATA_SYNC, PUBLIC_CHALLENGE
+}
+
+fun isDatabaseUpgradeDone(context: Context) =
+    PreferenceManager.getDefaultSharedPreferences(context).getBoolean(
+        KEY_DATABASE_UPGRADE, false
+    )
+
+fun databaseUpgradeDone(context: Context) =
+    PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(
+        KEY_DATABASE_UPGRADE, true
+    ).apply()
+
+fun reduceArrayLength(
+    route: ArrayList<MyLocation>,
+    distanceInMetres: Double,
+    accuracyInMetres: Int = 30
+): ArrayList<PublicRouteItem> {
+
+    var filter = distanceInMetres / accuracyInMetres
+    if (filter > 1200) filter = 1200.0
+
+    filter = route.size.toDouble() / filter
+    val filterInt = if (filter.roundToInt() == 0) 1 else filter.roundToInt()
+    val filtered = route.filterIndexed { index, _ ->
+        (index % filterInt == 0 || index == route.size - 1)
+    } as ArrayList<MyLocation>
+    Log.d("UTILS", "the filtered public challenge route length is: ${filtered.count()}")
+    return filtered.map {
+        PublicRouteItem(
+            it.latLng,
+            it.time,
+            it.distance,
+            it.altitude.roundToInt()
+        )
+    } as ArrayList<PublicRouteItem>
 }
 
 @SuppressLint("SimpleDateFormat")
@@ -230,11 +277,9 @@ fun shouldRefreshDataSet(type: UpdateTypes, minutes: Int, context: Context): Boo
         Context.MODE_PRIVATE
     )
 
-    val lastRefreshString = if (type == UpdateTypes.DATA_SYNC) lastRefreshSharedPreferences
-        .getString(LAST_REFRESH_TIME_SYNC, null)
-    else
-        lastRefreshSharedPreferences
-            .getString(LAST_REFRESH_TIME_WEATHER, null)
+    val lastRefreshString = lastRefreshSharedPreferences
+        .getString(type.name, null)
+
 
     return if (lastRefreshString == null)
         true
@@ -247,7 +292,7 @@ fun shouldRefreshDataSet(type: UpdateTypes, minutes: Int, context: Context): Boo
             .div(1000).also {
                 Log.i("MAIN", "$it is the difference")
             }
-        difference > minutes * 10
+        difference > minutes
     }
 }
 
@@ -261,22 +306,70 @@ fun updateRefreshDate(type: UpdateTypes, context: Context) {
     val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
     val currentDate: String = current.format(formatter)
     with(lastRefreshSharedPreferences.edit()) {
-        if (type == UpdateTypes.DATA_SYNC)
-            putString(LAST_REFRESH_TIME_SYNC, currentDate)
-        else
-            putString(LAST_REFRESH_TIME_WEATHER, currentDate)
+        putString(type.name, currentDate)
         apply()
     }
 }
 
+fun calculateElevations(route: List<MyLocation>): Pair<Int, Int> {
+
+    val doubleList = route.map { it.altitude }
+    val elevationArray = doubleList.toDoubleArray()
+    var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
+    if (windowSize > Constants.MAX_WINDOW_SIZE)
+        windowSize = Constants.MAX_WINDOW_SIZE
+    Log.d("ELEVATION", "the calculated window size is: $windowSize")
+    val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
+    val filteredElevation = s1.smoothSignal()
+    var elevGain = 0.0
+    var elevLoss = 0.0
+    for (i in 0..filteredElevation.size - 2) {
+        if (filteredElevation[i] < filteredElevation[i + 1]) {
+            elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
+        } else {
+            elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+        }
+    }
+    route[filteredElevation.size - 1].altitude =
+        filteredElevation.last()
+
+    return Pair(elevGain.roundToInt(), elevLoss.roundToInt())
+}
+
+fun calculateElevations(challenge: Challenge): Pair<Int, Int> {
+    val route: ArrayList<MyLocation> = Gson().fromJson(
+        challenge.routeAsString,
+        Constants.typeJson
+    )
+    val doubleList = route.map { it.altitude }
+    val elevationArray = doubleList.toDoubleArray()
+    var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
+    if (windowSize > Constants.MAX_WINDOW_SIZE)
+        windowSize = Constants.MAX_WINDOW_SIZE
+    Log.d("ELEVATION", "the calculated window size is: $windowSize")
+    val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
+    val filteredElevation = s1.smoothSignal()
+    var elevGain = 0.0
+    var elevLoss = 0.0
+    for (i in 0..filteredElevation.size - 2) {
+        if (filteredElevation[i] < filteredElevation[i + 1]) {
+            elevGain += abs(filteredElevation[i] - filteredElevation[i + 1])
+        } else {
+            elevLoss += abs(filteredElevation[i] - filteredElevation[i + 1])
+        }
+    }
+    route[filteredElevation.size - 1].altitude =
+        filteredElevation.last()
+
+    return Pair(elevGain.roundToInt(), elevLoss.roundToInt())
+}
 
 fun showDialog(
     title: String,
     text: String,
     buttonText: String,
     context: Context,
-    layoutInflater: LayoutInflater,
-    drawable: Drawable
+    layoutInflater: LayoutInflater
 ) {
 
     Log.d("UTILS", "Dialog called")
@@ -302,9 +395,6 @@ fun showDialog(
     }
 }
 
-fun getColorForBPM(hr: Int) {
-
-}
 
 fun getMapBitmapFromInternalStorage(firebaseId: String, context: Context): Bitmap? {
     return try {
@@ -320,4 +410,5 @@ fun getMapBitmapFromInternalStorage(firebaseId: String, context: Context): Bitma
 private const val LAST_REFRESH = "Utils.LastRefresh"
 private const val LAST_REFRESH_TIME_SYNC = "time"
 private const val LAST_REFRESH_TIME_WEATHER = "weatherTime"
+private const val KEY_DATABASE_UPGRADE = "com.sziffer.challenger.dbUpgrade"
 

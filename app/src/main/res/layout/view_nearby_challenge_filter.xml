@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardCornerRadius="8dp"
+    android:backgroundTint="@android:color/white"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/dialogImageView"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:layout_marginTop="24dp"
+            android:layout_gravity="center"
+            android:src="@drawable/choose"
+            app:tint="@color/colorStop" />
+
+        <TextView
+            android:id="@+id/dialogTitleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Filter results"
+            style="@style/Headline4"
+            android:layout_marginBottom="12dp"
+            android:textColor="@color/colorDarkBlue"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:layout_marginTop="0dp" />
+
+        <View
+            android:id="@+id/divider13"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="24dp"
+            android:background="?android:attr/listDivider"
+            android:backgroundTint="@color/colorDarkerBlue" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:layout_marginHorizontal="12dp"
+            android:layout_height="wrap_content">
+
+            <CheckBox
+                android:id="@+id/cyclingCheckbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:drawableStart="@drawable/cycling_small"
+                android:layout_gravity="center"
+                android:drawableTint="@color/colorDarkBlue"
+                android:textAllCaps="true"
+                android:textColor="@color/colorDarkBlue"
+                android:text="@string/cycling" />
+
+            <CheckBox
+                android:textAllCaps="true"
+                android:id="@+id/runningCheckbox"
+                android:drawableStart="@drawable/running_small"
+                android:drawableTint="@color/colorDarkBlue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:layout_gravity="center"
+                android:textColor="@color/colorDarkBlue"
+                android:text="@string/running" />
+
+        </LinearLayout>
+
+
+        <View
+            android:id="@+id/divider14"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="24dp"
+            android:background="?android:attr/listDivider"
+            android:backgroundTint="@color/colorDarkerBlue" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="12dp"
+            android:text="@string/distance"
+            android:textColor="@color/colorDarkBlue" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/filterDistanceStartKmTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textAllCaps="true"
+                android:textSize="10sp"
+                android:fontFamily="@font/segoe_ui_bold"
+                android:textColor="@color/colorDarkBlue"
+                android:text="0 km" />
+
+            <com.google.android.material.slider.RangeSlider
+                android:id="@+id/rangeSlider"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="12dp"
+                android:layout_height="wrap_content"
+                android:valueFrom="0"
+                android:valueTo="150"
+                android:stepSize="1"
+                style="@style/SliderStyle"
+                app:values="@array/initial_slider_values" />
+
+            <TextView
+                android:id="@+id/filterDistanceEndKmTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textAllCaps="true"
+                android:textSize="10sp"
+                android:fontFamily="@font/segoe_ui_bold"
+                android:textColor="@color/colorDarkBlue"
+                android:text="150+ km" />
+        </LinearLayout>
+
+
+        <View
+            android:id="@+id/divider15"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="24dp"
+            android:background="?android:attr/listDivider"
+            android:backgroundTint="@color/colorDarkerBlue" />
+
+        <LinearLayout
+            android:layout_marginTop="12dp"
+            android:layout_width="match_parent"
+            android:layout_marginHorizontal="24dp"
+            android:layout_height="wrap_content">
+
+
+            <Button
+                android:id="@+id/dialogCancelButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="32dp"
+                android:text="@string/cancel"
+                android:background="@drawable/round_16dp"
+                android:backgroundTint="@color/colorDarkBlue"
+                android:textColor="@android:color/white"
+                android:layout_marginBottom="16dp" />
+
+            <Space
+                android:id="@+id/dialogButtonSpace"
+                android:layout_width="12dp"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/dialogOkButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="32dp"
+                android:text="@string/apply"
+                android:background="@drawable/round_16dp"
+                android:backgroundTint="@color/colorDarkBlue"
+                android:textColor="@android:color/white"
+                android:layout_marginBottom="16dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

@@ -22,7 +22,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.graphics.scale
-import com.github.psambit9791.jdsp.signal.Smooth
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.mapbox.api.staticmap.v1.MapboxStaticMap
@@ -34,9 +33,8 @@ import com.squareup.picasso.Picasso
 import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.databinding.ActivityShareBinding
-import com.sziffer.challenger.model.Challenge
-import com.sziffer.challenger.model.ChallengeDetailsViewModel
-import com.sziffer.challenger.model.MyLocation
+import com.sziffer.challenger.model.challenge.Challenge
+import com.sziffer.challenger.model.challenge.MyLocation
 import com.sziffer.challenger.utils.*
 import java.io.*
 import java.text.DateFormat
@@ -337,7 +335,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
 
 
         // 62% ELEVATION
-        val elevationText = ChallengeDetailsViewModel.shared.elevationGained.value.toString() + "m"
+        val elevationText = challenge.elevGain.toString() + "m"
         val elevationTextPosition = it.width * 0.62f + textCenteringIconCorrection
         val elevationWidth = textPaint.measureText(elevationText)
         val elevationIcon = ContextCompat.getDrawable(this, R.drawable.mountain)?.apply {
@@ -422,18 +420,10 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
         executor.execute {
 
 
-            val elevationArray = challengeData.map { it.altitude }.toDoubleArray()
-
-            var windowSize = elevationArray.size.div(Constants.WINDOW_SIZE_HELPER)
-            if (windowSize > Constants.MAX_WINDOW_SIZE)
-                windowSize = Constants.MAX_WINDOW_SIZE
-            Log.d("ELEVATION", "the calculated window size is: $windowSize")
-            val s1 = Smooth(elevationArray, windowSize, Constants.SMOOTH_MODE)
-            val filteredElevation = s1.smoothSignal()
 
             handler.post {
                 binding.progressBar.apply {
-                    max = filteredElevation.size
+                    max = challengeData.size
                     progress = 0
                     visibility = View.VISIBLE
                 }
@@ -451,7 +441,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
                 <trkseg>"""
 
             if (challengeData.first().hr == -1) {
-                for (i in filteredElevation.indices) {
+                for (i in challengeData.indices) {
                     segments += """<trkpt lat="${
                         challengeData[i].latLng.latitude
                     }" lon="${challengeData[i].latLng.longitude}"><time>${
@@ -461,14 +451,14 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
                             )
                         )
                     }</time>
-            <ele>${filteredElevation[i]}</ele>
+            <ele>${challengeData[i].altitude}</ele>
             </trkpt>"""
                     handler.post {
                         binding.progressBar.progress = i
                     }
                 }
             } else {
-                for (i in filteredElevation.indices) {
+                for (i in challengeData.indices) {
                     segments += """<trkpt lat="${
                         challengeData[i].latLng.latitude
                     }" lon="${challengeData[i].latLng.longitude}"><time>${
@@ -478,7 +468,7 @@ class ShareActivity : AppCompatActivity(), NetworkStateListener {
                             )
                         )
                     }</time>
-            <ele>${filteredElevation[i]}</ele>
+            <ele>${challengeData[i].altitude}</ele>
             <extensions>
              <gpxtpx:TrackPointExtension>
               <gpxtpx:hr>${challengeData[i].hr}</gpxtpx:hr>

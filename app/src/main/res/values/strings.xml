@@ -261,5 +261,38 @@
     <string name="passwords_not_match">Passwords don\'t match</string>
     <string name="google_sign_in">Google sign in</string>
     <string name="alerts">Alerts</string>
+    <string name="upgrade_description">Your current challenges need some upgrade to show you more precise data, please wait until the process finishes and do not close this screen</string>
+    <string name="upgrade_failed_retry">Upgrade failed - retry</string>
+    <string name="upgrading_challenges">Upgrading challenges</string>
+    <string name="away_from_you">" away from you"</string>
+    <string name="away">away</string>
+    <plurals name="attempt">
+        <item quantity="one">Attempt</item>
+        <item quantity="other">Attempts</item>
+    </plurals>
+    <string name="elevation_profile">Elevation profile</string>
+    <string name="you_are_the_fastest_on_this_route">Hooray, you are the fastest on this route!</string>
+    <string name="come_on_you_can_be_the_fastest_here">Come on, you can be the fastest here!</string>
+    <string name="i_will_do_it_faster">I will do it faster!</string>
+    <string name="i_will_be_the_fastest">I will be the fastest!</string>
+    <string name="nearby_challenges">Nearby challenges</string>
+    <string name="flat_routes">Flat routes</string>
+    <string name="do_it_faster">Do it faster</string>
+    <string name="challenge_do_it_faster">Challenge - do it faster</string>
+
+    <string-array name="challenge_categories">
+        <item>Popular routes</item>
+        <item>Flat routes</item>
+        <item>Hilly routes</item>
+        <item>Downhill routes</item>
+        <item>Uphill routes</item>
+    </string-array>
+
+
+    <string name="mapbox_access_token" translatable="false">pk.eyJ1Ijoic3ppZmZlcmEiLCJhIjoiY2tubHd6a3dlMG13dDJvbjB1cDk0Z3lqciJ9.pFSPVz4-icft9PBQpIG6pw</string>
+    <string name="title_activity_nearby_challenge_browser">ActivityNearbyChallengeBrowser</string>
+    <string name="filter">Filter</string>
+    <string name="apply">Apply</string>
+    <string name="minutelyPrecipitation">Chance of rain within 1 hour</string>
 
 </resources>

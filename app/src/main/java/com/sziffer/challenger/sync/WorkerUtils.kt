@@ -32,11 +32,35 @@ private fun startWorkManager(context: Context) {
     WorkManager.getInstance(context).enqueue(workRequest)
 }
 
+fun startPublicChallengeUploader(
+    challengeId: Int,
+    userId: String,
+    context: Context
+) {
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+    val workRequest = OneTimeWorkRequestBuilder<PublicChallengeUploader>()
+        .setConstraints(constraints)
+        .setInputData(
+            Data.Builder()
+                .putString(PublicChallengeUploader.KEY_USER_ID, userId)
+                .putInt(PublicChallengeUploader.KEY_CHALLENGE_ID, challengeId).build()
+        )
+        .setBackoffCriteria(
+            BackoffPolicy.LINEAR,
+            OneTimeWorkRequest.DEFAULT_BACKOFF_DELAY_MILLIS,
+            TimeUnit.MILLISECONDS
+        )
+        .build()
+    WorkManager.getInstance(context).enqueue(workRequest)
+}
+
+
 fun startDataDownloaderWorkManager(context: Context) {
     Log.i("MAIN", "WM started from MainActivity")
     val constraints = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.CONNECTED)
-        .setRequiresBatteryNotLow(true)
         .build()
 
     val workRequest = OneTimeWorkRequestBuilder<DataDownloaderWorker>()

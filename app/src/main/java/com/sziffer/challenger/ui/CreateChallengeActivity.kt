@@ -2,12 +2,12 @@ package com.sziffer.challenger.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import com.sziffer.challenger.R
 import com.sziffer.challenger.databinding.ActivityCreateChallengeBinding
+import com.sziffer.challenger.model.challenge.RecordingType
 import com.sziffer.challenger.utils.getStringFromNumber
 import java.util.*
 
@@ -34,10 +34,8 @@ class CreateChallengeActivity : AppCompatActivity() {
                 calculateAndSetAvgSpeed()
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                timePicker.hour = 0
-                timePicker.minute = 0
-            }
+            timePicker.hour = 0
+            timePicker.minute = 0
             timePicker.setOnTimeChangedListener { _, hourOfDay, minute ->
                 seconds = hourOfDay.times(3600) + minute.times(60)
                 calculateAndSetAvgSpeed()
@@ -55,7 +53,7 @@ class CreateChallengeActivity : AppCompatActivity() {
             }
             val startRecordingIntent = Intent(this, ChallengeRecorderActivity::class.java)
             with(startRecordingIntent) {
-                putExtra(ChallengeRecorderActivity.CREATED_CHALLENGE_INTENT, true)
+                putExtra(ChallengeRecorderActivity.RECORDING_TYPE, RecordingType.TRAINING)
                 putExtra(ChallengeRecorderActivity.AVG_SPEED, avgSpeed)
                 putExtra(ChallengeRecorderActivity.DISTANCE, distance)
             }
@@ -69,7 +67,7 @@ class CreateChallengeActivity : AppCompatActivity() {
         if (distance != 0 && seconds != 0) {
             avgSpeed = distance.times(3600.0).div(seconds)
             binding.avgSpeedTextView.text =
-                "${getString(R.string.avgspeed).toUpperCase(Locale.ROOT)}:" +
+                "${getString(R.string.avgspeed).uppercase(Locale.ROOT)}:" +
                         " ${getStringFromNumber(1, avgSpeed)}KM/H"
         }
     }

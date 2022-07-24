@@ -1,7 +1,8 @@
 package com.sziffer.challenger.ui
 
 import android.annotation.SuppressLint
-import android.bluetooth.*
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -21,46 +22,40 @@ import android.view.animation.AnimationUtils
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.chip.Chip
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.mapbox.geojson.Feature
-import com.mapbox.geojson.LineString
-import com.mapbox.geojson.Point
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.location.LocationComponent
-import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
-import com.mapbox.mapboxsdk.location.OnCameraTrackingChangedListener
-import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.location.modes.RenderMode
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.style.layers.LineLayer
-import com.mapbox.mapboxsdk.style.layers.Property
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
-import com.sziffer.challenger.LocationUpdatesService
-import com.sziffer.challenger.LocationUpdatesService.LocalBinder
+import com.mapbox.android.gestures.MoveGestureDetector
+import com.mapbox.maps.CameraOptions
+import com.mapbox.maps.Style
+import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
+import com.mapbox.maps.plugin.LocationPuck2D
+import com.mapbox.maps.plugin.gestures.OnMoveListener
+import com.mapbox.maps.plugin.gestures.gestures
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
+import com.mapbox.maps.plugin.locationcomponent.location
 import com.sziffer.challenger.R
 import com.sziffer.challenger.R.*
 import com.sziffer.challenger.database.ChallengeDbHelper
+import com.sziffer.challenger.database.PublicChallengesRepository
 import com.sziffer.challenger.databinding.ActivityChallengeRecorderBinding
-import com.sziffer.challenger.model.Challenge
-import com.sziffer.challenger.model.MyLocation
-import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.model.challenge.*
+import com.sziffer.challenger.model.user.UserManager
+import com.sziffer.challenger.services.LocationUpdatesService
+import com.sziffer.challenger.services.LocationUpdatesService.LocalBinder
 import com.sziffer.challenger.utils.*
 import com.sziffer.challenger.utils.dialogs.CustomListDialog
 import com.sziffer.challenger.utils.dialogs.DataAdapter
-import com.welie.blessed.*
-import java.text.SimpleDateFormat
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.absoluteValue
 
 
@@ -77,8 +72,35 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     private lateinit var dbHelper: ChallengeDbHelper
     private lateinit var userManager: UserManager
 
-    private var mapBox: MapboxMap? = null
-    private var style: Style? = null
+    private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
+        binding.mapbox.getMapboxMap().setCamera(
+            CameraOptions.Builder()
+                .bearing(it)
+                .build()
+        )
+    }
+
+    private val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener {
+        binding.mapbox.getMapboxMap().setCamera(
+            CameraOptions.Builder()
+                .center(it)
+                .zoom(14.0)
+                .build()
+        )
+        binding.mapbox.gestures.focalPoint = binding.mapbox.getMapboxMap().pixelForCoordinate(it)
+    }
+
+    private val onMoveListener = object : OnMoveListener {
+        override fun onMoveBegin(detector: MoveGestureDetector) {
+            onCameraTrackingDismissed()
+        }
+
+        override fun onMove(detector: MoveGestureDetector): Boolean {
+            return false
+        }
+
+        override fun onMoveEnd(detector: MoveGestureDetector) {}
+    }
 
     private lateinit var binding: ActivityChallengeRecorderBinding
 
@@ -108,7 +130,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Mapbox.getInstance(this, MAPBOX_ACCESS_TOKEN)
+
 
         binding = ActivityChallengeRecorderBinding.inflate(layoutInflater)
 
@@ -117,23 +139,20 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
         binding.recenterButton.setOnClickListener {
             binding.recenterButton.visibility = View.INVISIBLE
-            startLocationTracking()
+            initLocationComponent()
+            setupGesturesListener()
         }
 
         setContentView(binding.root)
 
         this.actionBar?.hide()
 
-        binding.mapbox.onCreate(savedInstanceState)
-        binding.mapbox.getMapAsync { mapBox ->
-            this.mapBox = mapBox
-            mapBox.setStyle(Style.OUTDOORS) {
-                styleLoaded(it)
-            }
+        binding.mapbox.getMapboxMap().loadStyleUri(Style.OUTDOORS) {
+            initLocationComponent()
+            setupGesturesListener()
         }
 
         checkOptimization()
-
 
         //setting user preferences based on settings
         userManager = UserManager(this)
@@ -182,10 +201,55 @@ class ChallengeRecorderActivity : AppCompatActivity(),
             }
 
         }
-        createdChallenge = intent.getBooleanExtra(CREATED_CHALLENGE_INTENT, false).also {
-            Log.i(TAG, "$it is the created challenge bool")
-        }
 
+
+        when (intent.getSerializableExtra(RECORDING_TYPE) as RecordingType) {
+            RecordingType.LOCAL_CHALLENGE -> {
+                binding.activityChooserChipGroup.visibility = View.GONE
+                binding.chooseAnActivity.visibility = View.INVISIBLE
+
+                val recordedChallengeId = intent.getIntExtra(RECORDED_CHALLENGE_ID, -1)
+                recordedChallenge = dbHelper.getChallenge(recordedChallengeId)
+
+                val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
+                val route =
+                    Gson().fromJson<ArrayList<RouteItemBase>>(
+                        recordedChallenge!!.routeAsString,
+                        typeJson
+                    )
+                activityType = recordedChallenge?.type
+                LocationUpdatesService.previousChallenge = route
+            }
+            RecordingType.NORMAL_RECORDING -> {
+                this.binding.differenceTextView.visibility = View.GONE
+            }
+            RecordingType.PUBLIC_CHALLENGE -> {
+
+                binding.activityChooserChipGroup.visibility = View.GONE
+                binding.chooseAnActivity.visibility = View.INVISIBLE
+
+                val challengeId = intent.getStringExtra(RECORDED_CHALLENGE_ID)
+                lifecycleScope.launch {
+                    val challenge = PublicChallengesRepository().getChallengeFromRoom(
+                        challengeId!!,
+                        this@ChallengeRecorderActivity
+                    )
+                    activityType = challenge!!.type.name.lowercase()
+                    LocationUpdatesService.previousChallenge =
+                        challenge.route!! as ArrayList<RouteItemBase>
+                }
+            }
+            RecordingType.TRAINING -> {
+                // getting the training data from intents
+                distance = intent.getIntExtra(DISTANCE, 0).also {
+                    Log.i(TAG, "$it is the got distance")
+                }
+                avgSpeed = intent.getDoubleExtra(AVG_SPEED, 0.0).also {
+                    Log.i(TAG, "$it is the got avgSpeed")
+                }
+                avgSpeed = avgSpeed.div(3.6)
+            }
+        }
         binding.setUpHeartRateSensor.setOnClickListener {
 
             if (bluetoothAdapter.isEnabled) {
@@ -197,7 +261,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                     binding.setUpHeartRateSensor.isEnabled = false
                 }
             } else {
-                //TODO(show normal alert with open action)
+                // TODO(show normal alert with open action)
                 Toast.makeText(this, getString(R.string.enable_bluetooth), Toast.LENGTH_SHORT)
                     .show()
             }
@@ -209,43 +273,6 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
         if (intent.getBooleanExtra(SHOW_WIND_ALERT, false)) {
             buildAlertMessageStrongWind()
-        }
-
-        if (createdChallenge) {
-            distance = intent.getIntExtra(DISTANCE, 0).also {
-                Log.i(TAG, "$it is the got distance")
-            }
-            avgSpeed = intent.getDoubleExtra(AVG_SPEED, 0.0).also {
-                Log.i(TAG, "$it is the got avgSpeed")
-            }
-            avgSpeed = avgSpeed.div(3.6)
-
-        } else {
-
-            challenge = intent.getBooleanExtra(CHALLENGE, false).also {
-                Log.i(TAG, "$it is the bool")
-            }
-
-            if (challenge) {
-
-                binding.activityChooserChipGroup.visibility = View.GONE
-                binding.chooseAnActivity.visibility = View.GONE
-
-                val recordedChallengeId = intent.getIntExtra(RECORDED_CHALLENGE_ID, -1)
-                recordedChallenge = dbHelper.getChallenge(recordedChallengeId)
-
-                val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
-                val route =
-                    Gson().fromJson<ArrayList<MyLocation>>(
-                        recordedChallenge!!.routeAsString,
-                        typeJson
-                    )
-                activityType = recordedChallenge?.type
-                LocationUpdatesService.previousChallenge = route
-
-            } else {
-                this.binding.differenceTextView.visibility = View.GONE
-            }
         }
 
         if (!locationPermissionCheck(this)) {
@@ -265,12 +292,12 @@ class ChallengeRecorderActivity : AppCompatActivity(),
         PreferenceManager.getDefaultSharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(this)
         super.onStop()
-        binding.mapbox.onStop()
+
     }
 
     override fun onStart() {
         super.onStart()
-        binding.mapbox.onStart()
+
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)
 
@@ -311,7 +338,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
-        binding.mapbox.onResume()
+
         LocalBroadcastManager.getInstance(this).registerReceiver(
             activityDataReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST_UI_UPDATE)
@@ -325,96 +352,74 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     override fun onPause() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(activityDataReceiver)
         super.onPause()
-        binding.mapbox.onPause()
+
     }
+
 
     override fun onDestroy() {
         super.onDestroy()
-        binding.mapbox.onDestroy()
+        binding.mapbox.location
+            .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
+        binding.mapbox.location
+            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+        binding.mapbox.gestures.removeOnMoveListener(onMoveListener)
     }
 
-    override fun onLowMemory() {
-        super.onLowMemory()
-        binding.mapbox.onLowMemory()
-    }
 
     //endregion activity lifecycle
 
 
     //region map
 
-    @SuppressLint("MissingPermission")//checked
-    private fun startLocationTracking() {
-        val locationComponent: LocationComponent = mapBox!!.locationComponent
-        // Activate with a built LocationComponentActivationOptions object
 
-        // Activate with a built LocationComponentActivationOptions object
-        locationComponent.activateLocationComponent(
-            LocationComponentActivationOptions.builder(
-                this,
-                style!!
-            ).build()
-        )
-        locationComponent.apply {
-            isLocationComponentEnabled = true
-            cameraMode = CameraMode.TRACKING_GPS
-            renderMode = RenderMode.GPS
-            addOnCameraTrackingChangedListener(object : OnCameraTrackingChangedListener {
-                override fun onCameraTrackingDismissed() {
-                    binding.recenterButton.visibility = View.VISIBLE
-                }
-
-                override fun onCameraTrackingChanged(currentMode: Int) {
-
-                }
-
-            })
-            zoomWhileTracking(15.0, 2000)
-        }
+    private fun setupGesturesListener() {
+        binding.mapbox.gestures.addOnMoveListener(onMoveListener)
     }
 
-    @SuppressLint("MissingPermission") //checked
-    private fun styleLoaded(style: Style) {
-
-        this.style = style
-
-        if (locationPermissionCheck(this)) {
-            startLocationTracking()
-        }
-
-        if (challenge) {
-            val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
-            val route =
-                Gson().fromJson<ArrayList<MyLocation>>(recordedChallenge!!.routeAsString, typeJson)
-
-            val points = route.map {
-                Point.fromLngLat(
-                    it.latLng.longitude,
-                    it.latLng.latitude,
-                    it.altitude
-                )
-            } as ArrayList<Point>
-
-            val lineString: LineString = LineString.fromLngLats(points)
-            val feature = Feature.fromGeometry(lineString)
-            val geoJsonSource = GeoJsonSource("geojson-source", feature)
-            style.addSource(geoJsonSource)
-            style.addLayer(
-                LineLayer("linelayer", "geojson-source").withProperties(
-                    PropertyFactory.lineCap(Property.LINE_CAP_SQUARE),
-                    PropertyFactory.lineJoin(Property.LINE_JOIN_MITER),
-                    PropertyFactory.lineOpacity(1f),
-                    PropertyFactory.lineWidth(4f),
-                    PropertyFactory.lineColor(
-                        resources.getColor(
-                            R.color.colorAccent,
-                            null
-                        )
-                    )
-                )
+    private fun initLocationComponent() {
+        val locationComponentPlugin = binding.mapbox.location
+        locationComponentPlugin.updateSettings {
+            this.enabled = true
+            this.locationPuck = LocationPuck2D(
+                bearingImage = AppCompatResources.getDrawable(
+                    this@ChallengeRecorderActivity,
+                    drawable.mapbox_user_puck_icon,
+                ),
+                shadowImage = AppCompatResources.getDrawable(
+                    this@ChallengeRecorderActivity,
+                    drawable.mapbox_user_icon_shadow,
+                ),
+                scaleExpression = interpolate {
+                    linear()
+                    zoom()
+                    stop {
+                        literal(0.0)
+                        literal(0.6)
+                    }
+                    stop {
+                        literal(20.0)
+                        literal(1.0)
+                    }
+                }.toJson()
             )
-
         }
+        locationComponentPlugin.addOnIndicatorPositionChangedListener(
+            onIndicatorPositionChangedListener
+        )
+        locationComponentPlugin.addOnIndicatorBearingChangedListener(
+            onIndicatorBearingChangedListener
+        )
+    }
+
+    private fun onCameraTrackingDismissed() {
+
+        binding.mapbox.location
+            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+        binding.mapbox.location
+            .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
+        binding.mapbox.gestures.removeOnMoveListener(onMoveListener)
+
+        binding.recenterButton.visibility = View.VISIBLE
     }
 
     //endregion map
@@ -438,17 +443,12 @@ class ChallengeRecorderActivity : AppCompatActivity(),
             buildAlertMessageNoLocationPoints()
         } else {
             if (gpsService != null) {
-                val currentDate: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val current = LocalDateTime.now()
-                    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
-                    current.format(formatter)
 
-                } else {
-                    val date = Date()
-                    val formatter = SimpleDateFormat("dd-MM-yyyy. HH:mm")
-                    formatter.format(date)
-                }
+                val current = LocalDateTime.now()
+                val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy. HH:mm")
+                val currentDate: String = current.format(formatter)
                 val gson = Gson()
+                val elevations = calculateElevations(gpsService?.myRoute ?: ArrayList())
                 val myLocationArrayString = gson.toJson(gpsService?.myRoute)
                 val duration: Long = gpsService!!.durationHelper.div(1000)
                 val distance = gpsService!!.distance.div(1000.0)
@@ -465,7 +465,9 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                     gpsService!!.maxSpeed.times(3.6),
                     avg,
                     duration,
-                    myLocationArrayString
+                    myLocationArrayString,
+                    elevations.first,
+                    elevations.second
                 )
                 val challengeId = dbHelper.addChallenge(newChallenge).also {
                     Log.i(TAG, "the id for the new challenge is: $it")
@@ -480,13 +482,19 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                     )
                 if (challenge) {
                     with(myIntent) {
-                        putExtra(ChallengeDetailsActivity.UPDATE, true)
+                        putExtra(
+                            ChallengeDetailsActivity.UPDATE_TYPE,
+                            ChallengeUpdateType.LOCAL_CHALLENGE_FINISHED
+                        )
                         putExtra(
                             ChallengeDetailsActivity.PREVIOUS_CHALLENGE_ID,
                             recordedChallenge!!.id.toLong()
                         )
                     }
-                }
+                } else myIntent.putExtra(
+                    ChallengeDetailsActivity.UPDATE_TYPE,
+                    ChallengeUpdateType.NORMAL_RECORDING_FINISHED
+                )
                 dbHelper.close()
                 startActivity(myIntent)
             }
@@ -529,14 +537,10 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                 binding.countDownTextView.visibility = View.GONE
 
                 val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator.vibrate(
-                        VibrationEffect
-                            .createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
-                    )
-                } else {
-                    vibrator.vibrate(500)
-                }
+                vibrator.vibrate(
+                    VibrationEffect
+                        .createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
+                )
 
                 if (autoPause) {
                     binding.startStopChallengeRecording.visibility = View.GONE
@@ -949,14 +953,10 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                     )
                 ) {
                     val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        vibrator.vibrate(
-                            VibrationEffect
-                                .createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE)
-                        )
-                    } else {
-                        vibrator.vibrate(200)
-                    }
+                    vibrator.vibrate(
+                        VibrationEffect
+                            .createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE)
+                    )
                     binding.setUpHeartRateSensor.apply {
                         text = getString(R.string.connected)
                         isEnabled = true
@@ -985,8 +985,6 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                 }
 
                 val altitude = intent.getIntExtra(LocationUpdatesService.ALTITUDE, 0)
-                val elevationGained = intent
-                    .getIntExtra(LocationUpdatesService.ELEVATION_GAINED, 0)
 
                 binding.altitudeTextView.text = "${altitude}m"
                 val hr = intent.getIntExtra(LocationUpdatesService.HEART_RATE, -1)
@@ -1069,7 +1067,7 @@ class ChallengeRecorderActivity : AppCompatActivity(),
                 } km/h"
 
                 if (location != null) {
-                    val latLng = LatLng(location.latitude, location.longitude)
+                    //val latLng = LatLng(location.latitude, location.longitude)
                     //mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
 
                     if (autoPauseActive) {
@@ -1086,9 +1084,8 @@ class ChallengeRecorderActivity : AppCompatActivity(),
     }
 
     companion object {
-        const val CHALLENGE = "challenge"
-        const val RECORDED_CHALLENGE_ID = "recorded"
-        const val CREATED_CHALLENGE_INTENT = "createdChallenge"
+        const val RECORDED_CHALLENGE_ID = "recordedChallengeId"
+        const val RECORDING_TYPE = "com.sziffer.challenge.RecordingType"
         var createdChallenge: Boolean = false
             private set
         const val AVG_SPEED = "avgSpeed"

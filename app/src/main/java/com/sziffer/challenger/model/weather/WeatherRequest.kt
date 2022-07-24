@@ -30,10 +30,6 @@ class WeatherRequest(
 
         var shouldShowUv: Boolean
 
-        val loc = Locale.getDefault().isO3Country.also {
-            Log.d("LOCALE", it)
-        }
-
         //fetching current weather data
         val request = Request.Builder()
             .url("${WEATHER_URL}lat=${location.latitude}&lon=${location.longitude}")

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:background="@drawable/gradient_background"
     android:layout_height="match_parent"
-    tools:context=".ui.weather.WeatherFragment">
+    tools:context=".ui.WeatherFragment">
 
     <TextView
         android:id="@+id/noInternetTextView"
@@ -43,11 +43,13 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:gravity="center">
 
-        <ProgressBar
-            android:layout_width="wrap_content"
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/bikeLoadingAnimationView"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:indeterminateTint="@color/colorPrimaryDark"
-            android:indeterminate="true" />
+            app:lottie_rawRes="@raw/bike_loading_light_blue"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true" />
     </RelativeLayout>
 
     <ScrollView
@@ -289,8 +291,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:visibility="gone"
                 android:gravity="center"
+                android:visibility="gone"
                 android:orientation="vertical">
 
                 <TextView
@@ -317,6 +319,24 @@
 
             </LinearLayout>
 
+
+            <TextView
+                android:id="@+id/chanceOfWithinOneHourTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:visibility="gone"
+                android:textSize="15sp"
+                android:text="@string/minutelyPrecipitation" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/minutelyPrecipitationLineChart"
+                android:layout_width="match_parent"
+                android:visibility="gone"
+                android:layout_height="150dp" />
+
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -327,6 +347,7 @@
                 android:text="@string/next_48_hours"
                 android:textAllCaps="true"
                 android:textSize="15sp" />
+
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/weatherForecastRecyclerView"

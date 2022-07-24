@@ -9,8 +9,8 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.database.FirebaseManager
-import com.sziffer.challenger.model.Challenge
-import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.model.challenge.Challenge
+import com.sziffer.challenger.model.user.UserManager
 import java.util.concurrent.CountDownLatch
 
 class DataDownloaderWorker(
@@ -18,7 +18,6 @@ class DataDownloaderWorker(
     workerParams: WorkerParameters
 ) :
     Worker(appContext, workerParams) {
-
 
     /** Downloads new challenges from Firebase and saves them to local DB */
     override fun doWork(): Result {
@@ -105,7 +104,6 @@ class DataDownloaderWorker(
                         if (challenge?.firebaseId?.isEmpty()!!) {
                             challenge.firebaseId = challenge.id
                         }
-
                         dbHelper.addChallenge(challenge)
                     }
                 }

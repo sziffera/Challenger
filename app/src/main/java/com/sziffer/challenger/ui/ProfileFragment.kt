@@ -8,7 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -17,12 +17,13 @@ import com.sziffer.challenger.R
 import com.sziffer.challenger.database.ChallengeDbHelper
 import com.sziffer.challenger.database.FirebaseManager
 import com.sziffer.challenger.databinding.FragmentProfileBinding
-import com.sziffer.challenger.model.ActivityMainViewModel
-import com.sziffer.challenger.model.UserManager
+import com.sziffer.challenger.model.user.UserManager
 import com.sziffer.challenger.ui.user.BodyFatCalculatorActivity
 import com.sziffer.challenger.ui.user.LoginActivity
 import com.sziffer.challenger.utils.DEFAULT_WEB_CLIENT_ID
 import com.sziffer.challenger.utils.getStringFromNumber
+import com.sziffer.challenger.viewmodels.MainViewModel
+import com.sziffer.challenger.viewmodels.NearbyChallengesViewModelFactory
 
 class ProfileFragment : Fragment() {
 
@@ -30,7 +31,15 @@ class ProfileFragment : Fragment() {
     private val binding get() = _binding!!
 
 
-    private val viewModel: ActivityMainViewModel by activityViewModels()
+    private lateinit var viewModel: MainViewModel
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewModel = ViewModelProvider(
+            requireActivity(),
+            NearbyChallengesViewModelFactory()
+        )[MainViewModel::class.java]
+    }
 
     @SuppressLint("SetTextI18n")
     override fun onCreateView(
@@ -51,12 +60,12 @@ class ProfileFragment : Fragment() {
             }
         }
 
-        viewModel.profilePhotoUriLiveData.observe(viewLifecycleOwner, {
+        viewModel.profilePhotoUriLiveData.observe(viewLifecycleOwner) {
             binding.profileImageView.visibility = View.VISIBLE
             Picasso.get().load(it).into(binding.profileImageView)
-        })
+        }
 
-        viewModel.statisticsLiveData.observe(viewLifecycleOwner, {
+        viewModel.statisticsLiveData.observe(viewLifecycleOwner) {
             val cyclingStatistics = it[STAT_CYCLING_INDEX]
             val runningStatistics = it[STAT_RUNNING_INDEX]
 
@@ -84,7 +93,7 @@ class ProfileFragment : Fragment() {
                 binding.runningThisYearTextView.text = getStringFromNumber(1, thisYear) + " km"
             }
 
-        })
+        }
 
         with(binding) {
             bodyFatCalculatorButton.setOnClickListener {

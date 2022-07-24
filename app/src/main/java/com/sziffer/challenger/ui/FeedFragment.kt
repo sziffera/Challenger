@@ -1,6 +1,7 @@
 package com.sziffer.challenger.ui
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.os.Bundle
@@ -16,12 +17,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.sziffer.challenger.AppConfig
 import com.sziffer.challenger.R
+import com.sziffer.challenger.adapters.ChallengeRecyclerViewAdapter
 import com.sziffer.challenger.databinding.FragmentFeedBinding
-import com.sziffer.challenger.model.ActivityMainViewModel
 import com.sziffer.challenger.sync.DATA_DOWNLOADER_TAG
 import com.sziffer.challenger.sync.startDataDownloaderWorkManager
 import com.sziffer.challenger.utils.*
+import com.sziffer.challenger.utils.extensions.toVisibility
+import com.sziffer.challenger.viewmodels.MainViewModel
 
 class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkStateListener {
 
@@ -34,19 +38,18 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
 
     private var challengeAdapter: ChallengeRecyclerViewAdapter? = null
 
-    private val viewModel: ActivityMainViewModel by activityViewModels()
+    private val viewModel: MainViewModel by activityViewModels()
 
     private var connected = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         connectivityManager = requireActivity().getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
         myNetworkCallback = MyNetworkCallback(this, connectivityManager)
         userIdSharedPreferences =
             requireContext().getSharedPreferences(UID_SHARED_PREF, Context.MODE_PRIVATE)
-
-
     }
 
     override fun onCreateView(
@@ -55,27 +58,35 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
     ): View {
         // Inflate the layout for this fragment
 
+        //showing loading UI
+
         _binding = FragmentFeedBinding.inflate(layoutInflater, container, false)
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.setHasFixedSize(true)
         binding.swipeRefreshLayout.setOnRefreshListener(this)
 
+        binding.findNearbyChallengesButton.visibility = AppConfig.PUBLIC_CHALLENGES.toVisibility()
+
+        binding.findNearbyChallengesButton.setOnClickListener {
+            startActivity(Intent(requireContext(), NearbyChallengesActivity::class.java))
+        }
         viewModel.fetchChallenges(requireContext())
 
-        viewModel.callObserveWork.observe(viewLifecycleOwner, {
+        viewModel.callObserveWork.observe(viewLifecycleOwner) {
             Log.d("OBSERVE", it.toString())
             if (it) {
                 observeWork()
                 viewModel.turnOfObserver()
             }
 
-        })
+        }
 
-        viewModel.challengesLiveData.observe(viewLifecycleOwner, {
+        viewModel.challengesLiveData.observe(viewLifecycleOwner) {
             with(binding) {
                 if (it.isEmpty()) return@observe
                 swipeRefreshLayout.visibility = View.VISIBLE
                 emptyViewLinearLayout.visibility = View.GONE
+                bikeLoadingAnimationView.visibility = View.GONE
                 with(recyclerView) {
                     challengeAdapter = ChallengeRecyclerViewAdapter(it, requireContext())
                     adapter = challengeAdapter
@@ -87,7 +98,7 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
                     )
                 }
             }
-        })
+        }
 
 
         return binding.root
@@ -146,14 +157,14 @@ class FeedFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, NetworkSt
     private fun observeWork() {
         WorkManager.getInstance(requireContext())
             .getWorkInfosByTagLiveData(DATA_DOWNLOADER_TAG)
-            .observe(viewLifecycleOwner, { workInfo ->
+            .observe(viewLifecycleOwner) { workInfo ->
                 if (workInfo != null && workInfo[0].state == WorkInfo.State.SUCCEEDED) {
                     Log.i("MAIN", "WorkManager succeeded")
                     binding.swipeRefreshLayout.isRefreshing = false
                     viewModel.fetchChallenges(requireContext(), startDownloader = false)
                     updateRefreshDate(UpdateTypes.DATA_SYNC, requireContext())
                 }
-            })
+            }
     }
 
     companion object {

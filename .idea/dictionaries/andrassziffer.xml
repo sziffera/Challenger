@@ -3,8 +3,10 @@
     <words>
       <w>appid</w>
       <w>crossfade</w>
+      <w>geohash</w>
       <w>gson</w>
       <w>mapbox</w>
+      <w>sharedpreferences</w>
       <w>sziffer</w>
       <w>walkthrough</w>
     </words>

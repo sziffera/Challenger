@@ -13,7 +13,7 @@
 
     <fragment
         android:id="@+id/navigation_weather"
-        android:name="com.sziffer.challenger.ui.weather.WeatherFragment"
+        android:name="com.sziffer.challenger.ui.WeatherFragment"
         android:label="@string/weather"
         tools:layout="@layout/fragment_weather" />
 
