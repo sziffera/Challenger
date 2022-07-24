@@ -208,7 +208,7 @@ class NearbyChallengesActivity : AppCompatActivity() {
     @SuppressLint("MissingPermission")
     private fun requestLocation() {
         locationRequest = LocationRequest.create().apply {
-            priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+            priority = Priority.PRIORITY_BALANCED_POWER_ACCURACY
             interval = 1000
         }
         locationCallback = object : LocationCallback() {

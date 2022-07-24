@@ -4,14 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.analytics.ktx.analytics
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.ktx.Firebase
 import com.sziffer.challenger.ui.user.LoginActivity
 
-class SplashScreenActivity : AppCompatActivity() {
+class StartingActivity : AppCompatActivity() {
 
     companion object {
 
@@ -29,6 +28,7 @@ class SplashScreenActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
+        val splashScreenView = installSplashScreen()
 
         super.onCreate(savedInstanceState)
 
@@ -52,14 +52,12 @@ class SplashScreenActivity : AppCompatActivity() {
                 Intent(this, MainActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
             )
-            finish()
-        }
-        else {
+        } else {
             startActivity(
                 Intent(this, LoginActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
             )
-            finish()
         }
+        finish()
     }
 }

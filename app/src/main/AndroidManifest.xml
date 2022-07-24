@@ -35,12 +35,12 @@
             android:exported="true" />
         <activity
             android:name=".ui.DatabaseUpgradeActivity"
-            android:screenOrientation="portrait"
-            android:exported="true" />
+            android:exported="true"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.NearbyChallengesActivity"
-            android:screenOrientation="portrait"
-            android:exported="true" />
+            android:exported="true"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.walkthrough.WalkthroughActivity"
             android:exported="true"
@@ -104,7 +104,7 @@
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ui.SplashScreenActivity"
+            android:name=".ui.StartingActivity"
             android:exported="true"
             android:theme="@style/AppTheme.Launcher">
             <intent-filter>
@@ -121,6 +121,7 @@
             android:name=".ui.user.RegisterActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
+
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"

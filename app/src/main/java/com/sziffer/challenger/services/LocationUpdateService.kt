@@ -235,7 +235,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
     }
 
     //region service binding
-    override fun onBind(intent: Intent): IBinder? {
+    override fun onBind(intent: Intent): IBinder {
 
         Log.i(TAG, "in onBind()")
         serviceIsRunningInForeground = false
@@ -533,7 +533,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
         mLocationRequest = LocationRequest.create().apply {
             interval = UPDATE_INTERVAL_IN_MILLISECONDS
             fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            priority = Priority.PRIORITY_HIGH_ACCURACY
         }
     }
     //endregion location handling
@@ -554,6 +554,7 @@ class LocationUpdatesService : Service(), AudioManager.OnAudioFocusChangeListene
                         }
                     }
 
+                    @Deprecated("Deprecated in Java")
                     override fun onError(utteranceId: String?) {
                         if (utteranceId == TTS_ID) {
                             audioManager.abandonAudioFocusRequest(audioFocusRequest)
