@@ -13,12 +13,14 @@ object Constants {
     const val KEY_WEATHER = "Weather"
     const val KEY_WEATHER_DATA = "WeatherData"
 
+
     val typeJson = object : TypeToken<ArrayList<MyLocation>>() {}.type
     val publicRouteType = object : TypeToken<ArrayList<PublicRouteItem>>() {}.type
     val publicChallengeType = object : TypeToken<PublicChallenge>() {}.type
     val publicChallengeHashType = object : TypeToken<PublicChallengeHash>() {}.type
 
     const val WINDOW_SIZE_HELPER = 30
+
     const val MAX_WINDOW_SIZE = 130
     const val SMOOTH_MODE = "triangular"
 
